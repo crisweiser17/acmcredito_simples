@@ -7,6 +7,19 @@
   <form method="post" class="grid md:grid-cols-2 gap-8">
     <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Dados</div>
+      <div class="grid md:grid-cols-3 gap-3 items-end">
+        <div>
+          <div class="text-xs text-gray-500 mb-1">Calcular por</div>
+          <select class="border rounded px-3 py-2 w-full" id="modo_calculo">
+            <option value="valor">Valor do empréstimo</option>
+            <option value="parcela">Parcela máxima</option>
+          </select>
+        </div>
+        <div id="box_parcela_max" class="hidden">
+          <div class="text-xs text-gray-500 mb-1">Parcela máxima (R$)</div>
+          <input class="border rounded px-3 py-2 w-full" id="parcela_max" placeholder="R$ 0,00">
+        </div>
+      </div>
       <div>
         <select class="w-full border rounded px-3 py-2" name="client_id" required>
           <option value="">Selecione o cliente</option>
@@ -201,8 +214,51 @@ function recalc(){
   html += '</tbody></table>';
   document.getElementById('tabela').innerHTML = html;
 }
+function recommendByParcela(){
+  const mode = document.getElementById('modo_calculo').value;
+  if (mode !== 'parcela') return;
+  const pmtTarget = parseMoneyBR(document.getElementById('parcela_max').value||'0');
+  let taxa = parsePercentBR(document.getElementById('taxa_juros_mensal').value||'0');
+  const dv = document.getElementById('data_primeiro_vencimento').value;
+  if (!pmtTarget || !dv) return;
+  if (!taxa) taxa = 24;
+  const parts = dv.split('-');
+  let base = new Date(); base.setDate(base.getDate()+1); while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+  const dataVenc = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  let dias = Math.floor((dataVenc - base) / (1000*60*60*24)); if (dias < 0) dias = 0;
+  const dfrac = dias/30;
+  const i = taxa/100;
+  let bestValor = 0, bestN = 0;
+  for (let n=3; n<=12; n++){
+    const pow = Math.pow(1+i, n);
+    const factorBase = (i * pow) / (pow - 1);
+    const denom = factorBase * (1 + i * dfrac);
+    if (denom <= 0) continue;
+    let v = pmtTarget / denom;
+    if (v > 5000) v = 5000;
+    if (v > bestValor) { bestValor = v; bestN = n; }
+  }
+  if (bestN > 0 && bestValor > 0){
+    const vi = document.getElementById('valor_principal');
+    const np = document.getElementById('num_parcelas');
+    if (vi) vi.value = formatBR(bestValor);
+    if (np) np.value = String(bestN);
+    recalc();
+  }
+}
 ['valor_principal','taxa_juros_mensal'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('input', recalc); });
 ['num_parcelas','data_primeiro_vencimento'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('change', recalc); });
+['parcela_max','taxa_juros_mensal','data_primeiro_vencimento'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('input', recommendByParcela); });
+const modoSel = document.getElementById('modo_calculo');
+const boxParcela = document.getElementById('box_parcela_max');
+function toggleModo(){
+  if (modoSel.value === 'parcela') {
+    boxParcela.classList.remove('hidden');
+  } else {
+    boxParcela.classList.add('hidden');
+  }
+}
+if (modoSel) { modoSel.addEventListener('change', toggleModo); toggleModo(); }
 const valorInput = document.getElementById('valor_principal');
 if (valorInput) {
   valorInput.addEventListener('blur', ()=>{
