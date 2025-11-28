@@ -16,7 +16,7 @@ class HomeController {
       elseif ($periodo === 'mes_passado') { $ini=date('Y-m-01', strtotime('-1 month')); $fim=date('Y-m-t', strtotime('-1 month')); }
       elseif ($periodo === 'total') { $ini=''; $fim=''; }
     }
-    $clients = 0; $loans = 0; $valorLiberado = 0.0; $valorRepagamento = 0.0; $inadValor = 0.0; $inadPercent = 0.0; $lucroBruto = 0.0; $pddSugestao = 0.0; $receberMesAtual = 0.0; $receberProximoMes = 0.0;
+    $clients = 0; $loans = 0; $valorLiberado = 0.0; $valorRepagamento = 0.0; $inadValor = 0.0; $inadPercent = 0.0; $lucroBruto = 0.0; $lucroBrutoPercent = 0.0; $pddSugestao = 0.0; $receberMesAtual = 0.0; $receberProximoMes = 0.0;
     // Helpers for WHERE date filters
     $whereClients = ''; $pClients = [];
     if ($ini !== '' && $fim !== '') { $whereClients = 'WHERE DATE(created_at) BETWEEN :ini AND :fim'; $pClients=['ini'=>$ini,'fim'=>$fim]; }
@@ -45,6 +45,7 @@ class HomeController {
     $stmt->execute($pInad); $inadValor = (float)($stmt->fetch()['s'] ?? 0);
     $inadPercent = $valorLiberado > 0 ? round(($inadValor / $valorLiberado) * 100, 2) : 0.0;
     $lucroBruto = round($valorRepagamento - $inadValor - $valorLiberado, 2);
+    $lucroBrutoPercent = ($valorLiberado > 0) ? round(($lucroBruto / $valorLiberado) * 100, 2) : 0.0;
 
     $pddSugestao = round($valorLiberado * 0.10, 2);
     $iniAtual = date('Y-m-01');
@@ -57,7 +58,7 @@ class HomeController {
     $stmt->execute(['ini'=>$iniProx,'fim'=>$fimProx]); $receberProximoMes = (float)($stmt->fetch()['s'] ?? 0);
     $title = 'Dashboard';
     $content = __DIR__ . '/../Views/home.php';
-    $metrics = compact('clients','loans','valorLiberado','valorRepagamento','inadValor','inadPercent','lucroBruto','pddSugestao','receberMesAtual','receberProximoMes','periodo','ini','fim');
+    $metrics = compact('clients','loans','valorLiberado','valorRepagamento','inadValor','inadPercent','lucroBruto','lucroBrutoPercent','pddSugestao','receberMesAtual','receberProximoMes','periodo','ini','fim');
     include __DIR__ . '/../Views/layout.php';
   }
 }

@@ -36,10 +36,6 @@
       <a class="ml-2 px-4 py-2 rounded inline-block bg-gray-200 text-gray-800" target="_blank" href="/arquivo?p=<?php echo urlencode($l['contrato_pdf_path']); ?>">Ver Contrato</a>
     <?php endif; ?>
     <div class="mt-3 flex gap-2 items-center">
-      <form method="post" onsubmit="return confirm('Tem certeza que deseja excluir este empréstimo? Esta ação é irreversível.');">
-        <input type="hidden" name="acao" value="excluir">
-        <button class="px-3 py-2 rounded bg-red-600 text-white" type="submit">Excluir</button>
-      </form>
       <?php if ($l['status']==='aguardando_assinatura'): ?>
       <details>
         <summary class="cursor-pointer px-3 py-2 rounded bg-gray-200 inline-block">Editar</summary>
@@ -269,6 +265,40 @@
   var btnC = document.getElementById('btn_close_payload'); if (btnC) btnC.addEventListener('click', closePayloadModal);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closePayloadModal(); });
   var overlay = document.getElementById('payload_modal'); if (overlay) overlay.addEventListener('click', function(e){ if (e.target === overlay) closePayloadModal(); });
+  </script>
+  <?php endif; ?>
+  <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
+  <div class="mt-6 text-right">
+    <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" id="form_excluir_inferior" class="inline">
+      <input type="hidden" name="acao" value="excluir">
+      <a href="#" id="link_excluir_inferior" class="text-red-600 hover:text-red-700 underline">excluir emprestimo</a>
+    </form>
+  </div>
+  <div id="modal_excluir" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="bg-black bg-opacity-60 absolute inset-0"></div>
+    <div class="relative bg-white rounded shadow p-4 w-80">
+      <div class="font-semibold mb-2">Confirmar exclusão</div>
+      <div class="text-sm mb-4">Esta ação é irreversível. Deseja excluir este empréstimo?</div>
+      <div class="flex justify-end gap-2">
+        <button type="button" id="btn_cancelar_excluir" class="px-3 py-2 rounded bg-gray-200">Cancelar</button>
+        <button type="button" id="btn_confirmar_excluir" class="px-3 py-2 rounded bg-red-600 text-white">Excluir</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var lnk = document.getElementById('link_excluir_inferior');
+      var modal = document.getElementById('modal_excluir');
+      var btnOk = document.getElementById('btn_confirmar_excluir');
+      var btnCancel = document.getElementById('btn_cancelar_excluir');
+      if (lnk && modal && btnOk && btnCancel) {
+        lnk.addEventListener('click', function(e){ e.preventDefault(); modal.classList.remove('hidden'); modal.classList.add('flex'); });
+        btnCancel.addEventListener('click', function(){ modal.classList.add('hidden'); modal.classList.remove('flex'); });
+        btnOk.addEventListener('click', function(){ var f = document.getElementById('form_excluir_inferior'); if (f) f.submit(); });
+        modal.addEventListener('click', function(e){ if (e.target === modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } });
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { modal.classList.add('hidden'); modal.classList.remove('flex'); } });
+      }
+    })();
   </script>
   <?php endif; ?>
   <form method="post" id="parcela_form" style="display:none">

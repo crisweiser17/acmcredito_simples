@@ -1,4 +1,4 @@
-<?php $m = $metrics ?? ['clients'=>0,'loans'=>0,'valorLiberado'=>0,'valorRepagamento'=>0,'inadValor'=>0,'inadPercent'=>0,'lucroBruto'=>0,'pddSugestao'=>0,'receberMesAtual'=>0,'receberProximoMes'=>0,'periodo'=>'','ini'=>'','fim'=>'']; ?>
+<?php $m = $metrics ?? ['clients'=>0,'loans'=>0,'valorLiberado'=>0,'valorRepagamento'=>0,'inadValor'=>0,'inadPercent'=>0,'lucroBruto'=>0,'lucroBrutoPercent'=>0,'pddSugestao'=>0,'receberMesAtual'=>0,'receberProximoMes'=>0,'periodo'=>'','ini'=>'','fim'=>'']; ?>
 <div class="space-y-6">
   <h2 class="text-2xl font-semibold">Dashboard</h2>
   <div class="rounded border border-gray-200 p-4">
@@ -66,6 +66,10 @@
     <div class="p-4 bg-white border rounded">
       <div class="text-sm text-gray-600">Lucro Bruto <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
       <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['lucroBruto'],2,',','.'); ?></div>
+    </div>
+    <div class="p-4 bg-white border rounded">
+      <div class="text-sm text-gray-600">Lucro Bruto (%) <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
+      <div class="text-2xl font-bold"><?php echo number_format((float)$m['lucroBrutoPercent'],2,',','.'); ?>%</div>
     </div>
     <div class="p-4 bg-white border rounded">
       <div class="text-sm text-gray-600">Sugestão de PDD (10%) <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>

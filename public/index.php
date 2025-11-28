@@ -2,6 +2,11 @@
 declare(strict_types=1);
 session_start();
 date_default_timezone_set('America/Sao_Paulo');
+if (isset($_GET['force_env'])) {
+  $fe = $_GET['force_env'];
+  $_SESSION['force_env'] = $fe;
+  setcookie('force_env', $fe, time() + 7*24*60*60, '/');
+}
 spl_autoload_register(function($class){
   $prefix = 'App\\';
   $base = __DIR__ . '/../src/';

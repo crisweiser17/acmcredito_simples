@@ -67,6 +67,55 @@ $production = readEnvFile('.env.production');
       <input class="w-full border rounded px-3 py-2" name="empresa_endereco" placeholder="Endereço" value="<?php echo htmlspecialchars($empresaEndereco); ?>">
       <div class="text-xs text-gray-500">Essas informações serão utilizadas em contratos, mensagens e demais telas.</div>
     </div>
+    <div class="space-y-4">
+      <div class="text-lg font-semibold">Planos Pré-definidos</div>
+      <?php $pl1v = \App\Helpers\ConfigRepo::get('plano1_valor','500'); $pl1n = \App\Helpers\ConfigRepo::get('plano1_parcelas','3'); ?>
+      <?php $pl2v = \App\Helpers\ConfigRepo::get('plano2_valor','1000'); $pl2n = \App\Helpers\ConfigRepo::get('plano2_parcelas','5'); ?>
+      <?php $pl3v = \App\Helpers\ConfigRepo::get('plano3_valor','1500'); $pl3n = \App\Helpers\ConfigRepo::get('plano3_parcelas','5'); ?>
+      <?php $pl4v = \App\Helpers\ConfigRepo::get('plano4_valor','2000'); $pl4n = \App\Helpers\ConfigRepo::get('plano4_parcelas','6'); ?>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2 items-end">
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Plano 1 Valor (R$)</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano1_valor" value="<?php echo htmlspecialchars($pl1v); ?>">
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano1_parcelas" value="<?php echo htmlspecialchars($pl1n); ?>">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 items-end">
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Plano 2 Valor (R$)</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano2_valor" value="<?php echo htmlspecialchars($pl2v); ?>">
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano2_parcelas" value="<?php echo htmlspecialchars($pl2n); ?>">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 items-end">
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Plano 3 Valor (R$)</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano3_valor" value="<?php echo htmlspecialchars($pl3v); ?>">
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano3_parcelas" value="<?php echo htmlspecialchars($pl3n); ?>">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 items-end">
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Plano 4 Valor (R$)</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano4_valor" value="<?php echo htmlspecialchars($pl4v); ?>">
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+            <input class="border rounded px-3 py-2 w-full" name="plano4_parcelas" value="<?php echo htmlspecialchars($pl4n); ?>">
+          </div>
+        </div>
+      </div>
+    </div>
     <button class="btn-primary px-4 py-2 rounded" type="submit">Salvar Configurações</button>
   </form>
   <div class="text-sm text-gray-600">Para alternar manualmente o ambiente, edite <code>config/app.php</code> e troque o valor de <code>'env'</code> entre <code>staging</code> e <code>production</code>.</div>

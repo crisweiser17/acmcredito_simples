@@ -38,6 +38,22 @@ class SettingsController {
       if ($empresaEmail !== '') { ConfigRepo::set('empresa_email', $empresaEmail, 'Email da Empresa'); }
       if ($empresaTelefone !== '') { ConfigRepo::set('empresa_telefone', $empresaTelefone, 'Telefone da Empresa'); }
       if ($empresaEndereco !== '') { ConfigRepo::set('empresa_endereco', $empresaEndereco, 'Endereço da Empresa'); }
+      $pl1v = trim($_POST['plano1_valor'] ?? '');
+      $pl1n = trim($_POST['plano1_parcelas'] ?? '');
+      $pl2v = trim($_POST['plano2_valor'] ?? '');
+      $pl2n = trim($_POST['plano2_parcelas'] ?? '');
+      $pl3v = trim($_POST['plano3_valor'] ?? '');
+      $pl3n = trim($_POST['plano3_parcelas'] ?? '');
+      $pl4v = trim($_POST['plano4_valor'] ?? '');
+      $pl4n = trim($_POST['plano4_parcelas'] ?? '');
+      if ($pl1v !== '') { ConfigRepo::set('plano1_valor', $pl1v, 'Plano 1 Valor'); }
+      if ($pl1n !== '') { ConfigRepo::set('plano1_parcelas', $pl1n, 'Plano 1 Parcelas'); }
+      if ($pl2v !== '') { ConfigRepo::set('plano2_valor', $pl2v, 'Plano 2 Valor'); }
+      if ($pl2n !== '') { ConfigRepo::set('plano2_parcelas', $pl2n, 'Plano 2 Parcelas'); }
+      if ($pl3v !== '') { ConfigRepo::set('plano3_valor', $pl3v, 'Plano 3 Valor'); }
+      if ($pl3n !== '') { ConfigRepo::set('plano3_parcelas', $pl3n, 'Plano 3 Parcelas'); }
+      if ($pl4v !== '') { ConfigRepo::set('plano4_valor', $pl4v, 'Plano 4 Valor'); }
+      if ($pl4n !== '') { ConfigRepo::set('plano4_parcelas', $pl4n, 'Plano 4 Parcelas'); }
       header('Location: /config?saved=1');
       exit;
     }

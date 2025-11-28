@@ -67,6 +67,7 @@ $saved = isset($_GET['saved']);
           </button>
           <div id="menu-relatorios" class="<?php echo strpos($path,'/relatorios')===0?'block':'hidden'; ?>">
             <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
+            <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
           </div>
         </div>
         <div>

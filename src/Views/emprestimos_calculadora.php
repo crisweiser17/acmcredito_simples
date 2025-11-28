@@ -1,11 +1,11 @@
-<?php $taxaDefault = '24'; ?>
+<?php $taxaDefault = '24'; $pl1v = \App\Helpers\ConfigRepo::get('plano1_valor','500'); $pl1n = \App\Helpers\ConfigRepo::get('plano1_parcelas','3'); $pl2v = \App\Helpers\ConfigRepo::get('plano2_valor','1000'); $pl2n = \App\Helpers\ConfigRepo::get('plano2_parcelas','5'); $pl3v = \App\Helpers\ConfigRepo::get('plano3_valor','1500'); $pl3n = \App\Helpers\ConfigRepo::get('plano3_parcelas','5'); $pl4v = \App\Helpers\ConfigRepo::get('plano4_valor','2000'); $pl4n = \App\Helpers\ConfigRepo::get('plano4_parcelas','6'); ?>
 <div class="space-y-8">
   <h2 class="text-2xl font-semibold">Calculadora de Empréstimos</h2>
   <?php if (empty($clients)): ?>
     <div class="rounded border border-yellow-200 bg-yellow-50 text-yellow-700 px-4 py-3">Nenhum cliente aprovado disponível</div>
   <?php endif; ?>
   <form method="post" class="grid md:grid-cols-2 gap-8">
-    <div class="space-y-4">
+    <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Dados</div>
       <div>
         <select class="w-full border rounded px-3 py-2" name="client_id" required>
@@ -17,7 +17,10 @@
         <div class="text-sm text-gray-600 mt-0.5">Cliente</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="valor_principal" id="valor_principal" placeholder="Valor do Empréstimo (R$)" required>
+        <div class="flex items-center gap-2">
+          <input class="border rounded px-3 py-2 w-full" name="valor_principal" id="valor_principal" placeholder="Valor do Empréstimo (R$)" required>
+          <button type="button" id="btn_planos" class="px-3 py-2 rounded bg-gray-200">+</button>
+        </div>
         <div class="text-sm text-gray-600 mt-0.5">Valor do Empréstimo (R$)</div>
       </div>
       <div class="flex items-start gap-2">
@@ -40,6 +43,10 @@
         <div>
           <div class="flex items-center gap-2">
             <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo htmlspecialchars($taxaDefault); ?>" required>
+            <div class="inline-flex items-center gap-1">
+              <button type="button" id="btn_taxa_dec" class="px-2 py-1 rounded bg-gray-200" title="-0,5%">-0,5</button>
+              <button type="button" id="btn_taxa_inc" class="px-2 py-1 rounded bg-gray-200" title="+0,5%">+0,5</button>
+            </div>
             <span class="text-sm text-gray-600">% a.m.</span>
           </div>
           <div class="text-sm text-gray-600 mt-0.5">Taxa de Juros Mensal</div>
@@ -49,8 +56,11 @@
         <input class="w-full border rounded px-3 py-2" type="date" name="data_primeiro_vencimento" id="data_primeiro_vencimento" required>
         <div class="text-sm text-gray-600 mt-0.5">Primeiro Vencimento</div>
       </div>
+      <div class="flex gap-3 pt-2">
+        <button class="btn-primary px-4 py-2 rounded" type="submit">Gerar Solicitação de Empréstimo</button>
+      </div>
     </div>
-    <div class="space-y-4">
+    <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Resultados</div>
       <div class="grid grid-cols-2 gap-2">
         <div>
@@ -69,29 +79,57 @@
           <input class="border rounded px-3 py-2 w-full" id="total" readonly>
           <div class="text-sm text-gray-600 mt-1">Valor Total (R$)</div>
         </div>
-        <div>
-          <input class="border rounded px-3 py-2 w-full" id="juros_total" readonly>
-          <div class="text-sm text-gray-600 mt-1">Total de Juros</div>
+        <div class="col-span-2 text-right">
+          <button class="px-4 py-2 rounded bg-gray-200 text-gray-800" type="button" id="btn_copy_simulacao">Copiar simulação</button>
         </div>
-        <div>
-          <input class="border rounded px-3 py-2 w-full" id="cet" readonly>
-          <div class="text-sm text-gray-600 mt-1">CET anual (%)</div>
-        </div>
-        <div>
-          <input class="border rounded px-3 py-2 w-full" id="lucro" readonly>
-          <div class="text-sm text-gray-600 mt-1">Lucro da Operação</div>
+        <div class="col-span-2 border-t mt-3 mb-1"></div>
+        <div class="col-span-2 grid grid-cols-3 gap-2">
+          <div>
+            <input class="border rounded px-3 py-2 w-full" id="juros_total" readonly>
+            <div class="text-sm text-gray-600 mt-1">Total de Juros</div>
+          </div>
+          <div>
+            <input class="border rounded px-3 py-2 w-full" id="cet" readonly>
+            <div class="text-sm text-gray-600 mt-1">CET anual (%)</div>
+          </div>
+          <div>
+            <input class="border rounded px-3 py-2 w-full" id="lucro" readonly>
+            <div class="text-sm text-gray-600 mt-1">Lucro da Operação</div>
+          </div>
         </div>
       </div>
+      
     </div>
-    <div class="md:col-span-2 flex gap-3">
-      <button class="px-4 py-2 rounded bg-gray-200 text-gray-800" type="button" id="btn_calcular">Calcular</button>
-      <button class="btn-primary px-4 py-2 rounded" type="submit">Gerar Solicitação de Empréstimo</button>
-    </div>
+    
   </form>
-  <details class="border rounded p-4">
-    <summary class="cursor-pointer font-semibold">Ver Tabela de Amortização Completa</summary>
+  <details class="border rounded p-4" open>
+    <summary class="cursor-pointer font-semibold flex items-center justify-between">
+      <span>Ver Tabela de Amortização Completa</span>
+      <button type="button" id="btn_copy_tabela" class="px-3 py-1 rounded bg-gray-200 text-gray-800">Copiar imagem</button>
+    </summary>
     <div id="tabela" class="mt-4"></div>
   </details>
+  <div id="modal_planos" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="bg-black bg-opacity-50 absolute inset-0"></div>
+    <div class="relative bg-white rounded shadow p-4 w-96">
+      <div class="font-semibold mb-3">Planos disponíveis</div>
+      <div class="space-y-2">
+        <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl1v; ?>" data-parcelas="<?php echo (int)$pl1n; ?>">R$<?php echo number_format((float)$pl1v,0,',','.'); ?> em <?php echo (int)$pl1n; ?>x</button>
+        <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl2v; ?>" data-parcelas="<?php echo (int)$pl2n; ?>">R$<?php echo number_format((float)$pl2v,0,',','.'); ?> em <?php echo (int)$pl2n; ?>x</button>
+        <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl3v; ?>" data-parcelas="<?php echo (int)$pl3n; ?>">R$<?php echo number_format((float)$pl3v,0,',','.'); ?> em <?php echo (int)$pl3n; ?>x</button>
+        <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl4v; ?>" data-parcelas="<?php echo (int)$pl4n; ?>">R$<?php echo number_format((float)$pl4v,0,',','.'); ?> em <?php echo (int)$pl4n; ?>x</button>
+      </div>
+      <div class="flex justify-end gap-2 mt-3">
+        <button type="button" id="btn_planos_cancelar" class="px-3 py-2 rounded bg-gray-200">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast_copy" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="bg-black bg-opacity-50 absolute inset-0"></div>
+    <div class="relative bg-white rounded shadow px-4 py-3">
+      <div class="font-semibold">Copiado para a área de transferência</div>
+    </div>
+  </div>
 </div>
 <script>
 function formatBR(n){
@@ -173,6 +211,25 @@ if (valorInput) {
     valorInput.value = formatBR(v);
   });
 }
+const btnPlanos = document.getElementById('btn_planos');
+const modalPlanos = document.getElementById('modal_planos');
+if (btnPlanos && modalPlanos) {
+  btnPlanos.addEventListener('click', function(){ modalPlanos.classList.remove('hidden'); modalPlanos.classList.add('flex'); });
+  const opts = modalPlanos.querySelectorAll('.plan_option');
+  opts.forEach(function(b){ b.addEventListener('click', function(){
+    const valor = parseFloat(b.getAttribute('data-valor')||'0');
+    const n = parseInt(b.getAttribute('data-parcelas')||'0');
+    const vi = document.getElementById('valor_principal');
+    const np = document.getElementById('num_parcelas');
+    if (vi) vi.value = formatBR(valor);
+    if (np) np.value = String(n);
+    recalc();
+    modalPlanos.classList.add('hidden'); modalPlanos.classList.remove('flex');
+  }); });
+  const cancel = document.getElementById('btn_planos_cancelar');
+  if (cancel) cancel.addEventListener('click', function(){ modalPlanos.classList.add('hidden'); modalPlanos.classList.remove('flex'); });
+  modalPlanos.addEventListener('click', function(e){ if (e.target === modalPlanos) { modalPlanos.classList.add('hidden'); modalPlanos.classList.remove('flex'); } });
+}
 const taxaInput = document.getElementById('taxa_juros_mensal');
 if (taxaInput) {
   taxaInput.addEventListener('blur', ()=>{
@@ -180,8 +237,53 @@ if (taxaInput) {
     taxaInput.value = t.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   });
 }
-const btnCalc = document.getElementById('btn_calcular');
-if (btnCalc) { btnCalc.addEventListener('click', ()=>{ recalc(); }); }
+const btnDec = document.getElementById('btn_taxa_dec');
+const btnInc = document.getElementById('btn_taxa_inc');
+function adjustRate(delta){
+  const el = document.getElementById('taxa_juros_mensal');
+  if (!el) return;
+  let v = parsePercentBR(el.value);
+  v = v + delta;
+  if (v < 0) v = 0;
+  el.value = v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  recalc();
+}
+if (btnDec) btnDec.addEventListener('click', ()=>adjustRate(-0.5));
+if (btnInc) btnInc.addEventListener('click', ()=>adjustRate(0.5));
+const btnCopy = document.getElementById('btn_copy_simulacao');
+if (btnCopy) {
+  btnCopy.addEventListener('click', async ()=>{
+    recalc();
+    const cliSel = document.querySelector('select[name="client_id"]');
+    let clienteNome = '';
+    if (cliSel) {
+      const opt = cliSel.options[cliSel.selectedIndex];
+      const txt = opt ? opt.text : '';
+      clienteNome = txt.split(' - ')[0] || '';
+    }
+    const vp = parseMoneyBR(document.getElementById('valor_principal').value);
+    const parcelas = document.getElementById('num_parcelas').value||'';
+    const pmt = document.getElementById('pmt').value||'';
+    const dv = document.getElementById('data_primeiro_vencimento').value||'';
+    let dataBR = dv;
+    if (dv && dv.indexOf('-')>0) {
+      const parts = dv.split('-');
+      dataBR = `${String(parts[2]).padStart(2,'0')}/${String(parts[1]).padStart(2,'0')}/${parts[0]}`;
+    }
+    const msg = [
+      clienteNome ? `Segue abaixo a simulacão solicitada para ${clienteNome}:` : 'Segue abaixo a simulacão solicitada:',
+      `Valor do Emprestimo: ${formatBR(vp)}`,
+      `Valor das parcelas: ${pmt}`,
+      `Numero de parcelas: ${parcelas}`,
+      `1o vencimento: ${dataBR}`,
+      'O que acha?'
+    ].join('\n');
+    try { await navigator.clipboard.writeText(msg);
+      const toast = document.getElementById('toast_copy');
+      if (toast) { toast.classList.remove('hidden'); toast.classList.add('flex'); setTimeout(()=>{ toast.classList.add('hidden'); toast.classList.remove('flex'); }, 1800); }
+    } catch(e) { }
+  });
+}
 const dateEl = document.getElementById('data_primeiro_vencimento');
 if (dateEl && !dateEl.value) {
   let base = new Date();
@@ -197,5 +299,66 @@ if (dateEl && !dateEl.value) {
   }
   const iso = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
   dateEl.value = iso;
+}
+const btnTbl = document.getElementById('btn_copy_tabela');
+if (btnTbl) {
+  btnTbl.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); copyTabelaImagem(); });
+}
+function copyTabelaImagem(){
+  const tbl = document.querySelector('#tabela table');
+  if (!tbl) return;
+  const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+  const width = Math.min(1000, Math.max(700, document.getElementById('tabela').clientWidth || 800));
+  const rowCount = Math.max(1, tbl.querySelectorAll('tbody tr').length);
+  const titleH = 34, headerH = 36, rowH = 30, pad = 12;
+  const height = (titleH + headerH + rowH * rowCount) + pad*2;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,width,height);
+  ctx.fillStyle = '#111827';
+  ctx.font = 'bold 16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText('Tabela de Amortização', pad, pad + 18);
+  const cols = ['#','Vencimento','Valor','Juros','Amortização','Saldo'];
+  const weights = [0.08,0.20,0.15,0.15,0.17,0.25];
+  const xPos = []; let acc = pad;
+  for(let i=0;i<weights.length;i++){ xPos[i]=acc; acc += Math.floor(weights[i]* (width-pad*2)); }
+  ctx.fillStyle = '#f3f4f6';
+  ctx.fillRect(pad, pad + titleH, width-pad*2, headerH);
+  ctx.fillStyle = '#111827';
+  ctx.font = 'bold 13px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  for(let i=0;i<cols.length;i++){ ctx.fillText(cols[i], xPos[i]+8, pad + titleH + 22); }
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.beginPath();
+  ctx.moveTo(pad, pad+titleH+headerH); ctx.lineTo(width-pad, pad+titleH+headerH); ctx.stroke();
+  const rows = tbl.querySelectorAll('tbody tr');
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  let y = pad + titleH + headerH;
+  rows.forEach((tr)=>{
+    y += rowH;
+    const tds = tr.querySelectorAll('td');
+    const vals = [tds[0]?.textContent||'', tds[1]?.textContent||'', tds[2]?.textContent||'', tds[3]?.textContent||'', tds[4]?.textContent||'', tds[5]?.textContent||''];
+    for(let i=0;i<vals.length;i++){
+      ctx.fillStyle = '#111827';
+      ctx.fillText(vals[i], xPos[i]+8, y-10);
+    }
+    ctx.strokeStyle = '#f3f4f6';
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(width-pad, y); ctx.stroke();
+  });
+  try {
+    canvas.toBlob(async function(blob){
+      if (!blob) return;
+      const item = new ClipboardItem({ 'image/png': blob });
+      await navigator.clipboard.write([item]);
+      const toast = document.getElementById('toast_copy');
+      if (toast) { toast.querySelector('.font-semibold').textContent = 'Imagem copiada para a área de transferência'; toast.classList.remove('hidden'); toast.classList.add('flex'); setTimeout(()=>{ toast.classList.add('hidden'); toast.classList.remove('flex'); toast.querySelector('.font-semibold').textContent = 'Copiado para a área de transferência'; }, 1800); }
+    }, 'image/png');
+  } catch(e) {
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a'); a.href = url; a.download = 'tabela_amortizacao.png'; a.click();
+  }
 }
 </script>

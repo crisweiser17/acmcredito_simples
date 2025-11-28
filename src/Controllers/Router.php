@@ -109,6 +109,10 @@ class Router {
       \App\Controllers\ReportsController::parcelas();
       return;
     }
+    if ($path === '/relatorios/logs') {
+      \App\Controllers\ReportsController::logs();
+      return;
+    }
     \App\Controllers\HomeController::handle();
   }
   private static function isPublic(string $path): bool {
