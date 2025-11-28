@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Empréstimo</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .section { margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .assinatura { margin-top: 50px; }
+    </style>
+    </head>
+<body>
+    <div class="header">
+        <h1>CONTRATO DE EMPRÉSTIMO PESSOAL</h1>
+        <p>Contrato Nº: {{LOAN_ID}}</p>
+    </div>
+    <div class="section">
+        <h2>1. PARTES</h2>
+        <p><strong>CREDOR:</strong> {{EMPRESA_NOME}}, CNPJ {{EMPRESA_CNPJ}}, com sede em {{EMPRESA_ENDERECO}}.</p>
+        <p><strong>DEVEDOR:</strong> {{CLIENTE_NOME}}, CPF {{CLIENTE_CPF}}, nascido(a) em {{CLIENTE_NASCIMENTO}}, residente em {{CLIENTE_ENDERECO}}.</p>
+    </div>
+    <div class="section">
+        <h2>2. DO OBJETO</h2>
+        <p>O CREDOR concede ao DEVEDOR um empréstimo no valor de <strong>R$ {{VALOR_PRINCIPAL}}</strong>, a ser pago em <strong>{{NUM_PARCELAS}} parcelas</strong> mensais de <strong>R$ {{VALOR_PARCELA}}</strong>.</p>
+    </div>
+    <div class="section">
+        <h2>3. DAS CONDIÇÕES FINANCEIRAS</h2>
+        <ul>
+            <li>Taxa de Juros Mensal: {{TAXA_JUROS}}% ao mês</li>
+            <li>CET (Custo Efetivo Total): {{CET}}% ao ano</li>
+            <li>Valor Total a Pagar: R$ {{VALOR_TOTAL}}</li>
+            <li>Total de Juros: R$ {{TOTAL_JUROS}}</li>
+            <li>Data do Primeiro Vencimento: {{DATA_PRIMEIRO_VENCIMENTO}}</li>
+        </ul>
+    </div>
+    <div class="section">
+        <h2>4. DO CRONOGRAMA DE PAGAMENTO</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parcela</th>
+                    <th>Vencimento</th>
+                    <th>Valor</th>
+                    <th>Juros</th>
+                    <th>Amortização</th>
+                    <th>Saldo Devedor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{TABELA_PARCELAS}}
+            </tbody>
+        </table>
+    </div>
+    <div class="section">
+        <h2>5. DAS PENALIDADES</h2>
+        <p>Em caso de atraso no pagamento de qualquer parcela, serão aplicados:</p>
+        <ul>
+            <li>Multa de {{MULTA_PERCENTUAL}}% sobre o valor da parcela</li>
+            <li>Juros de mora de {{JUROS_MORA_DIA}}% ao dia</li>
+        </ul>
+    </div>
+    <div class="section">
+        <h2>6. DAS DISPOSIÇÕES GERAIS</h2>
+        <p>[Cláusulas contratuais padrão...]</p>
+    </div>
+    <div class="assinatura">
+        <p>{{CIDADE}}, {{DATA_CONTRATO}}</p>
+        <br><br>
+        <p>_________________________________________</p>
+        <p>{{EMPRESA_NOME}}<br>CREDOR</p>
+        <br><br>
+        <p>_________________________________________</p>
+        <p>{{CLIENTE_NOME}}<br>DEVEDOR</p>
+    </div>
+</body>
+</html>
