@@ -124,13 +124,27 @@ class LoansController {
   public static function lista(): void {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');
-    if ($q !== '') {
-      $stmt = $pdo->prepare('SELECT l.id, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status FROM loans l JOIN clients c ON c.id=l.client_id WHERE c.nome LIKE :q OR l.id = :id ORDER BY l.created_at DESC');
-      $stmt->execute(['q'=>'%'.$q.'%','id'=>ctype_digit($q)?(int)$q:0]);
-      $rows = $stmt->fetchAll();
-    } else {
-      $rows = $pdo->query('SELECT l.id, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status FROM loans l JOIN clients c ON c.id=l.client_id ORDER BY l.created_at DESC')->fetchAll();
+    $ini = trim($_GET['data_ini'] ?? '');
+    $fim = trim($_GET['data_fim'] ?? '');
+    $periodo = trim($_GET['periodo'] ?? '');
+    if ($periodo !== '' && $periodo !== 'custom') {
+      $today = date('Y-m-d');
+      if ($periodo === 'hoje') { $ini = $today; $fim = $today; }
+      elseif ($periodo === 'ultimos7') { $ini = date('Y-m-d', strtotime('-6 days')); $fim = $today; }
+      elseif ($periodo === 'ultimos30') { $ini = date('Y-m-d', strtotime('-29 days')); $fim = $today; }
+      elseif ($periodo === 'mes_atual') { $ini = date('Y-m-01'); $fim = $today; }
     }
+    $status = trim($_GET['status'] ?? '');
+    $sql = 'SELECT l.id, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $params = [];
+    if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
+    if ($ini !== '') { $sql .= ' AND DATE(l.created_at) >= :ini'; $params['ini'] = $ini; }
+    if ($fim !== '') { $sql .= ' AND DATE(l.created_at) <= :fim'; $params['fim'] = $fim; }
+    if ($status !== '' && in_array($status, ['aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado'], true)) { $sql .= ' AND l.status = :st'; $params['st'] = $status; }
+    $sql .= ' ORDER BY l.created_at DESC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll();
     $title = 'Empréstimos';
     $content = __DIR__ . '/../Views/emprestimos_lista.php';
     include __DIR__ . '/../Views/layout.php';
@@ -206,14 +220,14 @@ class LoansController {
             'juros_dia' => (float)ConfigRepo::get('juros_mora_percentual_dia','0.033')
           ];
         }
-        $pdo->prepare('UPDATE loans SET boletos_api_response=:r, boletos_gerados=1, boletos_gerados_em=NOW(), status=\'concluido\' WHERE id=:id')
+        $pdo->prepare('UPDATE loans SET boletos_api_response=:r, boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')
             ->execute(['r'=>json_encode($payload), 'id'=>$id]);
         Audit::log('gerar_boletos_api','loans',$id,null);
         header('Location:/emprestimos/'.$id);
         return;
       }
       if (isset($_POST['acao']) && $_POST['acao']==='manuais') {
-        $pdo->prepare('UPDATE loans SET boletos_gerados=1, boletos_gerados_em=NOW() WHERE id=:id')->execute(['id'=>$id]);
+        $pdo->prepare('UPDATE loans SET boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')->execute(['id'=>$id]);
         Audit::log('boletos_manuais','loans',$id,null);
         header('Location:/emprestimos/'.$id);
         return;

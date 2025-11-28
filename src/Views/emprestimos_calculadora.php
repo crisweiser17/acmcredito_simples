@@ -7,14 +7,21 @@
   <form method="post" class="grid md:grid-cols-2 gap-8">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados</div>
-      <select class="w-full border rounded px-3 py-2" name="client_id" required>
-        <option value="">Selecione o cliente</option>
-        <?php foreach ($clients as $cl): ?>
-          <option value="<?php echo $cl['id']; ?>"><?php echo htmlspecialchars($cl['nome'].' - '.$cl['cpf']); ?></option>
-        <?php endforeach; ?>
-      </select>
-      <input class="w-full border rounded px-3 py-2" name="valor_principal" id="valor_principal" placeholder="Valor do Empréstimo (R$)" required>
-      <div class="flex items-center gap-2">
+      <div>
+        <select class="w-full border rounded px-3 py-2" name="client_id" required>
+          <option value="">Selecione o cliente</option>
+          <?php foreach ($clients as $cl): ?>
+            <option value="<?php echo $cl['id']; ?>"><?php echo htmlspecialchars($cl['nome'].' - '.$cl['cpf']); ?></option>
+          <?php endforeach; ?>
+        </select>
+        <div class="text-sm text-gray-600 mt-0.5">Cliente</div>
+      </div>
+      <div>
+        <input class="w-full border rounded px-3 py-2" name="valor_principal" id="valor_principal" placeholder="Valor do Empréstimo (R$)" required>
+        <div class="text-sm text-gray-600 mt-0.5">Valor do Empréstimo (R$)</div>
+      </div>
+      <div class="flex items-start gap-2">
+        <div>
         <select class="border rounded px-3 py-2 w-36" name="num_parcelas" id="num_parcelas" required>
           <option value="">Selecione</option>
           <option value="1">1x</option>
@@ -28,14 +35,19 @@
           <option value="9">9x</option>
           <option value="10">10x</option>
         </select>
-        <div class="flex items-center gap-2">
-          <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo htmlspecialchars($taxaDefault); ?>" required>
-          <span class="text-sm text-gray-600">% a.m.</span>
+        <div class="text-sm text-gray-600 mt-0.5">Parcelas</div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo htmlspecialchars($taxaDefault); ?>" required>
+            <span class="text-sm text-gray-600">% a.m.</span>
+          </div>
+          <div class="text-sm text-gray-600 mt-0.5">Taxa de Juros Mensal</div>
         </div>
       </div>
       <div>
         <input class="w-full border rounded px-3 py-2" type="date" name="data_primeiro_vencimento" id="data_primeiro_vencimento" required>
-        <div class="text-sm text-gray-600 mt-1">Primeiro Vencimento</div>
+        <div class="text-sm text-gray-600 mt-0.5">Primeiro Vencimento</div>
       </div>
     </div>
     <div class="space-y-4">

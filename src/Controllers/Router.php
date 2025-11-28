@@ -85,6 +85,10 @@ class Router {
       \App\Controllers\ClientesController::validar((int)$m[1]);
       return;
     }
+    if (preg_match('#^/clientes/(\d+)/ver$#', $path, $m)) {
+      \App\Controllers\ClientesController::ver((int)$m[1]);
+      return;
+    }
     if (preg_match('#^/clientes/(\d+)/editar$#', $path, $m)) {
       \App\Controllers\ClientesController::editar((int)$m[1]);
       return;

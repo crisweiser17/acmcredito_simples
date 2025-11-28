@@ -141,7 +141,7 @@
           <tr>
             <td class="border px-2 py-1"><?php echo (int)$p['numero_parcela']; ?></td>
             <td class="border px-2 py-1"><?php echo date('d/m/Y', strtotime($p['data_vencimento'])); ?></td>
-            <td class="border px-2 py-1">R$ <?php echo number_format((float)$p['valor'],2,',','.'); ?></td>
+            <td class="border px-2 py-1 text-red-800">R$ <?php echo number_format((float)$p['valor'],2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format((float)$p['juros_embutido'],2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format((float)$p['amortizacao'],2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format((float)$p['saldo_devedor'],2,',','.'); ?></td>

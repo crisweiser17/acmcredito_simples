@@ -83,13 +83,29 @@ class ClientesController {
   public static function lista(): void {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');
-    if ($q !== '') {
-      $stmt = $pdo->prepare('SELECT id, nome, cpf, prova_vida_status, cpf_check_status, created_at FROM clients WHERE nome LIKE :q OR cpf LIKE :q ORDER BY created_at DESC');
-      $stmt->execute(['q' => '%'.$q.'%']);
-      $rows = $stmt->fetchAll();
-    } else {
-      $rows = $pdo->query('SELECT id, nome, cpf, prova_vida_status, cpf_check_status, created_at FROM clients ORDER BY created_at DESC')->fetchAll();
+    $ini = trim($_GET['data_ini'] ?? '');
+    $fim = trim($_GET['data_fim'] ?? '');
+    $periodo = trim($_GET['periodo'] ?? '');
+    if ($periodo !== '' && $periodo !== 'custom') {
+      $today = date('Y-m-d');
+      if ($periodo === 'hoje') { $ini = $today; $fim = $today; }
+      elseif ($periodo === 'ultimos7') { $ini = date('Y-m-d', strtotime('-6 days')); $fim = $today; }
+      elseif ($periodo === 'ultimos30') { $ini = date('Y-m-d', strtotime('-29 days')); $fim = $today; }
+      elseif ($periodo === 'mes_atual') { $ini = date('Y-m-01'); $fim = $today; }
     }
+    $ps = trim($_GET['prova_status'] ?? '');
+    $cs = trim($_GET['cpf_status'] ?? '');
+    $sql = 'SELECT id, nome, cpf, prova_vida_status, cpf_check_status, created_at FROM clients WHERE 1=1';
+    $params = [];
+    if ($q !== '') { $sql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
+    if ($ini !== '') { $sql .= ' AND DATE(created_at) >= :ini'; $params['ini'] = $ini; }
+    if ($fim !== '') { $sql .= ' AND DATE(created_at) <= :fim'; $params['fim'] = $fim; }
+    if ($ps !== '' && in_array($ps, ['aprovado','reprovado','pendente'], true)) { $sql .= ' AND prova_vida_status = :ps'; $params['ps'] = $ps; }
+    if ($cs !== '' && in_array($cs, ['aprovado','reprovado','pendente'], true)) { $sql .= ' AND cpf_check_status = :cs'; $params['cs'] = $cs; }
+    $sql .= ' ORDER BY created_at DESC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll();
     $title = 'Clientes';
     $content = __DIR__ . '/../Views/clientes_lista.php';
     include __DIR__ . '/../Views/layout.php';
@@ -283,6 +299,16 @@ class ClientesController {
     }
     $title = 'Editar Cliente';
     $content = __DIR__ . '/../Views/clientes_editar.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
+  public static function ver(int $id): void {
+    $pdo = Connection::get();
+    $stmt = $pdo->prepare('SELECT * FROM clients WHERE id = :id');
+    $stmt->execute(['id' => $id]);
+    $client = $stmt->fetch();
+    if (!$client) { header('Location: /clientes'); return; }
+    $title = 'Visualizar Cliente';
+    $content = __DIR__ . '/../Views/clientes_ver.php';
     include __DIR__ . '/../Views/layout.php';
   }
 }

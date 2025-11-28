@@ -7,6 +7,7 @@ $saved = isset($_GET['saved']);
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo $title; ?></title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <script>
     tailwind.config = {
       theme: { extend: { colors: { royal: '#1f4bf2' } } }
@@ -18,7 +19,7 @@ $saved = isset($_GET['saved']);
   <div class="flex">
     <aside class="w-64 bg-gray-900 text-white min-h-screen">
       <div class="p-4">
-        <h1 class="text-xl font-bold">Sistema Empréstimos</h1>
+        <h1 class="text-xl font-bold">ACM Credito</h1>
         <p class="text-sm text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_nome'] ?? ''); ?></p>
       </div>
       <nav>
