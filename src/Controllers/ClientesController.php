@@ -41,10 +41,20 @@ class ClientesController {
         return;
       }
       $pdo = Connection::get();
+      $cpfNorm = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
+      $dup = $pdo->prepare("SELECT COUNT(*) AS c FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf");
+      $dup->execute(['cpf'=>$cpfNorm]);
+      if (((int)($dup->fetch()['c'] ?? 0)) > 0) {
+        $error = 'CPF já cadastrado.';
+        $title = 'Novo Cliente';
+        $content = __DIR__ . '/../Views/clientes_novo.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
       $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
       $stmt->execute([
         'nome' => trim($_POST['nome'] ?? ''),
-        'cpf' => trim($_POST['cpf'] ?? ''),
+        'cpf' => $cpfNorm,
         'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
         'email' => trim($_POST['email'] ?? ''),
         'telefone' => trim($_POST['telefone'] ?? ''),
@@ -120,6 +130,7 @@ class ClientesController {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $nome = trim($_POST['nome'] ?? '');
       $cpf = trim($_POST['cpf'] ?? '');
+      $cpfNorm = preg_replace('/\D/', '', (string)$cpf);
       $data_nascimento = trim($_POST['data_nascimento'] ?? '');
       $email = trim($_POST['email'] ?? '');
       $telefone = trim($_POST['telefone'] ?? '');
@@ -132,8 +143,17 @@ class ClientesController {
       $ocupacao = trim($_POST['ocupacao'] ?? '');
       $tempo = trim($_POST['tempo_trabalho'] ?? '');
       $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
-      if ($nome === '' || $cpf === '' || $data_nascimento === '' || $email === '' || $telefone === '' || $cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '' || $ocupacao === '' || $tempo === '' || $renda <= 0) {
+      if ($nome === '' || $cpfNorm === '' || $data_nascimento === '' || $email === '' || $telefone === '' || $cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '' || $ocupacao === '' || $tempo === '' || $renda <= 0) {
         $error = 'Preencha todos os campos obrigatórios.';
+        $title = 'Cadastro de Cliente';
+        $content = __DIR__ . '/../Views/cadastro_publico.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
+      $dup = $pdo->prepare("SELECT COUNT(*) AS c FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf");
+      $dup->execute(['cpf'=>$cpfNorm]);
+      if (((int)($dup->fetch()['c'] ?? 0)) > 0) {
+        $error = 'CPF já cadastrado.';
         $title = 'Cadastro de Cliente';
         $content = __DIR__ . '/../Views/cadastro_publico.php';
         include __DIR__ . '/../Views/layout.php';
@@ -141,7 +161,7 @@ class ClientesController {
       }
       $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal)');
       $stmt->execute([
-        'nome'=>$nome, 'cpf'=>$cpf, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
+        'nome'=>$nome, 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
         'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
         'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda
       ]);
@@ -344,10 +364,20 @@ class ClientesController {
         include __DIR__ . '/../Views/layout.php';
         return;
       }
+      $cpfNorm = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
+      $dup = $pdo->prepare("SELECT COUNT(*) AS c FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf AND id <> :id");
+      $dup->execute(['cpf'=>$cpfNorm, 'id'=>$id]);
+      if (((int)($dup->fetch()['c'] ?? 0)) > 0) {
+        $error = 'CPF já cadastrado.';
+        $title = 'Editar Cliente';
+        $content = __DIR__ . '/../Views/clientes_editar.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
       $sql = 'UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, observacoes=:observacoes WHERE id=:id';
       $pdo->prepare($sql)->execute([
         'nome' => trim($_POST['nome'] ?? ''),
-        'cpf' => trim($_POST['cpf'] ?? ''),
+        'cpf' => $cpfNorm,
         'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
         'email' => trim($_POST['email'] ?? ''),
         'telefone' => trim($_POST['telefone'] ?? ''),

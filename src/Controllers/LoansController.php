@@ -18,6 +18,15 @@ class LoansController {
       $taxa = self::parsePercent($_POST['taxa_juros_mensal'] ?? (string)$taxaDefault);
       $primeiro = $_POST['data_primeiro_vencimento'] ?? null;
       if ($client_id && $valor > 0 && $parcelas > 0 && $primeiro) {
+        $chk = $pdo->prepare("SELECT COUNT(*) AS c FROM loans WHERE client_id=:cid AND status IN ('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo')");
+        $chk->execute(['cid'=>$client_id]);
+        if (((int)($chk->fetch()['c'] ?? 0)) > 0) {
+          $error = 'Cliente já possui empréstimo ativo';
+          $title = 'Calculadora de Empréstimos';
+          $content = __DIR__ . '/../Views/emprestimos_calculadora.php';
+          include __DIR__ . '/../Views/layout.php';
+          return;
+        }
         $calc = self::calcularPrice($valor, $parcelas, $taxa, $primeiro);
         $stmt = $pdo->prepare("INSERT INTO loans (client_id, valor_principal, num_parcelas, taxa_juros_mensal, valor_parcela, valor_total, total_juros, data_primeiro_vencimento, dias_primeiro_periodo, juros_proporcional_primeiro_mes, cet_percentual, status, created_by_user_id) VALUES (:client_id,:valor_principal,:num_parcelas,:taxa_juros_mensal,:valor_parcela,:valor_total,:total_juros,:data_primeiro_vencimento,:dias_primeiro_periodo,:juros_proporcional_primeiro_mes,:cet_percentual,'calculado',:user_id)");
         $stmt->execute([

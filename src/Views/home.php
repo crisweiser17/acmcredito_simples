@@ -28,6 +28,16 @@
       </div>
     </form>
   </div>
+  <?php $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http'; $host = $_SERVER['HTTP_HOST'] ?? 'localhost'; $cadastro = $scheme.'://'.$host.'/cadastro'; ?>
+  <div class="rounded border border-gray-200 p-4 flex items-center justify-between">
+    <div>
+      <div class="text-sm text-gray-600">Página pública de cadastro</div>
+      <div><a class="text-blue-700 underline" href="/cadastro" target="_blank">Abrir página de cadastro</a></div>
+    </div>
+    <div>
+      <button type="button" class="px-3 py-2 rounded bg-gray-100" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($cadastro); ?>')" title="Copiar link">Copiar link</button>
+    </div>
+  </div>
   <script>
     (function(){
       var sel = document.getElementById('dash_periodo');

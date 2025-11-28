@@ -17,9 +17,13 @@ $saved = isset($_GET['saved']);
 </head>
 <body class="min-h-screen bg-gray-900">
   <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; ?>
-  <?php if ($isLogged): ?>
-  <div class="flex">
-    <aside class="w-64 bg-gray-900 text-white min-h-screen">
+  <?php if ($path === '/cadastro'): ?>
+    <main class="flex-1 p-8 bg-white text-black min-h-screen">
+      <?php include $content; ?>
+    </main>
+  <?php elseif ($isLogged): ?>
+    <div class="flex">
+      <aside class="w-64 bg-gray-900 text-white min-h-screen">
       <div class="p-4">
         <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
         <h1 class="text-xl font-bold"><?php echo htmlspecialchars($empresaRazao); ?></h1>
