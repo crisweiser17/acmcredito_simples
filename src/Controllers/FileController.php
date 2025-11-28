@@ -64,12 +64,32 @@ class FileController {
     $target = realpath(dirname(__DIR__,2) . '/' . ltrim($p,'/'));
     if (!$target || strpos($target, $base) !== 0) { http_response_code(404); echo 'Arquivo não encontrado'; return; }
     $safeName = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $name);
-    $finfo = finfo_open(\FILEINFO_MIME_TYPE);
-    $mime = finfo_file($finfo, $target);
-    finfo_close($finfo);
+    $extSrc = strtolower(pathinfo($target, PATHINFO_EXTENSION));
+    $servePath = $target;
+    $root = dirname(__DIR__,2);
+    if ($extSrc === 'html' || $extSrc === 'htm') {
+      $tmpPdf = sys_get_temp_dir() . '/contrato_' . uniqid() . '.pdf';
+      $html = @file_get_contents($target) ?: '';
+      $html = preg_replace('#(src|href)=\"/uploads/#','${1}="file://'.$root.'/uploads/',$html);
+      $html = preg_replace('#<iframe[^>]*>.*?</iframe>#is','',$html);
+      try {
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->set_option('isRemoteEnabled', true);
+        $dompdf->setPaper('A4','portrait');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $out = $dompdf->output();
+        if (!empty($out)) { @file_put_contents($tmpPdf, $out); }
+      } catch (\Throwable $e) { }
+      if (file_exists($tmpPdf) && filesize($tmpPdf) > 1000) { $servePath = $tmpPdf; $extSrc = 'pdf'; }
+    }
+    $mime = 'application/pdf';
+    if (!preg_match('/\.pdf$/i', $safeName)) { $safeName .= '.pdf'; }
     header('Content-Type: ' . $mime);
-    header('Content-Length: ' . filesize($target));
+    $size = @filesize($servePath);
+    if ($size !== false) { header('Content-Length: ' . $size); }
     header('Content-Disposition: attachment; filename="' . $safeName . '"');
-    readfile($target);
+    readfile($servePath);
+    if ($servePath !== $target && strpos($servePath, sys_get_temp_dir()) === 0) { @unlink($servePath); }
   }
 }

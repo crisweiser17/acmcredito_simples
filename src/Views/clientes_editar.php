@@ -38,7 +38,10 @@
           <input type="hidden" name="indicado_por_id" id="indicado_por_id" value="<?php echo (int)($c['indicado_por_id'] ?? 0); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Indicado por</div>
           <div id="indicador_results" class="absolute bg-white border rounded shadow hidden w-full max-h-56 overflow-auto z-10"></div>
-          <div id="indicador_selected" class="mt-1 text-sm text-gray-700"></div>
+          <div class="mt-1 flex items-center gap-2">
+            <div id="indicador_selected" class="text-sm text-gray-700"></div>
+            <button type="button" id="indicador_clear" class="px-2 py-1 rounded bg-gray-200">Remover</button>
+          </div>
         </div>
       </div>
     </div>
@@ -235,9 +238,11 @@
     var hidden = document.getElementById('indicado_por_id');
     var selected = document.getElementById('indicador_selected');
     var timer = null;
+    var clearBtn = document.getElementById('indicador_clear');
     async function hydrateSelected(){
-      var id = parseInt(hidden.value||'0',10); if(!id) return;
-      try{ var r = await fetch('/api/clientes/'+id); var d = await r.json(); if(d && d.id){ selected.textContent = d.nome + ' ' + (d.cpf||'') + ' ' + (d.telefone||''); } }catch(e){}
+      var id = parseInt(hidden.value||'0',10);
+      if(!id){ if(clearBtn){ clearBtn.classList.add('hidden'); } return; }
+      try{ var r = await fetch('/api/clientes/'+id); var d = await r.json(); if(d && d.id){ selected.textContent = d.nome + ' ' + (d.cpf||'') + ' ' + (d.telefone||''); if(clearBtn){ clearBtn.classList.remove('hidden'); } } }catch(e){ if(clearBtn){ clearBtn.classList.remove('hidden'); } }
     }
     hydrateSelected();
     function render(items){
@@ -251,6 +256,8 @@
         btn.addEventListener('click', function(){ hidden.value = btn.getAttribute('data-id'); selected.textContent = btn.textContent; results.classList.add('hidden'); });
       });
     }
+    function clearIndicador(){ if(hidden){ hidden.value=''; } if(selected){ selected.textContent=''; } }
+    if (clearBtn) clearBtn.addEventListener('click', clearIndicador);
     input.addEventListener('input', function(){
       clearTimeout(timer);
       var q = input.value.trim();

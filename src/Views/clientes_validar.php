@@ -61,9 +61,20 @@
       <span class="px-2 py-1 rounded text-white <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':($c['cpf_check_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['cpf_check_status']); ?></span>
     </div>
     <div class="space-y-3">
-      <div class="flex items-center gap-2">
-        <label class="w-28">CPF</label>
-        <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($c['cpf'] ?? ''); ?>" readonly>
+      <?php $dn = !empty($c['data_nascimento']) ? date('d/m/Y', strtotime($c['data_nascimento'])) : ''; ?>
+      <div class="grid md:grid-cols-3 gap-3 items-end">
+        <div>
+          <label class="text-sm text-gray-600">Nome</label>
+          <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($c['nome'] ?? ''); ?>" readonly>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Data de Nascimento</label>
+          <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($dn); ?>" readonly>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">CPF</label>
+          <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($c['cpf'] ?? ''); ?>" readonly>
+        </div>
       </div>
       <div class="flex items-center gap-3">
         <form method="post" id="cpf-consulta-form" class="flex gap-2">

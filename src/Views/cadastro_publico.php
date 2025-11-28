@@ -1,9 +1,9 @@
 <div class="space-y-8">
-  <h2 class="text-2xl font-semibold">Novo Cliente</h2>
+  <h2 class="text-2xl font-semibold">Cadastro de Cliente</h2>
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
-  <form method="post" enctype="multipart/form-data" class="space-y-8">
+  <form method="post" class="space-y-8">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -26,21 +26,6 @@
         <div>
           <input class="w-full border rounded px-3 py-2" name="telefone" id="telefone" placeholder="Telefone" required>
           <div class="text-sm text-gray-600 mt-0.5">Telefone <span class="text-red-600">*</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="space-y-4">
-      <div class="text-lg font-semibold">Indicado Por</div>
-      <div class="md:grid md:grid-cols-2 gap-2">
-        <div class="md:col-span-2 relative">
-          <input class="w-full border rounded px-3 py-2" id="indicador_search" placeholder="Buscar por nome ou telefone">
-          <input type="hidden" name="indicado_por_id" id="indicado_por_id">
-          <div class="text-sm text-gray-600 mt-0.5">Indicado por</div>
-          <div id="indicador_results" class="absolute bg-white border rounded shadow hidden w-full max-h-56 overflow-auto z-10"></div>
-          <div class="mt-1 flex items-center gap-2">
-            <div id="indicador_selected" class="text-sm text-gray-700"></div>
-            <button type="button" id="indicador_clear" class="px-2 py-1 rounded bg-gray-200 hidden">Remover</button>
-          </div>
         </div>
       </div>
     </div>
@@ -142,45 +127,6 @@
         </div>
       </div>
     </div>
-    <div class="space-y-4">
-      <div class="text-lg font-semibold">Documentos</div>
-      <div class="space-y-2">
-        <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
-        <div>
-          <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-          <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
-        </div>
-      </div>
-      <div class="space-y-2">
-        <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
-        <div id="cnh_separado" class="space-y-2">
-          <div>CNH/RG Frente <span class="text-red-600">*</span></div>
-          <div>
-            <input class="w-full" type="file" name="cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
-            <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
-          </div>
-          <div>CNH/RG Verso <span class="text-red-600">*</span></div>
-          <div>
-            <input class="w-full" type="file" name="cnh_verso" accept=".pdf,.jpg,.jpeg,.png" required>
-            <div class="text-sm text-gray-600 mt-0.5">Arquivo Verso</div>
-          </div>
-        </div>
-        <div id="cnh_unico" class="space-y-2 hidden">
-          <div>Documento Único <span class="text-red-600">*</span></div>
-          <div>
-            <input class="w-full" type="file" name="cnh_unico" accept=".pdf,.jpg,.jpeg,.png">
-            <div class="text-sm text-gray-600 mt-0.5">Documento Único</div>
-          </div>
-        </div>
-      </div>
-      <div class="space-y-2">
-        <div>Selfie <span class="text-red-600">*</span></div>
-        <div>
-          <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png" required>
-          <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
-        </div>
-      </div>
-    </div>
     <div class="space-y-2">
       <div class="text-lg font-semibold">Observações</div>
       <div>
@@ -188,7 +134,8 @@
         <div class="text-sm text-gray-600 mt-0.5">Observações</div>
       </div>
     </div>
-    <button class="btn-primary px-4 py-2 rounded" type="submit">Salvar Cliente</button>
+    <div class="text-xs text-gray-500">Ao enviar, seus dados serão avaliados pela equipe e você será contatado.</div>
+    <button class="btn-primary px-4 py-2 rounded" type="submit">Enviar Cadastro</button>
   </form>
 </div>
 <script src="https://unpkg.com/imask"></script>
@@ -225,59 +172,4 @@
       document.getElementById('estado').value = d.uf || '';
     } catch (e) {}
   });
-  const chk = document.getElementById('cnh_unico_toggle');
-  const sep = document.getElementById('cnh_separado');
-  const uni = document.getElementById('cnh_unico');
-  const inpFrente = document.querySelector('input[name="cnh_frente"]');
-  const inpVerso = document.querySelector('input[name="cnh_verso"]');
-  const inpUnico = document.querySelector('input[name="cnh_unico"]');
-  chk.addEventListener('change', function(){
-    if (chk.checked) {
-      sep.classList.add('hidden');
-      uni.classList.remove('hidden');
-      if (inpUnico) inpUnico.required = true;
-      if (inpFrente) inpFrente.required = false;
-      if (inpVerso) inpVerso.required = false;
-    } else {
-      sep.classList.remove('hidden');
-      uni.classList.add('hidden');
-      if (inpUnico) inpUnico.required = false;
-      if (inpFrente) inpFrente.required = true;
-      if (inpVerso) inpVerso.required = true;
-    }
-  });
-  (function(){
-    var input = document.getElementById('indicador_search');
-    var results = document.getElementById('indicador_results');
-    var hidden = document.getElementById('indicado_por_id');
-    var selected = document.getElementById('indicador_selected');
-    var timer = null;
-    function render(items){
-      if (!items || items.length===0){ results.innerHTML=''; results.classList.add('hidden'); return; }
-      results.innerHTML = items.map(function(it){
-        var tel = it.telefone||''; var cpf = it.cpf||'';
-        return '<button type="button" data-id="'+it.id+'" class="block w-full text-left px-3 py-2 hover:bg-gray-100">'+it.nome+'<span class="ml-2 text-xs text-gray-500">'+cpf+' '+tel+'</span></button>';
-      }).join('');
-      results.classList.remove('hidden');
-      Array.from(results.querySelectorAll('button[data-id]')).forEach(function(btn){
-        btn.addEventListener('click', function(){ hidden.value = btn.getAttribute('data-id'); selected.textContent = btn.textContent; results.classList.add('hidden'); var clr=document.getElementById('indicador_clear'); if(clr){ clr.classList.remove('hidden'); } });
-      });
-    }
-    var clearBtn = document.getElementById('indicador_clear');
-    function clearIndicador(){ if(hidden){ hidden.value=''; } if(selected){ selected.textContent=''; } if(clearBtn){ clearBtn.classList.add('hidden'); } }
-    if (clearBtn) clearBtn.addEventListener('click', clearIndicador);
-    input.addEventListener('input', function(){
-      clearTimeout(timer);
-      var q = input.value.trim();
-      if (q.length<2){ results.classList.add('hidden'); return; }
-      timer = setTimeout(async function(){
-        try{
-          var r = await fetch('/api/clientes/search?q='+encodeURIComponent(q));
-          var d = await r.json();
-          render(d||[]);
-        } catch(e){ results.classList.add('hidden'); }
-      }, 250);
-    });
-    document.addEventListener('click', function(e){ if (!results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
-  })();
 </script>

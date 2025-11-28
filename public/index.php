@@ -2,6 +2,7 @@
 declare(strict_types=1);
 session_start();
 date_default_timezone_set('America/Sao_Paulo');
+require_once __DIR__ . '/../vendor/autoload.php';
 if (isset($_GET['force_env'])) {
   $fe = $_GET['force_env'];
   $_SESSION['force_env'] = $fe;

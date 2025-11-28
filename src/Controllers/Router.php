@@ -61,6 +61,10 @@ class Router {
       \App\Controllers\LoansController::contrato((int)$m[1]);
       return;
     }
+    if (preg_match('#^/emprestimos/(\\d+)/contrato-link$#', $path, $m)) {
+      \App\Controllers\LoansController::contratoELink((int)$m[1]);
+      return;
+    }
     if (preg_match('#^/emprestimos/(\d+)/gerar-link$#', $path, $m)) {
       \App\Controllers\LoansController::gerarLink((int)$m[1]);
       return;
@@ -73,8 +77,16 @@ class Router {
       \App\Controllers\LoansController::boletos((int)$m[1]);
       return;
     }
+    if (preg_match('#^/emprestimos/(\d+)/cancelar-contrato$#', $path, $m)) {
+      \App\Controllers\LoansController::cancelarContrato((int)$m[1]);
+      return;
+    }
     if (preg_match('#^/assinar/([a-f0-9]{64})$#', $path, $m)) {
       \App\Controllers\LoansController::assinar($m[1]);
+      return;
+    }
+    if ($path === '/cadastro') {
+      \App\Controllers\ClientesController::cadastroPublico();
       return;
     }
     if ($path === '/clientes/novo') {
@@ -120,6 +132,7 @@ class Router {
     if (preg_match('#^/assinar/#', $path)) return true;
     if ($path === '/arquivo' || $path === '/arquivo/view' || $path === '/arquivo/download') return true;
     if (preg_match('#^/uploads/#', $path)) return true;
+    if ($path === '/cadastro') return true;
     return false;
   }
 }

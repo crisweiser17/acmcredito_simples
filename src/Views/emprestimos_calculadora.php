@@ -10,12 +10,12 @@
       <div class="grid md:grid-cols-3 gap-3 items-end">
         <div>
           <div class="text-xs text-gray-500 mb-1">Calcular por</div>
-          <select class="border rounded px-3 py-2 w-full" id="modo_calculo">
-            <option value="valor">Valor do empréstimo</option>
-            <option value="parcela">Parcela máxima</option>
-          </select>
+          <div class="flex items-center gap-4">
+            <label class="inline-flex items-center gap-2"><input type="radio" name="modo_calculo" value="valor" checked> <span>Valor do empréstimo</span></label>
+            <label class="inline-flex items-center gap-2"><input type="radio" name="modo_calculo" value="parcela"> <span>Parcela máxima</span></label>
+          </div>
         </div>
-        <div id="box_parcela_max" class="hidden">
+        <div id="box_parcela_max" class="hidden md:col-start-2" style="margin-left:25px">
           <div class="text-xs text-gray-500 mb-1">Parcela máxima (R$)</div>
           <input class="border rounded px-3 py-2 w-full" id="parcela_max" placeholder="R$ 0,00">
         </div>
@@ -68,6 +68,7 @@
       <div>
         <input class="w-full border rounded px-3 py-2" type="date" name="data_primeiro_vencimento" id="data_primeiro_vencimento" required>
         <div class="text-sm text-gray-600 mt-0.5">Primeiro Vencimento</div>
+        <div class="text-xs text-gray-500 mt-1">Data do 1º pagamento para pró‑rata zero = <button type="button" id="pr_zero_btn" class="underline"><span id="pr_zero_date"></span></button></div>
       </div>
       <div class="flex gap-3 pt-2">
         <button class="btn-primary px-4 py-2 rounded" type="submit">Gerar Solicitação de Empréstimo</button>
@@ -96,7 +97,7 @@
           <button class="px-4 py-2 rounded bg-gray-200 text-gray-800" type="button" id="btn_copy_simulacao">Copiar simulação</button>
         </div>
         <div class="col-span-2 border-t mt-3 mb-1"></div>
-        <div class="col-span-2 grid grid-cols-3 gap-2">
+        <div class="col-span-2 grid grid-cols-2 gap-2">
           <div>
             <input class="border rounded px-3 py-2 w-full" id="juros_total" readonly>
             <div class="text-sm text-gray-600 mt-1">Total de Juros</div>
@@ -104,10 +105,6 @@
           <div>
             <input class="border rounded px-3 py-2 w-full" id="cet" readonly>
             <div class="text-sm text-gray-600 mt-1">CET anual (%)</div>
-          </div>
-          <div>
-            <input class="border rounded px-3 py-2 w-full" id="lucro" readonly>
-            <div class="text-sm text-gray-600 mt-1">Lucro da Operação</div>
           </div>
         </div>
       </div>
@@ -169,31 +166,37 @@ function recalc(){
   const dv = document.getElementById('data_primeiro_vencimento').value;
   if (!valor || !n) return;
   if (!taxa) { const ti = document.getElementById('taxa_juros_mensal'); const tf = parsePercentBR(ti ? ti.value : ''); taxa = tf || 24; }
-  let dias = 0;
+  let diasPadrao = 0, diasSel = 0;
+  let jurosProp = 0;
   if (dv) {
     let base = new Date();
     base.setDate(base.getDate()+1);
     while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
     const parts = dv.split('-');
     const dataVenc = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    dias = Math.floor((dataVenc - base) / (1000*60*60*24));
-    if (dias < 0) dias = 0;
+    const yb = base.getFullYear(), mb = base.getMonth(), db = base.getDate();
+    let nd = new Date(yb, mb+1, db);
+    const target = (mb+1)%12;
+    if (nd.getMonth() !== target) { while (nd.getMonth() !== target) { nd.setDate(nd.getDate()-1); } }
+    const dayMs = 1000*60*60*24;
+    diasPadrao = Math.floor((nd - base) / dayMs);
+    diasSel = Math.floor((dataVenc - base) / dayMs);
+    const diff = diasSel - diasPadrao;
+    jurosProp = valor * (taxa/100) * (diff/30);
   }
-  let jurosProp = 0;
-  if (dv && dias > 0) jurosProp = valor * (taxa/100) * (dias/30);
   const i = taxa/100;
-  const principal = valor + jurosProp;
-  const PMT = principal * (i * Math.pow(1+i, n)) / (Math.pow(1+i, n) - 1);
+  const principal = valor;
+  const PMT = Math.round(principal * (i * Math.pow(1+i, n)) / (Math.pow(1+i, n) - 1) * 100) / 100;
   const valorTotal = PMT * n;
-  const totalJuros = valorTotal - valor;
+  const totalJuros = valorTotal - principal;
+  const totalJurosComProp = totalJuros + (jurosProp || 0);
   const cetMensal = (Math.pow(valorTotal/valor, 1/n) - 1) * 100;
   const cetAnual = (Math.pow(1 + cetMensal/100, 12) - 1) * 100;
-  document.getElementById('dias').value = dias;
+  document.getElementById('dias').value = diasSel;
   document.getElementById('juros_prop').value = formatBR(jurosProp);
   document.getElementById('pmt').value = formatBR(PMT);
-  document.getElementById('total').value = formatBR(valorTotal);
-  document.getElementById('juros_total').value = formatBR(totalJuros);
-  document.getElementById('lucro').value = formatBR(totalJuros);
+  document.getElementById('total').value = formatBR(valorTotal + (jurosProp||0));
+  document.getElementById('juros_total').value = formatBR(totalJurosComProp);
   document.getElementById('cet').value = cetAnual.toFixed(2) + ' % a.a.';
   let saldo = principal;
   const p2 = dv.split('-');
@@ -204,18 +207,37 @@ function recalc(){
     const juros = saldo * i;
     const amort = PMT - juros;
     saldo = Math.max(0, saldo - amort);
-    html += `<tr><td class="border px-2 py-1">${k}</td><td class="border px-2 py-1">${dt.toLocaleDateString('pt-BR')}</td><td class="border px-2 py-1">${formatBR(PMT)}</td><td class="border px-2 py-1">${formatBR(juros)}</td><td class="border px-2 py-1">${formatBR(amort)}</td><td class="border px-2 py-1">${formatBR(saldo)}</td></tr>`;
+    const valorCobranca = k===1 ? (PMT + (jurosProp||0)) : PMT;
+    let valorCell = formatBR(valorCobranca);
+    if (k===1 && jurosProp) {
+      const sinal = jurosProp >= 0 ? '+' : '−';
+      const jpAbs = Math.abs(jurosProp);
+      valorCell = `${valorCell}<div class="text-xs text-gray-500">Parcela base ${formatBR(PMT)}; Ajuste pró‑rata ${sinal} ${formatBR(jpAbs)}</div>`;
+    }
+    html += `<tr><td class="border px-2 py-1">${k}</td><td class="border px-2 py-1">${dt.toLocaleDateString('pt-BR')}</td><td class="border px-2 py-1">${valorCell}</td><td class="border px-2 py-1">${formatBR(juros)}</td><td class="border px-2 py-1">${formatBR(amort)}</td><td class="border px-2 py-1">${formatBR(saldo)}</td></tr>`;
     const nextMonthIndex = dt.getMonth() + 1;
     const y2 = dt.getFullYear();
     const lastDayNextMonth = new Date(y2, nextMonthIndex + 1, 0).getDate();
     const day = Math.min(dueDay, lastDayNextMonth);
     dt = new Date(y2, nextMonthIndex, day);
   }
+  const totalJurosTabela = (valorTotal - principal);
+  const totalValorComProp = valorTotal + (jurosProp||0);
+  html += `<tr><td class="border px-2 py-1 font-semibold">Totais</td><td class="border px-2 py-1"></td><td class="border px-2 py-1 font-semibold">${formatBR(totalValorComProp)}</td><td class="border px-2 py-1 font-semibold">${formatBR(totalJurosTabela)}</td><td class="border px-2 py-1 font-semibold">${formatBR(principal)}</td><td class="border px-2 py-1"></td></tr>`;
   html += '</tbody></table>';
+  if (jurosProp) {
+    const jpAbs = Math.abs(jurosProp);
+    const nota = jurosProp >= 0
+      ? `Na primeira cobrança, incidem ${formatBR(jpAbs)} de juros proporcionais do período inicial (pró‑rata).`
+      : `Na primeira cobrança, há redução de ${formatBR(jpAbs)} nos juros proporcionais do período inicial (pró‑rata).`;
+    html += `<div class="text-sm text-gray-700 mt-2">${nota}</div>`;
+    html += `<div class="text-xs text-gray-500">Total de Juros (incl. pró‑rata): ${formatBR(totalJuros + jurosProp)}</div>`;
+  }
   document.getElementById('tabela').innerHTML = html;
 }
 function recommendByParcela(){
-  const mode = document.getElementById('modo_calculo').value;
+  const modeEl = document.querySelector('input[name="modo_calculo"]:checked');
+  const mode = modeEl ? modeEl.value : 'valor';
   if (mode !== 'parcela') return;
   const pmtTarget = parseMoneyBR(document.getElementById('parcela_max').value||'0');
   let taxa = parsePercentBR(document.getElementById('taxa_juros_mensal').value||'0');
@@ -229,13 +251,27 @@ function recommendByParcela(){
   const dfrac = dias/30;
   const i = taxa/100;
   let bestValor = 0, bestN = 0;
-  for (let n=3; n<=12; n++){
+  const npEl = document.getElementById('num_parcelas');
+  const currentN = parseInt(npEl ? (npEl.value||'0') : '0');
+  function valorFor(n){
     const pow = Math.pow(1+i, n);
     const factorBase = (i * pow) / (pow - 1);
-    const denom = factorBase * (1 + i * dfrac);
-    if (denom <= 0) continue;
-    let v = pmtTarget / denom;
+    const denom = factorBase;
+    if (denom <= 0) return 0;
+    let vRaw = pmtTarget / denom;
+    let v = Math.floor(vRaw * 100) / 100;
     if (v > 5000) v = 5000;
+    return v;
+  }
+  if (currentN > 0) {
+    const v = valorFor(currentN);
+    const vi = document.getElementById('valor_principal');
+    if (vi) vi.value = formatBR(v);
+    recalc();
+    return;
+  }
+  for (let n=3; n<=12; n++){
+    const v = valorFor(n);
     if (v > bestValor) { bestValor = v; bestN = n; }
   }
   if (bestN > 0 && bestValor > 0){
@@ -247,18 +283,47 @@ function recommendByParcela(){
   }
 }
 ['valor_principal','taxa_juros_mensal'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('input', recalc); });
-['num_parcelas','data_primeiro_vencimento'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('change', recalc); });
+['num_parcelas','data_primeiro_vencimento'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('change', function(){ recommendByParcela(); recalc(); }); });
 ['parcela_max','taxa_juros_mensal','data_primeiro_vencimento'].forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('input', recommendByParcela); });
-const modoSel = document.getElementById('modo_calculo');
 const boxParcela = document.getElementById('box_parcela_max');
+function getModo(){ const el = document.querySelector('input[name="modo_calculo"]:checked'); return el ? el.value : 'valor'; }
 function toggleModo(){
-  if (modoSel.value === 'parcela') {
+  if (getModo() === 'parcela') {
     boxParcela.classList.remove('hidden');
   } else {
     boxParcela.classList.add('hidden');
   }
 }
-if (modoSel) { modoSel.addEventListener('change', toggleModo); toggleModo(); }
+document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.addEventListener('change', function(){ toggleModo(); recommendByParcela(); }); });
+toggleModo();
+// initialize display of pro-rata zero date
+(function(){
+  let base = new Date();
+  base.setDate(base.getDate()+1);
+  while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+  const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
+  let nd = new Date(y, m+1, d);
+  const target = (m+1)%12;
+  if (nd.getMonth() !== target) { while (nd.getMonth() !== target) { nd.setDate(nd.getDate()-1); } }
+  const el = document.getElementById('pr_zero_date');
+  if (el) el.textContent = nd.toLocaleDateString('pt-BR');
+})();
+const prBtn = document.getElementById('pr_zero_btn');
+if (prBtn) {
+  prBtn.addEventListener('click', function(){
+    let base = new Date();
+    base.setDate(base.getDate()+1);
+    while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+    const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
+    let nd = new Date(y, m+1, d);
+    const target = (m+1)%12;
+    if (nd.getMonth() !== target) { while (nd.getMonth() !== target) { nd.setDate(nd.getDate()-1); } }
+    const iso = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
+    const dateEl = document.getElementById('data_primeiro_vencimento');
+    if (dateEl) { dateEl.value = iso; }
+    recalc();
+  });
+}
 const valorInput = document.getElementById('valor_principal');
 if (valorInput) {
   valorInput.addEventListener('blur', ()=>{
@@ -321,6 +386,8 @@ if (btnCopy) {
     const parcelas = document.getElementById('num_parcelas').value||'';
     const pmt = document.getElementById('pmt').value||'';
     const dv = document.getElementById('data_primeiro_vencimento').value||'';
+    const jp = parseMoneyBR((document.getElementById('juros_prop')?.value||'').toString());
+    const pmtNum = parseMoneyBR(pmt);
     let dataBR = dv;
     if (dv && dv.indexOf('-')>0) {
       const parts = dv.split('-');
@@ -334,7 +401,22 @@ if (btnCopy) {
       `1o vencimento: ${dataBR}`,
       'O que acha?'
     ].join('\n');
-    try { await navigator.clipboard.writeText(msg);
+    let finalMsg = msg;
+    if (jp) {
+      const primeiraParcela = formatBR(pmtNum + jp);
+      const sinal = jp >= 0 ? '+' : '-';
+      const ajusteTxt = `${sinal} ${formatBR(Math.abs(jp))}`;
+      finalMsg = [
+        clienteNome ? `Segue abaixo a simulacão solicitada para ${clienteNome}:` : 'Segue abaixo a simulacão solicitada:',
+        `Valor do Emprestimo: ${formatBR(vp)}`,
+        `Valor das parcelas: ${pmt}`,
+        `Numero de parcelas: ${parcelas}`,
+        `1o vencimento: ${dataBR}`,
+        `1a parcela: ${primeiraParcela} (Parcela base ${pmt}; Ajuste pró‑rata ${ajusteTxt})`,
+        'O que acha?'
+      ].join('\n');
+    }
+    try { await navigator.clipboard.writeText(finalMsg);
       const toast = document.getElementById('toast_copy');
       if (toast) { toast.classList.remove('hidden'); toast.classList.add('flex'); setTimeout(()=>{ toast.classList.add('hidden'); toast.classList.remove('flex'); }, 1800); }
     } catch(e) { }
@@ -367,7 +449,15 @@ function copyTabelaImagem(){
   const width = Math.min(1000, Math.max(700, document.getElementById('tabela').clientWidth || 800));
   const rowCount = Math.max(1, tbl.querySelectorAll('tbody tr').length);
   const titleH = 34, headerH = 36, rowH = 30, pad = 12;
-  const height = (titleH + headerH + rowH * rowCount) + pad*2;
+  const jp = parseMoneyBR((document.getElementById('juros_prop')?.value||'').toString());
+  const pmtNum = parseMoneyBR((document.getElementById('pmt')?.value||'').toString());
+  const totalTxt = (function(){
+    const vt = (document.getElementById('total')?.value||'');
+    const jj = (document.getElementById('juros_total')?.value||'');
+    return { vt, jj };
+  })();
+  const footH = jp ? 56 : 0;
+  const height = (titleH + headerH + rowH * rowCount) + pad*2 + footH;
   const canvas = document.createElement('canvas');
   canvas.width = Math.floor(width * dpr);
   canvas.height = Math.floor(height * dpr);
@@ -393,10 +483,14 @@ function copyTabelaImagem(){
   const rows = tbl.querySelectorAll('tbody tr');
   ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
   let y = pad + titleH + headerH;
-  rows.forEach((tr)=>{
+  rows.forEach((tr, idx)=>{
     y += rowH;
     const tds = tr.querySelectorAll('td');
     const vals = [tds[0]?.textContent||'', tds[1]?.textContent||'', tds[2]?.textContent||'', tds[3]?.textContent||'', tds[4]?.textContent||'', tds[5]?.textContent||''];
+    const numCell = (tds[0]?.textContent||'').trim();
+    if (idx === 0 && numCell === '1') {
+      vals[2] = formatBR(pmtNum + (jp||0));
+    }
     for(let i=0;i<vals.length;i++){
       ctx.fillStyle = '#111827';
       ctx.fillText(vals[i], xPos[i]+8, y-10);
@@ -404,6 +498,18 @@ function copyTabelaImagem(){
     ctx.strokeStyle = '#f3f4f6';
     ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(width-pad, y); ctx.stroke();
   });
+  if (jp) {
+    y += 10;
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    const abs = Math.abs(jp).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const valTxt = `R$ ${abs}`;
+    const nota = jp >= 0
+      ? `Na primeira cobrança, incidem ${valTxt} de juros proporcionais (pró‑rata).`
+      : `Na primeira cobrança, há redução de ${valTxt} nos juros proporcionais (pró‑rata).`;
+    ctx.fillText(nota, pad, y+16);
+    ctx.fillText(`Total de Juros (incl. pró‑rata): ${totalTxt.jj}`, pad, y+32);
+  }
   try {
     canvas.toBlob(async function(blob){
       if (!blob) return;

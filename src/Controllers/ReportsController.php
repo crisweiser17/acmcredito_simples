@@ -18,6 +18,7 @@ class ReportsController {
           $stmt = $pdo->prepare('UPDATE loan_parcelas SET status=:s, pago_em = CASE WHEN :s = "pago" THEN NOW() ELSE NULL END WHERE id=:pid');
           $stmt->execute(['s'=>$st,'pid'=>$pid]);
           try { \App\Helpers\Audit::log('update_parcela_status','loan_parcelas',$pid,'from_'.(($prev['status'] ?? '')).'_to_'.$st); } catch (\Throwable $e) {}
+          $_SESSION['toast'] = ($st==='pago') ? 'Parcela marcada como paga' : 'Parcela marcada como pendente';
         }
         $qs = $_SERVER['QUERY_STRING'] ?? '';
         header('Location: /relatorios/parcelas' . ($qs ? ('?'.$qs) : ''));

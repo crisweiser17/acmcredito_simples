@@ -115,6 +115,53 @@ class ClientesController {
     $content = __DIR__ . '/../Views/clientes_novo.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function cadastroPublico(): void {
+    $pdo = Connection::get();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $nome = trim($_POST['nome'] ?? '');
+      $cpf = trim($_POST['cpf'] ?? '');
+      $data_nascimento = trim($_POST['data_nascimento'] ?? '');
+      $email = trim($_POST['email'] ?? '');
+      $telefone = trim($_POST['telefone'] ?? '');
+      $cep = trim($_POST['cep'] ?? '');
+      $endereco = trim($_POST['endereco'] ?? '');
+      $numero = trim($_POST['numero'] ?? '');
+      $bairro = trim($_POST['bairro'] ?? '');
+      $cidade = trim($_POST['cidade'] ?? '');
+      $estado = trim($_POST['estado'] ?? '');
+      $ocupacao = trim($_POST['ocupacao'] ?? '');
+      $tempo = trim($_POST['tempo_trabalho'] ?? '');
+      $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
+      if ($nome === '' || $cpf === '' || $data_nascimento === '' || $email === '' || $telefone === '' || $cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '' || $ocupacao === '' || $tempo === '' || $renda <= 0) {
+        $error = 'Preencha todos os campos obrigatórios.';
+        $title = 'Cadastro de Cliente';
+        $content = __DIR__ . '/../Views/cadastro_publico.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
+      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal)');
+      $stmt->execute([
+        'nome'=>$nome, 'cpf'=>$cpf, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
+        'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
+        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda
+      ]);
+      $clientId = (int)$pdo->lastInsertId();
+      $refN = $_POST['ref_nome'] ?? [];
+      $refT = $_POST['ref_telefone'] ?? [];
+      $refs = [];
+      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; } }
+      try { $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch(); if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]); } } catch (\Throwable $e) {}
+      \App\Helpers\Audit::log('create_public','clients',$clientId,'Cadastro público');
+      $_SESSION['toast'] = 'Cadastro enviado com sucesso';
+      $title = 'Cadastro de Cliente';
+      $content = __DIR__ . '/../Views/cadastro_publico_sucesso.php';
+      include __DIR__ . '/../Views/layout.php';
+      return;
+    }
+    $title = 'Cadastro de Cliente';
+    $content = __DIR__ . '/../Views/cadastro_publico.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
   public static function lista(): void {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');

@@ -17,6 +17,37 @@ class ContractService {
     foreach ($parcelas as $p) {
       $tabela .= '<tr><td>'.$p['numero_parcela'].'</td><td>'.date('d/m/Y', strtotime($p['data_vencimento'])).'</td><td>R$ '.number_format((float)$p['valor'],2,',','.').'</td><td>R$ '.number_format((float)$p['juros_embutido'],2,',','.').'</td><td>R$ '.number_format((float)$p['amortizacao'],2,',','.').'</td><td>R$ '.number_format((float)$p['saldo_devedor'],2,',','.').'</td></tr>';
     }
+    $docs = '';
+    $f = (string)($data['doc_cnh_frente'] ?? '');
+    $v = (string)($data['doc_cnh_verso'] ?? '');
+    $s = (string)($data['doc_selfie'] ?? '');
+    $cards = [];
+    $mk = function(string $path, string $label): string {
+      if ($path === '') return '';
+      $src = implode('/', array_map('rawurlencode', explode('/', $path)));
+      $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+      if (in_array($ext, ['jpg','jpeg','png','gif'])) {
+        return '<div class="doc-card"><div class="title">'.$label.'</div><img src="'.$src.'" alt="'.$label.'"></div>';
+      }
+      if ($ext === 'pdf') {
+        return '<div class="doc-card"><div class="title">'.$label.'</div><iframe src="'.$src.'"></iframe></div>';
+      }
+      return '<div class="doc-card"><div class="title">'.$label.'</div><a href="'.$src.'" target="_blank">Abrir documento</a></div>';
+    };
+    $cf = $mk($f, 'Documento de Identidade - Frente'); if ($cf !== '') $cards[] = $cf;
+    $cv = $mk($v, 'Documento de Identidade - Verso'); if ($cv !== '') $cards[] = $cv;
+    $cs = $mk($s, 'Selfie'); if ($cs !== '') $cards[] = $cs;
+    if (count($cards) > 0) { $docs = '<div class="doc-row">'.implode('', $cards).'</div>'; }
+    $notaPr = '';
+    $jp = (float)($data['juros_proporcional_primeiro_mes'] ?? 0);
+    if ($jp !== 0.0) {
+      $abs = number_format(abs($jp),2,',','.');
+      $linha = $jp > 0
+        ? 'Na primeira cobrança, incidem R$ '.$abs.' de juros proporcionais do período inicial (pró‑rata).'
+        : 'Na primeira cobrança, há redução de R$ '.$abs.' nos juros proporcionais do período inicial (pró‑rata).';
+      $totalJJ = 'Total de Juros (incl. pró‑rata): R$ '.number_format((float)($data['total_juros'] ?? 0),2,',','.');
+      $notaPr = '<div style="font-size:12px;color:#374151;margin-top:8px">'.$linha.'<br>'.$totalJJ.'</div>';
+    }
     $template = file_get_contents(dirname(__DIR__,2).'/templates/contrato.html');
     $place = [
       '{{LOAN_ID}}' => str_pad((string)$loan_id,6,'0',STR_PAD_LEFT),
@@ -38,6 +69,8 @@ class ContractService {
       '{{TOTAL_JUROS}}' => number_format((float)$data['total_juros'],2,',','.'),
       '{{DATA_PRIMEIRO_VENCIMENTO}}' => date('d/m/Y', strtotime($data['data_primeiro_vencimento'])),
       '{{TABELA_PARCELAS}}' => $tabela,
+      '{{DOCS_IDENTIDADE}}' => $docs,
+      '{{NOTA_PRORATA}}' => $notaPr,
       '{{MULTA_PERCENTUAL}}' => (string)($data['multa_percentual'] ?? ''),
       '{{JUROS_MORA_DIA}}' => (string)($data['juros_mora_percentual_dia'] ?? ''),
       '{{CIDADE}}' => (string)($data['cidade'] ?? ''),

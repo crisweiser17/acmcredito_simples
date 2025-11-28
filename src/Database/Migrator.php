@@ -18,6 +18,14 @@ class Migrator {
     if ((int)$exists['c'] === 0) {
       $pdo->exec("INSERT INTO config (chave, valor, descricao) VALUES ('multa_percentual','2','Multa por atraso (%)'),('juros_mora_percentual_dia','0.033','Juros de mora por dia (%)'),('taxa_juros_padrao_mensal','2.5','Taxa de juros padrão mensal (%)'),('empresa_nome','Clear Securitizadora S/A','Nome da empresa'),('empresa_cnpj','00.000.000/0001-00','CNPJ da empresa'),('empresa_endereco','Endereço completo','Endereço da empresa')");
     }
+    try {
+      $loanCols = $pdo->query("SHOW COLUMNS FROM loans")->fetchAll();
+      $haveMetodo = false; foreach ($loanCols as $col) { if (($col['Field'] ?? '') === 'boletos_metodo') { $haveMetodo = true; break; } }
+      if (!$haveMetodo) { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_metodo ENUM('api','manual') NULL AFTER boletos_api_response"); }
+    } catch (\Throwable $e) {}
+    try {
+      $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'");
+    } catch (\Throwable $e) {}
     $cols = $pdo->query("SHOW COLUMNS FROM clients")->fetchAll();
     $haveIndicador = false; $haveReferencias = false;
     foreach ($cols as $col) { if (($col['Field'] ?? '') === 'indicado_por_id') { $haveIndicador = true; } if (($col['Field'] ?? '') === 'referencias') { $haveReferencias = true; } }

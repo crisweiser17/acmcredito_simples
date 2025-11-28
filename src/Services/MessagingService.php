@@ -64,6 +64,11 @@ class MessagingService {
 
   private static function toPlainText(string $html): string {
     $html = preg_replace('/<br\s*\/>|<br>/i', "\n", $html);
-    return html_entity_decode(strip_tags($html));
+    $text = html_entity_decode(strip_tags($html));
+    $text = str_replace(["\r\n","\r"], "\n", $text);
+    $text = preg_replace('/[ \t]+/',' ', $text);
+    $text = preg_replace('/\n{2,}/', "\n", $text);
+    $lines = array_map(function($l){ return trim($l); }, explode("\n", $text));
+    return implode("\n", array_filter($lines, function($l){ return $l !== ''; }));
   }
 }

@@ -9,7 +9,36 @@
       <span class="px-3 py-1 rounded text-white <?php echo $l['status']==='concluido'?'bg-green-600':'bg-blue-600'; ?>"><?php echo strtoupper($l['status']); ?></span>
     </div>
   </div>
-  <?php $st = $l['status']; $active = 1; if ($st==='aguardando_transferencia') $active=2; if ($st==='aguardando_boletos' || $st==='concluido') $active=3; $done1 = ($st!=='calculado'); $done2 = (!empty($l['transferencia_em']) || $st==='aguardando_boletos' || $st==='concluido'); $done3 = (!empty($l['boletos_gerados']) || $st==='concluido'); ?>
+  <div class="space-y-4 border rounded p-4 mt-4">
+    <div class="text-lg font-semibold">Termos do Emprestimo</div>
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['valor_principal'] ?? 0),2,',','.'); ?>" readonly>
+        <div class="text-sm text-gray-600 mt-1">Valor do empréstimo (R$)</div>
+      </div>
+      <div>
+        <input class="border rounded px-3 py-2 w-full" value="<?php echo (int)($l['num_parcelas'] ?? 0); ?>" readonly>
+        <div class="text-sm text-gray-600 mt-1">Número de parcelas</div>
+      </div>
+      <div>
+        <input class="border rounded px-3 py-2 w-full" value="<?php echo (int)($l['dias_primeiro_periodo'] ?? 0); ?>" readonly>
+        <div class="text-sm text-gray-600 mt-1">Dias 1º período</div>
+      </div>
+      <div>
+        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['juros_proporcional_primeiro_mes'] ?? 0),2,',','.'); ?>" readonly>
+        <div class="text-sm text-gray-600 mt-1">Juros proporcional</div>
+      </div>
+      <div>
+        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['valor_parcela'] ?? 0),2,',','.'); ?>" readonly>
+        <div class="text-sm text-gray-600 mt-1">Valor da Parcela (R$)</div>
+      </div>
+      <div>
+        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['valor_total'] ?? 0),2,',','.'); ?>" readonly>
+        <div class="text-sm text-gray-600 mt-1">Valor Total (R$)</div>
+      </div>
+    </div>
+  </div>
+  <?php $st = $l['status']; $active = 1; if ($st==='aguardando_transferencia') $active=2; if ($st==='aguardando_boletos' || $st==='concluido') $active=3; $done1 = ($st!=='calculado'); $done2 = ($st==='aguardando_transferencia' || !empty($l['transferencia_em']) || $st==='aguardando_boletos' || $st==='concluido'); $done3 = (!empty($l['boletos_gerados']) || $st==='concluido'); $gate2Disabled = !$done1; $gate3Disabled = !$done2; $gate1Disabled = $done2; $canCancelContrato = (!empty($l['contrato_assinado_em']) && empty($l['transferencia_em'])); ?>
   <div class="mt-4">
     <div class="flex items-center">
       <div class="flex items-center gap-2">
@@ -30,28 +59,15 @@
   </div>
   <div class="border rounded p-4">
     <div class="font-semibold mb-2">Etapa 1: Gerar Contrato</div>
-    <a class="btn-primary px-4 py-2 rounded inline-block" href="/emprestimos/<?php echo (int)$l['id']; ?>/contrato">Gerar Contrato</a>
-    <a class="ml-2 px-4 py-2 rounded inline-block bg-blue-100 text-blue-700" href="/emprestimos/<?php echo (int)$l['id']; ?>/gerar-link">Gerar Link de Assinatura</a>
+    <a class="btn-primary px-4 py-2 rounded inline-block <?php echo $gate1Disabled?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $gate1Disabled?'#':'/emprestimos/'.(int)$l['id'].'/contrato-link'; ?>">Gerar Contrato e Link</a>
     <?php if (!empty($l['contrato_assinado_em']) && !empty($l['contrato_pdf_path'])): ?>
-      <a class="ml-2 px-4 py-2 rounded inline-block bg-gray-200 text-gray-800" target="_blank" href="/arquivo?p=<?php echo urlencode($l['contrato_pdf_path']); ?>">Ver Contrato</a>
-    <?php endif; ?>
-    <div class="mt-3 flex gap-2 items-center">
-      <?php if ($l['status']==='aguardando_assinatura'): ?>
-      <details>
-        <summary class="cursor-pointer px-3 py-2 rounded bg-gray-200 inline-block">Editar</summary>
-        <div class="text-sm text-gray-600 mt-2">Editar irá apagar o link de assinatura atual; após salvar, gere um novo link.</div>
-        <form method="post" class="mt-2 flex items-center gap-2">
-          <input type="hidden" name="acao" value="atualizar_status">
-          <select name="status" class="border rounded px-3 py-2">
-            <?php $opts=['aguardando_assinatura'=>'Aguardando Assinatura','cancelado'=>'Cancelado']; foreach($opts as $k=>$v): ?>
-              <option value="<?php echo $k; ?>" <?php echo ($l['status']===$k)?'selected':''; ?>><?php echo $v; ?></option>
-            <?php endforeach; ?>
-          </select>
-          <button class="btn-primary px-3 py-2 rounded" type="submit" onclick="return confirm('Editar irá apagar o link de assinatura atual e será necessário gerar outro. Prosseguir?');">Salvar</button>
+      <a class="ml-2 px-4 py-2 rounded inline-block bg-green-600 text-white" target="_blank" href="/arquivo?p=<?php echo urlencode($l['contrato_pdf_path']); ?>">Ver Contrato</a>
+      <?php if ($canCancelContrato): ?>
+        <form class="inline-block ml-2" method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>/cancelar-contrato" onsubmit="return confirm('Cancelar Contrato irá remover o documento assinado e reiniciar a Etapa 1. Prosseguir?');">
+          <button class="px-3 py-2 rounded bg-red-600 text-white" type="submit">Cancelar Contrato</button>
         </form>
-      </details>
       <?php endif; ?>
-    </div>
+    <?php endif; ?>
     <?php if (!empty($l['contrato_token'])): ?>
       <?php $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http'; $host = $_SERVER['HTTP_HOST'] ?? 'localhost'; $full = $scheme.'://'.$host.'/assinar/'.$l['contrato_token']; ?>
       <div class="mt-2 text-sm flex items-center gap-2">
@@ -73,13 +89,13 @@
         </div>
         <div>
           <label for="transferencia_data" class="text-sm text-gray-600">Data da transferência</label>
-          <input class="w-full border rounded px-3 py-2" type="date" name="transferencia_data" id="transferencia_data" value="<?php echo date('Y-m-d'); ?>">
+          <input class="w-full border rounded px-3 py-2" type="date" name="transferencia_data" id="transferencia_data" value="<?php echo date('Y-m-d'); ?>" <?php echo $gate2Disabled?'disabled':''; ?>>
         </div>
         <div>
           <label class="text-sm text-gray-600">Comprovante</label>
-          <input class="w-full" type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png">
+          <input class="w-full" type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png" <?php echo $gate2Disabled?'disabled':''; ?>>
         </div>
-        <button class="btn-primary px-4 py-2 rounded" type="submit">Confirmar financiamento do empréstimo</button>
+        <button class="btn-primary px-4 py-2 rounded <?php echo $gate2Disabled?'opacity-50 cursor-not-allowed':''; ?>" type="submit" <?php echo $gate2Disabled?'disabled':''; ?>>Confirmar financiamento do empréstimo</button>
       </form>
       <?php
         $tel = preg_replace('/\D/', '', (string)($l['telefone'] ?? ''));
@@ -93,14 +109,14 @@
         $hasOverdue = false; foreach (($rows ?? []) as $p) { if (($p['status'] ?? '')==='vencido') { $hasOverdue=true; break; } }
       ?>
       <div class="mt-3 relative inline-block">
-        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white" data-menu="wa_menu">
+        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white <?php echo $gate2Disabled?'opacity-50 pointer-events-none':''; ?>" data-menu="wa_menu" <?php echo $gate2Disabled?'disabled':''; ?>>
           <i class="fa fa-whatsapp" aria-hidden="true"></i>
           <span>Enviar mensagem</span>
         </button>
         <div id="wa_menu" class="absolute bg-white border rounded shadow hidden z-10 mt-1">
-          <a class="block px-3 py-2 hover:bg-gray-100" href="<?php echo htmlspecialchars($waApproval); ?>" target="_blank">Mensagem de aprovação</a>
-          <a class="block px-3 py-2 hover:bg-gray-100" href="<?php echo htmlspecialchars($waReminder); ?>" target="_blank">Lembrete de próximos vencimentos</a>
-          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $hasOverdue?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $gate2Disabled?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($waApproval); ?>" target="_blank">Mensagem de aprovação</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $gate2Disabled?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($waReminder); ?>" target="_blank">Lembrete de próximos vencimentos</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo ($hasOverdue && !$gate2Disabled)?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
         </div>
       </div>
     <?php else: ?>
@@ -116,7 +132,7 @@
         <div>
           <div class="text-sm text-gray-600">Comprovante</div>
           <?php if (!empty($l['transferencia_comprovante_path'])): ?>
-            <a class="text-blue-700 underline" target="_blank" href="<?php echo htmlspecialchars($l['transferencia_comprovante_path']); ?>">Abrir comprovante</a>
+            <a class="text-blue-700 underline" href="#" data-open-comprovante data-file="<?php echo htmlspecialchars($l['transferencia_comprovante_path']); ?>">Abrir comprovante</a>
           <?php else: ?>
             <div>—</div>
           <?php endif; ?>
@@ -142,7 +158,7 @@
         $hasOverdue = false; foreach (($rows ?? []) as $p) { if (($p['status'] ?? '')==='vencido') { $hasOverdue=true; break; } }
       ?>
       <div class="mt-3 relative inline-block">
-        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white" data-menu="wa_menu">
+        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white <?php echo $gate2Disabled?'opacity-50 pointer-events-none':''; ?>" data-menu="wa_menu" <?php echo $gate2Disabled?'disabled':''; ?>>
           <i class="fa fa-whatsapp" aria-hidden="true"></i>
           <span>Enviar mensagem</span>
         </button>
@@ -150,7 +166,7 @@
           <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $canApproval?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waApproval); ?>" target="_blank">Mensagem de aprovação</a>
           <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $canConfirm?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waConfirm); ?>" target="_blank">Confirmação de financiamento</a>
           <a class="block px-3 py-2 hover:bg-gray-100" href="<?php echo htmlspecialchars($waReminder); ?>" target="_blank">Lembrete de próximos vencimentos</a>
-          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $hasOverdue?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo ($hasOverdue && !$gate2Disabled)?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
         </div>
       </div>
     <?php endif; ?>
@@ -167,6 +183,10 @@
           <div class="text-sm text-gray-600">Gerados em</div>
           <div><?php echo !empty($l['boletos_gerados_em'])?date('d/m/Y H:i', strtotime($l['boletos_gerados_em'])):'—'; ?></div>
         </div>
+        <div>
+          <div class="text-sm text-gray-600">Método</div>
+          <div><?php echo (!empty($l['boletos_metodo']) && $l['boletos_metodo']==='api') ? 'Via API' : ((!empty($l['boletos_metodo']) && $l['boletos_metodo']==='manual') ? 'Manual' : '—'); ?></div>
+        </div>
         <div class="md:col-span-2">
           <?php if (!empty($l['boletos_api_response'])): ?>
             <button type="button" id="btn_ver_payload" class="px-3 py-2 rounded bg-gray-100">Ver payload da API</button>
@@ -174,7 +194,16 @@
         </div>
       </div>
     <?php else: ?>
-      <a class="btn-primary px-4 py-2 rounded inline-block" href="/emprestimos/<?php echo (int)$l['id']; ?>/boletos">Gerar Cobranças</a>
+      <div class="flex flex-wrap gap-2">
+        <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>">
+          <input type="hidden" name="acao" value="boletos_api">
+          <button class="btn-primary px-4 py-2 rounded <?php echo $gate3Disabled?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo $gate3Disabled?'disabled':''; ?>>Gerar Boleto Via API</button>
+        </form>
+        <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>">
+          <input type="hidden" name="acao" value="boletos_manuais">
+          <button class="px-4 py-2 rounded bg-gray-100 <?php echo $gate3Disabled?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo $gate3Disabled?'disabled':''; ?>>Registrar Geração de Boletos Manual</button>
+        </form>
+      </div>
     <?php endif; ?>
   </div>
   <div class="border rounded p-4">
@@ -195,7 +224,7 @@
               <button class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100" type="button" data-menu="menu_<?php echo (int)$p['id']; ?>" title="Alterar status" aria-label="Alterar status">
                 <i class="fa fa-money text-[18px]"></i>
               </button>
-              <div id="menu_<?php echo (int)$p['id']; ?>" class="absolute bg-white border rounded shadow hidden z-10">
+              <div id="menu_<?php echo (int)$p['id']; ?>" class="absolute bg-white border rounded shadow hidden z-10 mt-1">
                 <button class="block w-full text-left px-3 py-1 hover:bg-gray-100" data-action-status data-status="pendente" data-pid="<?php echo (int)$p['id']; ?>">Pendente</button>
                 <button class="block w-full text-left px-3 py-1 hover:bg-gray-100" data-action-status data-status="pago" data-pid="<?php echo (int)$p['id']; ?>">Pago</button>
               </div>
@@ -205,6 +234,11 @@
       </tbody>
   </table>
   </div>
+  <form method="post" id="parcela_form" action="/emprestimos/<?php echo (int)$l['id']; ?>" style="display:none">
+    <input type="hidden" name="acao" value="parcela_status">
+    <input type="hidden" name="pid" value="">
+    <input type="hidden" name="status" value="">
+  </form>
   <?php if (!empty($l['boletos_api_response'])): ?>
   <div id="payload_modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
     <div class="bg-white rounded shadow max-w-3xl w-11/12 p-4">
@@ -217,34 +251,39 @@
   </div>
   <script>
   (function(){
-    var openMenuId = null;
-    Array.from(document.querySelectorAll('button[data-menu]')).forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var id = btn.getAttribute('data-menu');
-        var menu = document.getElementById(id);
-        if (!menu) return;
-        if (openMenuId && openMenuId !== id){ var prev = document.getElementById(openMenuId); if (prev) { prev.classList.add('hidden'); } }
-        menu.classList.toggle('hidden');
-        openMenuId = menu.classList.contains('hidden') ? null : id;
+    if (!window.__parcelaMenuBound) {
+      window.__parcelaMenuBound = true;
+      var openMenuId = null;
+      Array.from(document.querySelectorAll('button[data-menu]')).forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          var id = btn.getAttribute('data-menu');
+          var menu = document.getElementById(id);
+          if (!menu) return;
+          if (openMenuId && openMenuId !== id){ var prev = document.getElementById(openMenuId); if (prev) { prev.classList.add('hidden'); } }
+          menu.classList.toggle('hidden');
+          openMenuId = menu.classList.contains('hidden') ? null : id;
+        });
       });
-    });
-    document.addEventListener('click', function(e){
-      if (openMenuId){
-        var menu = document.getElementById(openMenuId);
-        if (menu && !menu.contains(e.target) && !document.querySelector('button[data-menu][data-menu="'+openMenuId+'"]').contains(e.target)){
-          menu.classList.add('hidden'); openMenuId=null;
+      document.addEventListener('click', function(e){
+        if (openMenuId){
+          var menu = document.getElementById(openMenuId);
+          var trigger = document.querySelector('button[data-menu][data-menu="'+openMenuId+'"]');
+          if (menu && !menu.contains(e.target) && trigger && !trigger.contains(e.target)){
+            menu.classList.add('hidden'); openMenuId=null;
+          }
         }
-      }
-    });
-    Array.from(document.querySelectorAll('[data-action-status]')).forEach(function(item){
-      item.addEventListener('click', function(){
-        var pid = item.getAttribute('data-pid');
-        var st = item.getAttribute('data-status');
-        var form = document.getElementById('parcela_form');
-        if (!form) return;
-        form.pid.value = pid; form.status.value = st; form.submit();
       });
-    });
+      Array.from(document.querySelectorAll('[data-action-status]')).forEach(function(item){
+        item.addEventListener('click', function(){
+          var pid = item.getAttribute('data-pid');
+          var st = item.getAttribute('data-status');
+          var form = document.getElementById('parcela_form');
+          if (!form) return;
+          form.pid.value = pid; form.status.value = st; form.submit();
+        });
+      });
+    }
   })();
   var payloadRaw = <?php echo json_encode($l['boletos_api_response'] ?? ''); ?>;
   function openPayloadModal(){
@@ -267,6 +306,70 @@
   var overlay = document.getElementById('payload_modal'); if (overlay) overlay.addEventListener('click', function(e){ if (e.target === overlay) closePayloadModal(); });
   </script>
   <?php endif; ?>
+  <script>
+    (function(){
+      if (!window.__parcelaMenuBound) {
+        window.__parcelaMenuBound = true;
+        var openMenuId = null;
+        Array.from(document.querySelectorAll('button[data-menu]')).forEach(function(btn){
+          btn.addEventListener('click', function(e){
+            e.stopPropagation();
+            var id = btn.getAttribute('data-menu');
+            var menu = document.getElementById(id);
+            if (!menu) return;
+            if (openMenuId && openMenuId !== id){ var prev = document.getElementById(openMenuId); if (prev) { prev.classList.add('hidden'); prev.style.display='none'; } }
+            var isHidden = menu.classList.contains('hidden');
+            if (isHidden){ menu.classList.remove('hidden'); menu.style.display='block'; }
+            else { menu.classList.add('hidden'); menu.style.display='none'; }
+            openMenuId = menu.classList.contains('hidden') ? null : id;
+          });
+        });
+        document.addEventListener('click', function(e){
+          if (openMenuId){
+            var menu = document.getElementById(openMenuId);
+            var trig = document.querySelector('button[data-menu][data-menu="'+openMenuId+'"]');
+            if (menu && !menu.contains(e.target) && trig && !trig.contains(e.target)){
+              menu.classList.add('hidden'); menu.style.display='none'; openMenuId=null;
+            }
+          }
+        });
+        Array.from(document.querySelectorAll('[data-action-status]')).forEach(function(item){
+          item.addEventListener('click', function(){
+            var pid = item.getAttribute('data-pid');
+            var st = item.getAttribute('data-status');
+            var form = document.getElementById('parcela_form');
+            if (!form) return;
+            form.pid.value = pid; form.status.value = st; form.submit();
+          });
+        });
+      }
+    })();
+  </script>
+  <div id="comprovante_lightbox" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+    <div class="bg-white rounded shadow max-w-3xl w-11/12 p-2">
+      <div class="flex justify-end mb-2">
+        <button type="button" id="btn_close_comprovante" class="px-2 py-1 rounded bg-gray-200">Fechar</button>
+      </div>
+      <div id="comprovante_container" class="w-full h-[70vh] overflow-auto"></div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var overlay = document.getElementById('comprovante_lightbox');
+      var cont = document.getElementById('comprovante_container');
+      function closeComp(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } if (cont){ cont.innerHTML=''; } }
+      var btnC = document.getElementById('btn_close_comprovante'); if (btnC) btnC.addEventListener('click', closeComp);
+      if (overlay) overlay.addEventListener('click', function(e){ if (e.target===overlay) closeComp(); });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeComp(); });
+      Array.from(document.querySelectorAll('[data-open-comprovante]')).forEach(function(a){
+        a.addEventListener('click', function(ev){ ev.preventDefault(); var p = a.getAttribute('data-file')||''; if (!p) return;
+          var isImg = /\.(jpg|jpeg|png|gif)(\?|$)/i.test(p);
+          cont.innerHTML = isImg ? ('<img src="'+p+'" class="max-w-full max-h-full">') : ('<iframe src="'+p+'" class="w-full h-full"></iframe>');
+          overlay.classList.remove('hidden'); overlay.classList.add('flex');
+        });
+      });
+    })();
+  </script>
   <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
   <div class="mt-6 text-right">
     <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" id="form_excluir_inferior" class="inline">
@@ -301,9 +404,5 @@
     })();
   </script>
   <?php endif; ?>
-  <form method="post" id="parcela_form" style="display:none">
-    <input type="hidden" name="acao" value="parcela_status">
-    <input type="hidden" name="pid" value="">
-    <input type="hidden" name="status" value="">
-  </form>
+  <!-- duplicado removido: usar o formulário oculto definido acima -->
 </div>

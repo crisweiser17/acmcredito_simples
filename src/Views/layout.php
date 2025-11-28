@@ -6,14 +6,14 @@ $saved = isset($_GET['saved']);
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo $title; ?></title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://maxcdn.bootstrapcdn.com">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <script>
-    tailwind.config = {
-      theme: { extend: { colors: { royal: '#1f4bf2' } } }
-    }
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = { theme: { extend: { colors: { royal: '#1f4bf2' } } } };
   </script>
-  <script src="https://unpkg.com/@preline/preline/dist/preline.js"></script>
+  <script src="https://cdn.tailwindcss.com" defer></script>
 </head>
 <body class="min-h-screen bg-gray-900">
   <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; ?>
@@ -104,6 +104,15 @@ $saved = isset($_GET['saved']);
     <main class="flex-1 p-8 bg-white text-black">
       <?php if ($saved): ?>
         <div class="mb-4 rounded border border-blue-200 bg-blue-50 text-blue-700 px-4 py-3">Configurações salvas</div>
+      <?php endif; ?>
+      <?php $toastMsg = $_SESSION['toast'] ?? null; if ($toastMsg) { unset($_SESSION['toast']); } ?>
+      <?php if (!empty($toastMsg)): ?>
+        <div id="toast" class="fixed bottom-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded shadow">
+          <?php echo htmlspecialchars($toastMsg); ?>
+        </div>
+        <script>
+          (function(){ var t = document.getElementById('toast'); if (!t) return; setTimeout(function(){ t.style.transition='opacity 300ms'; t.style.opacity='0'; setTimeout(function(){ if(t && t.parentNode){ t.parentNode.removeChild(t); } }, 320); }, 2500); })();
+        </script>
       <?php endif; ?>
       <?php include $content; ?>
     </main>
