@@ -16,14 +16,17 @@ $saved = isset($_GET['saved']);
   <script src="https://unpkg.com/@preline/preline/dist/preline.js"></script>
 </head>
 <body class="min-h-screen bg-gray-900">
+  <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; ?>
+  <?php if ($isLogged): ?>
   <div class="flex">
     <aside class="w-64 bg-gray-900 text-white min-h-screen">
       <div class="p-4">
-        <h1 class="text-xl font-bold">ACM Credito</h1>
+        <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
+        <h1 class="text-xl font-bold"><?php echo htmlspecialchars($empresaRazao); ?></h1>
         <p class="text-sm text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_nome'] ?? ''); ?></p>
       </div>
       <nav>
-        <?php $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/admin/install'); ?>
+        <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/admin/install' || $path==='/usuarios'); ?>
         <a href="/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
           <span>Dashboard</span>
@@ -76,8 +79,11 @@ $saved = isset($_GET['saved']);
           </button>
           <div id="menu-config" class="<?php echo $openCfg?'block':'hidden'; ?>">
             <a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a>
-            <?php if (isset($_SESSION['user_id'])): ?>
+            <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
               <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
+            <?php endif; ?>
+            <?php if (isset($_SESSION['user_id'])): ?>
+              <a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a>
             <?php endif; ?>
           </div>
         </div>
@@ -101,6 +107,17 @@ $saved = isset($_GET['saved']);
       <?php include $content; ?>
     </main>
   </div>
+  <?php else: ?>
+    <?php if ($path === '/login'): ?>
+      <main class="flex-1 p-8 bg-white text-black min-h-screen flex items-center justify-center">
+        <?php include $content; ?>
+      </main>
+    <?php else: ?>
+      <main class="flex-1 p-8 bg-white text-black">
+        <?php include $content; ?>
+      </main>
+    <?php endif; ?>
+  <?php endif; ?>
 </body>
 <style>
   .btn-primary{background-color:#1f4bf2;color:#fff}

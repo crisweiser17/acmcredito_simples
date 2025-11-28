@@ -53,6 +53,20 @@ $production = readEnvFile('.env.production');
         <span>Ambiente de Testes (retorna dados fictícios)</span>
       </label>
     </div>
+    <div class="space-y-4">
+      <div class="text-lg font-semibold">Info da Empresa</div>
+      <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
+      <?php $empresaCnpj = \App\Helpers\ConfigRepo::get('empresa_cnpj', '00.000.000/0001-00'); ?>
+      <?php $empresaEmail = \App\Helpers\ConfigRepo::get('empresa_email', 'contato@acm.com.br'); ?>
+      <?php $empresaTelefone = \App\Helpers\ConfigRepo::get('empresa_telefone', '(11) 90000-0000'); ?>
+      <?php $empresaEndereco = \App\Helpers\ConfigRepo::get('empresa_endereco', 'Rua Exemplo, 123 - Centro, São Paulo/SP'); ?>
+      <input class="w-full border rounded px-3 py-2" name="empresa_razao_social" placeholder="Razão Social" value="<?php echo htmlspecialchars($empresaRazao); ?>">
+      <input class="w-full border rounded px-3 py-2" name="empresa_cnpj" placeholder="CNPJ" value="<?php echo htmlspecialchars($empresaCnpj); ?>">
+      <input class="w-full border rounded px-3 py-2" type="email" name="empresa_email" placeholder="Email" value="<?php echo htmlspecialchars($empresaEmail); ?>">
+      <input class="w-full border rounded px-3 py-2" name="empresa_telefone" placeholder="Telefone" value="<?php echo htmlspecialchars($empresaTelefone); ?>">
+      <input class="w-full border rounded px-3 py-2" name="empresa_endereco" placeholder="Endereço" value="<?php echo htmlspecialchars($empresaEndereco); ?>">
+      <div class="text-xs text-gray-500">Essas informações serão utilizadas em contratos, mensagens e demais telas.</div>
+    </div>
     <button class="btn-primary px-4 py-2 rounded" type="submit">Salvar Configurações</button>
   </form>
   <div class="text-sm text-gray-600">Para alternar manualmente o ambiente, edite <code>config/app.php</code> e troque o valor de <code>'env'</code> entre <code>staging</code> e <code>production</code>.</div>

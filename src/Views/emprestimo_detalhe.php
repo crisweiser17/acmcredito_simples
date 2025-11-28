@@ -85,6 +85,28 @@
         </div>
         <button class="btn-primary px-4 py-2 rounded" type="submit">Confirmar financiamento do empréstimo</button>
       </form>
+      <?php
+        $tel = preg_replace('/\D/', '', (string)($l['telefone'] ?? ''));
+        if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; }
+        $approvalText = \App\Services\MessagingService::render('aprovacao', $l, $rows);
+        $reminderText = \App\Services\MessagingService::render('lembrete', $l, $rows);
+        $chargeText = \App\Services\MessagingService::render('cobranca', $l, $rows);
+        $waApproval = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($approvalText);
+        $waReminder = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($reminderText);
+        $waCharge = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($chargeText);
+        $hasOverdue = false; foreach (($rows ?? []) as $p) { if (($p['status'] ?? '')==='vencido') { $hasOverdue=true; break; } }
+      ?>
+      <div class="mt-3 relative inline-block">
+        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white" data-menu="wa_menu">
+          <i class="fa fa-whatsapp" aria-hidden="true"></i>
+          <span>Enviar mensagem</span>
+        </button>
+        <div id="wa_menu" class="absolute bg-white border rounded shadow hidden z-10 mt-1">
+          <a class="block px-3 py-2 hover:bg-gray-100" href="<?php echo htmlspecialchars($waApproval); ?>" target="_blank">Mensagem de aprovação</a>
+          <a class="block px-3 py-2 hover:bg-gray-100" href="<?php echo htmlspecialchars($waReminder); ?>" target="_blank">Lembrete de próximos vencimentos</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $hasOverdue?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
+        </div>
+      </div>
     <?php else: ?>
       <div class="grid md:grid-cols-2 gap-3">
         <div>
@@ -106,6 +128,33 @@
         <div>
           <div class="text-sm text-gray-600">Confirmado em</div>
           <div><?php echo !empty($l['transferencia_em'])?date('d/m/Y H:i', strtotime($l['transferencia_em'])):'—'; ?></div>
+        </div>
+      </div>
+      <?php
+        $tel = preg_replace('/\D/', '', (string)($l['telefone'] ?? ''));
+        if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; }
+        $approvalText = \App\Services\MessagingService::render('aprovacao', $l, $rows);
+        $confirmText = \App\Services\MessagingService::render('confirmacao', $l, $rows);
+        $reminderText = \App\Services\MessagingService::render('lembrete', $l, $rows);
+        $chargeText = \App\Services\MessagingService::render('cobranca', $l, $rows);
+        $waApproval = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($approvalText);
+        $waConfirm = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($confirmText);
+        $waReminder = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($reminderText);
+        $waCharge = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($chargeText);
+        $canConfirm = (!empty($l['transferencia_em']) && ($l['status'] ?? '')==='ativo');
+        $canApproval = (empty($l['transferencia_em']) && ($l['status'] ?? '')==='aguardando_transferencia');
+        $hasOverdue = false; foreach (($rows ?? []) as $p) { if (($p['status'] ?? '')==='vencido') { $hasOverdue=true; break; } }
+      ?>
+      <div class="mt-3 relative inline-block">
+        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white" data-menu="wa_menu">
+          <i class="fa fa-whatsapp" aria-hidden="true"></i>
+          <span>Enviar mensagem</span>
+        </button>
+        <div id="wa_menu" class="absolute bg-white border rounded shadow hidden z-10 mt-1">
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $canApproval?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waApproval); ?>" target="_blank">Mensagem de aprovação</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $canConfirm?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waConfirm); ?>" target="_blank">Confirmação de financiamento</a>
+          <a class="block px-3 py-2 hover:bg-gray-100" href="<?php echo htmlspecialchars($waReminder); ?>" target="_blank">Lembrete de próximos vencimentos</a>
+          <a class="block px-3 py-2 hover:bg-gray-100 <?php echo $hasOverdue?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
         </div>
       </div>
     <?php endif; ?>

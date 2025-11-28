@@ -6,7 +6,7 @@ use App\Database\Connection;
 class ContractService {
   public static function gerarContratoHTML(int $loan_id): string {
     $pdo = Connection::get();
-    $sql = 'SELECT l.*, c.*, (SELECT valor FROM config WHERE chave=\'empresa_nome\') AS empresa_nome, (SELECT valor FROM config WHERE chave=\'empresa_cnpj\') AS empresa_cnpj, (SELECT valor FROM config WHERE chave=\'empresa_endereco\') AS empresa_endereco, (SELECT valor FROM config WHERE chave=\'multa_percentual\') AS multa_percentual, (SELECT valor FROM config WHERE chave=\'juros_mora_percentual_dia\') AS juros_mora_percentual_dia FROM loans l JOIN clients c ON l.client_id=c.id WHERE l.id=:id';
+    $sql = 'SELECT l.*, c.*, (SELECT valor FROM config WHERE chave=\'empresa_razao_social\') AS empresa_nome, (SELECT valor FROM config WHERE chave=\'empresa_cnpj\') AS empresa_cnpj, (SELECT valor FROM config WHERE chave=\'empresa_endereco\') AS empresa_endereco, (SELECT valor FROM config WHERE chave=\'empresa_email\') AS empresa_email, (SELECT valor FROM config WHERE chave=\'empresa_telefone\') AS empresa_telefone, (SELECT valor FROM config WHERE chave=\'multa_percentual\') AS multa_percentual, (SELECT valor FROM config WHERE chave=\'juros_mora_percentual_dia\') AS juros_mora_percentual_dia FROM loans l JOIN clients c ON l.client_id=c.id WHERE l.id=:id';
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['id'=>$loan_id]);
     $data = $stmt->fetch();
@@ -23,6 +23,8 @@ class ContractService {
       '{{EMPRESA_NOME}}' => $data['empresa_nome'] ?? '',
       '{{EMPRESA_CNPJ}}' => $data['empresa_cnpj'] ?? '',
       '{{EMPRESA_ENDERECO}}' => $data['empresa_endereco'] ?? '',
+      '{{EMPRESA_EMAIL}}' => $data['empresa_email'] ?? '',
+      '{{EMPRESA_TELEFONE}}' => $data['empresa_telefone'] ?? '',
       '{{CLIENTE_NOME}}' => $data['nome'] ?? '',
       '{{CLIENTE_CPF}}' => $data['cpf'] ?? '',
       '{{CLIENTE_NASCIMENTO}}' => date('d/m/Y', strtotime($data['data_nascimento'])),

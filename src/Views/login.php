@@ -1,4 +1,6 @@
+<?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
 <div class="max-w-sm mx-auto">
+  <div class="text-center mb-4 text-2xl font-bold text-gray-900"><?php echo htmlspecialchars($empresaRazao); ?></div>
   <h2 class="text-2xl font-semibold mb-6">Login</h2>
   <?php if (isset($_GET['error'])): ?>
     <div class="mb-4 rounded border border-red-200 bg-red-50 text-red-700 px-4 py-3">Credenciais inválidas</div>

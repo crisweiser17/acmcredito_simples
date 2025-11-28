@@ -20,6 +20,26 @@ class ClientesController {
   }
   public static function novo(): void {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      if (empty($_FILES['holerites']['name'][0])) {
+        $error = 'É necessário enviar pelo menos um holerite.';
+        $title = 'Novo Cliente';
+        $content = __DIR__ . '/../Views/clientes_novo.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
+      $cnhUnico = isset($_POST['cnh_arquivo_unico']);
+      $hasUnico = !empty($_FILES['cnh_unico']['name'] ?? '');
+      $hasFrente = !empty($_FILES['cnh_frente']['name'] ?? '');
+      $hasVerso = !empty($_FILES['cnh_verso']['name'] ?? '');
+      $hasSelfie = !empty($_FILES['selfie']['name'] ?? '');
+      $okCnh = $cnhUnico ? $hasUnico : ($hasFrente && $hasVerso);
+      if (!$okCnh || !$hasSelfie) {
+        $error = 'É necessário enviar CNH/RG (frente e verso ou arquivo único) e Selfie.';
+        $title = 'Novo Cliente';
+        $content = __DIR__ . '/../Views/clientes_novo.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
       $pdo = Connection::get();
       $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
       $stmt->execute([
@@ -42,6 +62,21 @@ class ClientesController {
         'observacoes' => trim($_POST['observacoes'] ?? '')
       ]);
       $clientId = (int)$pdo->lastInsertId();
+      $indicado = (int)($_POST['indicado_por_id'] ?? 0);
+      $refN = $_POST['ref_nome'] ?? [];
+      $refT = $_POST['ref_telefone'] ?? [];
+      $refs = [];
+      for ($i=0; $i<3; $i++) {
+        $n = trim((string)($refN[$i] ?? ''));
+        $t = trim((string)($refT[$i] ?? ''));
+        if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; }
+      }
+      try {
+        $hasInd = $pdo->query("SHOW COLUMNS FROM clients LIKE 'indicado_por_id'")->fetch();
+        $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch();
+        if ($hasInd) { $pdo->prepare('UPDATE clients SET indicado_por_id=:ind WHERE id=:id')->execute(['ind'=>$indicado?:null, 'id'=>$clientId]); }
+        if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:refs WHERE id=:id')->execute(['refs'=>json_encode($refs), 'id'=>$clientId]); }
+      } catch (\Throwable $e) { /* no-op */ }
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
         for ($i=0; $i<count($_FILES['holerites']['name']); $i++) {
@@ -241,6 +276,27 @@ class ClientesController {
     $client = $stmt->fetch();
     if (!$client) { header('Location: /clientes'); return; }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $req = ['nome','cpf','data_nascimento','email','telefone','cep','endereco','numero','bairro','cidade','estado','ocupacao','tempo_trabalho','renda_mensal'];
+      $missing = [];
+      foreach ($req as $k) { $v = trim((string)($_POST[$k] ?? '')); if ($v === '') { $missing[] = $k; } }
+      $existingHol = json_decode($client['doc_holerites'] ?? '[]', true); if (!is_array($existingHol)) $existingHol = [];
+      $hasNewHol = !empty($_FILES['holerites']['name'][0]);
+      $hasFrenteExisting = !empty($client['doc_cnh_frente']);
+      $hasVersoExisting = !empty($client['doc_cnh_verso']);
+      $hasSelfieExisting = !empty($client['doc_selfie']);
+      $hasFrenteNew = !empty($_FILES['cnh_frente']['name'] ?? '');
+      $hasVersoNew = !empty($_FILES['cnh_verso']['name'] ?? '');
+      $hasSelfieNew = !empty($_FILES['selfie']['name'] ?? '');
+      $cnhUnicoPost = isset($_POST['cnh_arquivo_unico']);
+      $okCnh = $cnhUnicoPost ? ($hasFrenteExisting || $hasFrenteNew) : (($hasFrenteExisting || $hasFrenteNew) && ($hasVersoExisting || $hasVersoNew));
+      $okSelfie = ($hasSelfieExisting || $hasSelfieNew);
+      if (!empty($missing) || (!$hasNewHol && count($existingHol) === 0) || !$okCnh || !$okSelfie) {
+        $error = 'Preencha todos os campos obrigatórios, envie ao menos um holerite e garanta CNH/RG (frente e verso ou arquivo único) e Selfie.';
+        $title = 'Editar Cliente';
+        $content = __DIR__ . '/../Views/clientes_editar.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
       $sql = 'UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, observacoes=:observacoes WHERE id=:id';
       $pdo->prepare($sql)->execute([
         'nome' => trim($_POST['nome'] ?? ''),
@@ -261,6 +317,17 @@ class ClientesController {
         'observacoes' => trim($_POST['observacoes'] ?? ''),
         'id' => $id
       ]);
+      $indicado = (int)($_POST['indicado_por_id'] ?? 0);
+      $refN = $_POST['ref_nome'] ?? [];
+      $refT = $_POST['ref_telefone'] ?? [];
+      $refs = [];
+      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; } }
+      try {
+        $hasInd = $pdo->query("SHOW COLUMNS FROM clients LIKE 'indicado_por_id'")->fetch();
+        $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch();
+        if ($hasInd) { $pdo->prepare('UPDATE clients SET indicado_por_id=:ind WHERE id=:id')->execute(['ind'=>$indicado?:null, 'id'=>$id]); }
+        if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:refs WHERE id=:id')->execute(['refs'=>json_encode($refs), 'id'=>$id]); }
+      } catch (\Throwable $e) { /* no-op */ }
       $cnhUnico = isset($_POST['cnh_arquivo_unico']) ? 1 : 0;
       $pdo->prepare('UPDATE clients SET cnh_arquivo_unico = :u WHERE id = :id')->execute(['u'=>$cnhUnico,'id'=>$id]);
       if ($cnhUnico) {
@@ -307,8 +374,42 @@ class ClientesController {
     $stmt->execute(['id' => $id]);
     $client = $stmt->fetch();
     if (!$client) { header('Location: /clientes'); return; }
+    $indicador = null;
+    if (!empty($client['indicado_por_id'])) {
+      $si = $pdo->prepare('SELECT id, nome, telefone FROM clients WHERE id=:id');
+      $si->execute(['id'=>$client['indicado_por_id']]);
+      $indicador = $si->fetch();
+    }
+    $lc = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id');
+    $lc->execute(['id'=>$id]);
+    $temEmprestimos = ((int)($lc->fetch()['c'] ?? 0)) > 0;
     $title = 'Visualizar Cliente';
     $content = __DIR__ . '/../Views/clientes_ver.php';
     include __DIR__ . '/../Views/layout.php';
+  }
+  public static function buscar(): void {
+    $pdo = Connection::get();
+    $q = trim($_GET['q'] ?? '');
+    $limit = 20;
+    $sql = 'SELECT id, nome, cpf, telefone FROM clients WHERE 1=1';
+    $params = [];
+    if ($q !== '') {
+      $params['q'] = '%'.$q.'%';
+      $sql .= ' AND (nome LIKE :q OR cpf LIKE :q OR telefone LIKE :q)';
+    }
+    $sql .= ' ORDER BY nome ASC LIMIT ' . (int)$limit;
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll();
+    header('Content-Type: application/json');
+    echo json_encode($rows);
+  }
+  public static function buscarPorId(int $id): void {
+    $pdo = Connection::get();
+    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone FROM clients WHERE id=:id');
+    $stmt->execute(['id'=>$id]);
+    $row = $stmt->fetch();
+    header('Content-Type: application/json');
+    echo json_encode($row ?: null);
   }
 }

@@ -10,6 +10,18 @@
   <main class="max-w-3xl mx-auto p-8">
     <?php include $content; ?>
   </main>
+  <?php $empresaEmail = \App\Helpers\ConfigRepo::get('empresa_email', ''); $empresaTelefone = \App\Helpers\ConfigRepo::get('empresa_telefone', ''); $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', ''); ?>
+  <footer class="max-w-3xl mx-auto px-8 pb-8 text-sm text-gray-600">
+    <div>
+      <?php if ($empresaRazao): ?>
+        <div><?php echo htmlspecialchars($empresaRazao); ?></div>
+      <?php endif; ?>
+      <div>
+        <?php if ($empresaEmail): ?><span>Email: <?php echo htmlspecialchars($empresaEmail); ?></span><?php endif; ?>
+        <?php if ($empresaTelefone): ?><span class="ml-2">Telefone: <?php echo htmlspecialchars($empresaTelefone); ?></span><?php endif; ?>
+      </div>
+    </div>
+  </footer>
 </body>
 <style>
   .btn-primary{background-color:#1f4bf2;color:#fff}

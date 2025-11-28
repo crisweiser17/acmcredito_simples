@@ -12,10 +12,32 @@ class Migrator {
     $sql[] = "CREATE TABLE IF NOT EXISTS loans (id INT PRIMARY KEY AUTO_INCREMENT, client_id INT NOT NULL, valor_principal DECIMAL(10,2) NOT NULL, num_parcelas INT NOT NULL, taxa_juros_mensal DECIMAL(5,2) NOT NULL, valor_parcela DECIMAL(10,2) NOT NULL, valor_total DECIMAL(10,2) NOT NULL, total_juros DECIMAL(10,2) NOT NULL, data_primeiro_vencimento DATE NOT NULL, dias_primeiro_periodo INT, juros_proporcional_primeiro_mes DECIMAL(10,2) DEFAULT 0, cet_percentual DECIMAL(5,2), contrato_html TEXT, contrato_pdf_path VARCHAR(255), contrato_token VARCHAR(64) UNIQUE, contrato_assinado_em DATETIME, contrato_assinante_nome VARCHAR(255), contrato_assinante_ip VARCHAR(45), contrato_assinante_user_agent TEXT, transferencia_valor DECIMAL(10,2), transferencia_data DATE, transferencia_comprovante_path VARCHAR(255), transferencia_user_id INT, transferencia_em DATETIME, boletos_gerados BOOLEAN DEFAULT 0, boletos_api_response JSON, boletos_gerados_em DATETIME, status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','concluido') DEFAULT 'calculado', observacoes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, created_by_user_id INT, deleted_at TIMESTAMP NULL, FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE RESTRICT, INDEX idx_client (client_id), INDEX idx_status (status), INDEX idx_token (contrato_token))";
     $sql[] = "CREATE TABLE IF NOT EXISTS loan_parcelas (id INT PRIMARY KEY AUTO_INCREMENT, loan_id INT NOT NULL, numero_parcela INT NOT NULL, valor DECIMAL(10,2) NOT NULL, data_vencimento DATE NOT NULL, juros_embutido DECIMAL(10,2) NOT NULL, amortizacao DECIMAL(10,2) NOT NULL, saldo_devedor DECIMAL(10,2) NOT NULL, boleto_id VARCHAR(100), boleto_url TEXT, boleto_codigo_barras VARCHAR(100), boleto_linha_digitavel VARCHAR(100), status ENUM('pendente','pago','vencido','cancelado') DEFAULT 'pendente', pago_em DATETIME, valor_pago DECIMAL(10,2), FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE CASCADE, INDEX idx_loan (loan_id), INDEX idx_vencimento (data_vencimento), INDEX idx_status (status))";
     $sql[] = "CREATE TABLE IF NOT EXISTS audit_log (id INT PRIMARY KEY AUTO_INCREMENT, user_id INT, tabela VARCHAR(50), registro_id INT, acao VARCHAR(50) NOT NULL, descricao TEXT, ip VARCHAR(45), user_agent TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_user (user_id), INDEX idx_tabela (tabela), INDEX idx_acao (acao), INDEX idx_created (created_at))";
+    $sql[] = "CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(100) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, nome VARCHAR(100) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
     foreach ($sql as $q) { $pdo->exec($q); }
     $exists = $pdo->query("SELECT COUNT(*) AS c FROM config")->fetch();
     if ((int)$exists['c'] === 0) {
       $pdo->exec("INSERT INTO config (chave, valor, descricao) VALUES ('multa_percentual','2','Multa por atraso (%)'),('juros_mora_percentual_dia','0.033','Juros de mora por dia (%)'),('taxa_juros_padrao_mensal','2.5','Taxa de juros padrão mensal (%)'),('empresa_nome','Clear Securitizadora S/A','Nome da empresa'),('empresa_cnpj','00.000.000/0001-00','CNPJ da empresa'),('empresa_endereco','Endereço completo','Endereço da empresa')");
     }
+    $cols = $pdo->query("SHOW COLUMNS FROM clients")->fetchAll();
+    $haveIndicador = false; $haveReferencias = false;
+    foreach ($cols as $col) { if (($col['Field'] ?? '') === 'indicado_por_id') { $haveIndicador = true; } if (($col['Field'] ?? '') === 'referencias') { $haveReferencias = true; } }
+    if (!$haveIndicador) { $pdo->exec("ALTER TABLE clients ADD COLUMN indicado_por_id INT NULL, ADD INDEX idx_indicado (indicado_por_id)"); }
+    if (!$haveReferencias) { $pdo->exec("ALTER TABLE clients ADD COLUMN referencias JSON NULL"); }
+    $usersCount = $pdo->query("SELECT COUNT(*) AS c FROM users")->fetch();
+    if ((int)($usersCount['c'] ?? 0) === 0) {
+      $ins = $pdo->prepare('INSERT INTO users (username, password, nome) VALUES (:u, :p, :n)');
+      $ins->execute(['u'=>'operador1','p'=>password_hash('senha123', PASSWORD_DEFAULT),'n'=>'Operador 1']);
+      $ins->execute(['u'=>'operador2','p'=>password_hash('senha456', PASSWORD_DEFAULT),'n'=>'Operador 2']);
+      $ins->execute(['u'=>'operador3','p'=>password_hash('senha789', PASSWORD_DEFAULT),'n'=>'Operador 3']);
+    }
+    // Ensure role column exists and assign roles
+    $userCols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll();
+    $haveRole = false; foreach ($userCols as $col) { if (($col['Field'] ?? '') === 'role') { $haveRole = true; break; } }
+    if (!$haveRole) { $pdo->exec("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'admin'"); }
+    // Set user ID 1 as superadmin, others as admin
+    try {
+      $pdo->exec("UPDATE users SET role='superadmin' WHERE id=1");
+      $pdo->exec("UPDATE users SET role='admin' WHERE id<>1");
+    } catch (\Throwable $e) {}
   }
 }

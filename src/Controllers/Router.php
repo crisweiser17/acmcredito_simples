@@ -25,6 +25,10 @@ class Router {
       \App\Controllers\SettingsController::handle();
       return;
     }
+    if ($path === '/usuarios') {
+      \App\Controllers\UsersController::handle();
+      return;
+    }
     if ($path === '/arquivo') {
       \App\Controllers\FileController::serve();
       return;
@@ -79,6 +83,14 @@ class Router {
     }
     if ($path === '/clientes') {
       \App\Controllers\ClientesController::lista();
+      return;
+    }
+    if ($path === '/api/clientes/search') {
+      \App\Controllers\ClientesController::buscar();
+      return;
+    }
+    if (preg_match('#^/api/clientes/(\d+)$#', $path, $m)) {
+      \App\Controllers\ClientesController::buscarPorId((int)$m[1]);
       return;
     }
     if (preg_match('#^/clientes/(\d+)/validar$#', $path, $m)) {

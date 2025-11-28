@@ -88,7 +88,7 @@ class LoansController {
 
   public static function detalhe(int $id): void {
     $pdo = Connection::get();
-    $stmt = $pdo->prepare('SELECT l.*, c.nome, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+    $stmt = $pdo->prepare('SELECT l.*, c.nome, c.cpf, c.telefone, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
     $stmt->execute(['id'=>$id]);
     $l = $stmt->fetch();
     if (!$l) { header('Location: /'); return; }
@@ -144,6 +144,7 @@ class LoansController {
   public static function lista(): void {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');
+    $cid = (int)($_GET['client_id'] ?? 0);
     $ini = trim($_GET['data_ini'] ?? '');
     $fim = trim($_GET['data_fim'] ?? '');
     $periodo = trim($_GET['periodo'] ?? '');
@@ -158,6 +159,7 @@ class LoansController {
     $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
     if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
+    if ($cid > 0) { $sql .= ' AND l.client_id = :cid'; $params['cid'] = $cid; }
     if ($ini !== '') { $sql .= ' AND DATE(l.created_at) >= :ini'; $params['ini'] = $ini; }
     if ($fim !== '') { $sql .= ' AND DATE(l.created_at) <= :fim'; $params['fim'] = $fim; }
     if ($status !== '' && in_array($status, ['aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado'], true)) { $sql .= ' AND l.status = :st'; $params['st'] = $status; }

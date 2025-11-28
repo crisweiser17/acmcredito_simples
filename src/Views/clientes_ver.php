@@ -1,6 +1,12 @@
 <?php $c = $client ?? []; ?>
 <div class="space-y-8">
   <h2 class="text-2xl font-semibold">Visualizar Cliente</h2>
+  <div class="flex gap-3">
+    <a class="btn-primary px-4 py-2 rounded" href="/clientes/<?php echo (int)$c['id']; ?>/editar">Editar</a>
+    <?php if (!empty($temEmprestimos)): ?>
+      <a class="btn-primary px-4 py-2 rounded" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>">Ver empréstimos</a>
+    <?php endif; ?>
+  </div>
   <div class="space-y-4">
     <div class="text-lg font-semibold">Dados Pessoais</div>
     <div class="grid md:grid-cols-2 gap-2">
@@ -25,6 +31,37 @@
         <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
       </div>
     </div>
+  </div>
+  <div class="space-y-4">
+    <div class="text-lg font-semibold">Indicado Por</div>
+    <div>
+      <?php if (!empty($c['indicado_por_id'])): ?>
+        <?php if (!empty($indicador)): ?>
+          <a class="text-blue-700 underline" href="/clientes/<?php echo (int)$indicador['id']; ?>/ver"><?php echo htmlspecialchars($indicador['nome']); ?></a>
+          <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars(($indicador['telefone'] ?? '')); ?></span>
+        <?php else: ?>
+          <span>ID <?php echo (int)$c['indicado_por_id']; ?></span>
+        <?php endif; ?>
+      <?php else: ?>
+        <span>—</span>
+      <?php endif; ?>
+    </div>
+  </div>
+  <div class="space-y-4">
+    <div class="text-lg font-semibold">Referências</div>
+    <?php $refs = json_decode($c['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = []; ?>
+    <?php if (count($refs) > 0): ?>
+      <div class="space-y-1">
+        <?php foreach ($refs as $r): ?>
+          <div>
+            <span><?php echo htmlspecialchars($r['nome'] ?? ''); ?></span>
+            <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></span>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <div>—</div>
+    <?php endif; ?>
   </div>
   <div class="space-y-4">
     <div class="text-lg font-semibold">Endereço</div>
