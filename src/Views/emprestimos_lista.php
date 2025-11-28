@@ -76,7 +76,7 @@
       <?php foreach ($rows as $l): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$l['id']; ?></td>
-          <td class="border px-2 py-1"><?php echo htmlspecialchars($l['nome']); ?></td>
+          <td class="border px-2 py-1"><a class="text-blue-700 underline" href="/clientes/<?php echo (int)$l['cid']; ?>/ver"><?php echo htmlspecialchars($l['nome']); ?></a></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?></td>
           <td class="border px-2 py-1"><?php echo (int)$l['num_parcelas']; ?></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></td>

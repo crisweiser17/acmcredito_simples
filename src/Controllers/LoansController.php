@@ -112,7 +112,27 @@ class LoansController {
         header('Location: /emprestimos/' . $id);
         return;
       }
+      if ($acao === 'parcela_status') {
+        $pid = (int)($_POST['pid'] ?? 0);
+        $st = trim($_POST['status'] ?? '');
+        $permit = ['pendente','pago'];
+        if ($pid && in_array($st, $permit, true)) {
+          if ($st === 'pago') {
+            $pdo->prepare('UPDATE loan_parcelas SET status=:s, pago_em=NOW() WHERE id=:pid AND loan_id=:lid')
+                ->execute(['s'=>'pago','pid'=>$pid,'lid'=>$id]);
+          } else {
+            $pdo->prepare('UPDATE loan_parcelas SET status=:s, pago_em=NULL WHERE id=:pid AND loan_id=:lid')
+                ->execute(['s'=>'pendente','pid'=>$pid,'lid'=>$id]);
+          }
+          Audit::log('update_parcela_status','loan_parcelas',$pid,'set_'.$st);
+        }
+        header('Location: /emprestimos/' . $id);
+        return;
+      }
     }
+    // Atualiza automaticamente parcelas vencidas: pendentes com vencimento < hoje viram 'vencido'
+    $pdo->prepare('UPDATE loan_parcelas SET status=\'vencido\' WHERE loan_id=:id AND status=\'pendente\' AND data_vencimento < CURDATE()')
+        ->execute(['id'=>$id]);
     
     $parcelas = $pdo->prepare('SELECT * FROM loan_parcelas WHERE loan_id=:id ORDER BY numero_parcela');
     $parcelas->execute(['id'=>$id]);
@@ -135,7 +155,7 @@ class LoansController {
       elseif ($periodo === 'mes_atual') { $ini = date('Y-m-01'); $fim = $today; }
     }
     $status = trim($_GET['status'] ?? '');
-    $sql = 'SELECT l.id, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
     if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
     if ($ini !== '') { $sql .= ' AND DATE(l.created_at) >= :ini'; $params['ini'] = $ini; }

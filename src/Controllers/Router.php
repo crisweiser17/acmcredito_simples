@@ -93,6 +93,10 @@ class Router {
       \App\Controllers\ClientesController::editar((int)$m[1]);
       return;
     }
+    if ($path === '/relatorios/parcelas') {
+      \App\Controllers\ReportsController::parcelas();
+      return;
+    }
     \App\Controllers\HomeController::handle();
   }
   private static function isPublic(string $path): bool {

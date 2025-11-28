@@ -2,7 +2,7 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div>
-      <div class="text-xl font-semibold"><?php echo htmlspecialchars($l['nome']); ?></div>
+      <div class="text-xl font-semibold"><a class="text-blue-700 underline" href="/clientes/<?php echo (int)$l['cid']; ?>/ver"><?php echo htmlspecialchars($l['nome']); ?></a></div>
       <div class="text-sm text-gray-600">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?> → R$ <?php echo number_format((float)$l['valor_total'],2,',','.'); ?> em <?php echo (int)$l['num_parcelas']; ?>x de R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></div>
     </div>
     <div>
@@ -135,7 +135,7 @@
   <div class="border rounded p-4">
     <div class="font-semibold mb-2">Tabela de Parcelas</div>
     <table class="w-full border-collapse">
-      <thead><tr><th class="border px-2 py-1">#</th><th class="border px-2 py-1">Vencimento</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Juros</th><th class="border px-2 py-1">Amortização</th><th class="border px-2 py-1">Saldo</th><th class="border px-2 py-1">Status</th></tr></thead>
+      <thead><tr><th class="border px-2 py-1">#</th><th class="border px-2 py-1">Vencimento</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Juros</th><th class="border px-2 py-1">Amortização</th><th class="border px-2 py-1">Saldo</th><th class="border px-2 py-1">Status</th><th class="border px-2 py-1">Ação</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $p): ?>
           <tr>
@@ -146,6 +146,15 @@
             <td class="border px-2 py-1">R$ <?php echo number_format((float)$p['amortizacao'],2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format((float)$p['saldo_devedor'],2,',','.'); ?></td>
             <td class="border px-2 py-1"><?php echo htmlspecialchars($p['status']); ?></td>
+            <td class="border px-2 py-1 relative">
+              <button class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100" type="button" data-menu="menu_<?php echo (int)$p['id']; ?>" title="Alterar status" aria-label="Alterar status">
+                <i class="fa fa-money text-[18px]"></i>
+              </button>
+              <div id="menu_<?php echo (int)$p['id']; ?>" class="absolute bg-white border rounded shadow hidden z-10">
+                <button class="block w-full text-left px-3 py-1 hover:bg-gray-100" data-action-status data-status="pendente" data-pid="<?php echo (int)$p['id']; ?>">Pendente</button>
+                <button class="block w-full text-left px-3 py-1 hover:bg-gray-100" data-action-status data-status="pago" data-pid="<?php echo (int)$p['id']; ?>">Pago</button>
+              </div>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -162,6 +171,36 @@
     </div>
   </div>
   <script>
+  (function(){
+    var openMenuId = null;
+    Array.from(document.querySelectorAll('button[data-menu]')).forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-menu');
+        var menu = document.getElementById(id);
+        if (!menu) return;
+        if (openMenuId && openMenuId !== id){ var prev = document.getElementById(openMenuId); if (prev) { prev.classList.add('hidden'); } }
+        menu.classList.toggle('hidden');
+        openMenuId = menu.classList.contains('hidden') ? null : id;
+      });
+    });
+    document.addEventListener('click', function(e){
+      if (openMenuId){
+        var menu = document.getElementById(openMenuId);
+        if (menu && !menu.contains(e.target) && !document.querySelector('button[data-menu][data-menu="'+openMenuId+'"]').contains(e.target)){
+          menu.classList.add('hidden'); openMenuId=null;
+        }
+      }
+    });
+    Array.from(document.querySelectorAll('[data-action-status]')).forEach(function(item){
+      item.addEventListener('click', function(){
+        var pid = item.getAttribute('data-pid');
+        var st = item.getAttribute('data-status');
+        var form = document.getElementById('parcela_form');
+        if (!form) return;
+        form.pid.value = pid; form.status.value = st; form.submit();
+      });
+    });
+  })();
   var payloadRaw = <?php echo json_encode($l['boletos_api_response'] ?? ''); ?>;
   function openPayloadModal(){
     var m = document.getElementById('payload_modal');
@@ -183,4 +222,9 @@
   var overlay = document.getElementById('payload_modal'); if (overlay) overlay.addEventListener('click', function(e){ if (e.target === overlay) closePayloadModal(); });
   </script>
   <?php endif; ?>
+  <form method="post" id="parcela_form" style="display:none">
+    <input type="hidden" name="acao" value="parcela_status">
+    <input type="hidden" name="pid" value="">
+    <input type="hidden" name="status" value="">
+  </form>
 </div>

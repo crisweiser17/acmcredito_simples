@@ -23,7 +23,7 @@ $saved = isset($_GET['saved']);
         <p class="text-sm text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_nome'] ?? ''); ?></p>
       </div>
       <nav>
-        <?php $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; ?>
+        <?php $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/admin/install'); ?>
         <a href="/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
           <span>Dashboard</span>
@@ -54,15 +54,34 @@ $saved = isset($_GET['saved']);
             <a href="/emprestimos/calculadora" class="block px-6 py-2 hover:bg-gray-800">Calculadora</a>
           </div>
         </div>
-        <a href="/config" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.027 7.027 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.2 2h-3.4a.5.5 0 0 0-.49.41l-.36 2.54c-.6.24-1.15.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.97 8.93a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.6.22l2.39-.96c.48.39 1.03.7 1.63.94l.36 2.54c.06.29.31.41.49.41h3.4c.29 0 .43-.19.49-.41l.36-2.54c.6-.24 1.15-.55 1.63-.94l2.39.96c.17.12.46.02.6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
-          <span>Configurações</span>
-        </a>
+        <div>
+          <button type="button" data-target="menu-relatorios" aria-expanded="<?php echo strpos($path,'/relatorios')===0?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
+            <span class="flex items-center gap-2">
+              <i class="fa fa-bar-chart" aria-hidden="true"></i>
+              <span>Relatórios</span>
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+          </button>
+          <div id="menu-relatorios" class="<?php echo strpos($path,'/relatorios')===0?'block':'hidden'; ?>">
+            <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
+          </div>
+        </div>
+        <div>
+          <button type="button" data-target="menu-config" aria-expanded="<?php echo $openCfg?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
+            <span class="flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.027 7.027 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.2 2h-3.4a.5.5 0 0 0-.49.41l-.36 2.54c-.6.24-1.15.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.97 8.93a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.6.22l2.39-.96c.48.39 1.03.7 1.63.94l.36 2.54c.06.29.31.41.49.41h3.4c.29 0 .43-.19.49-.41l.36-2.54c.6-.24 1.15-.55 1.63-.94l2.39.96c.17.12.46.02.6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+              <span>Configurações</span>
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+          </button>
+          <div id="menu-config" class="<?php echo $openCfg?'block':'hidden'; ?>">
+            <a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a>
+            <?php if (isset($_SESSION['user_id'])): ?>
+              <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
+            <?php endif; ?>
+          </div>
+        </div>
         <?php if (isset($_SESSION['user_id'])): ?>
-          <a href="/admin/install" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-9l-2-2H4c-1.1 0-2 .9-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h4.17l2 2H20v10z"/></svg>
-            <span>Instalação</span>
-          </a>
           <a href="/logout" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 17l5-5-5-5v10zM4 4h8v2H4v12h8v2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
             <span>Sair</span>
