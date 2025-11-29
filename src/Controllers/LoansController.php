@@ -525,14 +525,7 @@ class LoansController {
           $data = @file_get_contents($src);
           if ($data) { @file_put_contents($fontPath, $data); }
         }
-        if (file_exists($fontPath) && filesize($fontPath) > 1000) {
-          $fontData = @file_get_contents($fontPath);
-          if ($fontData) {
-            $b64Font = base64_encode($fontData);
-            $inject = '<style>@font-face{font-family:"SignatureFont";src:url("data:font/ttf;base64,'.$b64Font.'") format("truetype");font-weight:normal;font-style:normal}.signature{font-family:"SignatureFont",cursive !important}.signature-sm{font-size:22px}</style>';
-            if (preg_match('#</head>#i',$html2)) { $html2 = preg_replace('#</head>#i', $inject.'</head>', $html2, 1); } else { $html2 = $inject.$html2; }
-          }
-        }
+        // Não injeta @font-face para PDF; forçamos uso de imagens geradas
         $html2 = preg_replace('#(src|href)=["\"]/uploads/#','${1}="file://'.$root2.'/uploads/',$html2);
         $html2 = preg_replace_callback('#(src|href)=["\"]/arquivo\?p=([^"\"]+)#', function($m) use ($root2){ $p = rawurldecode($m[2]); $p = ltrim($p,'/'); return $m[1].'="file://'.$root2.'/'. $p; }, $html2);
         $findFont = function() {
