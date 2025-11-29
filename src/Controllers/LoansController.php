@@ -526,8 +526,12 @@ class LoansController {
           if ($data) { @file_put_contents($fontPath, $data); }
         }
         if (file_exists($fontPath) && filesize($fontPath) > 1000) {
-          $inject = '<style>@font-face{font-family:"SignatureFont";src:url("file://'.$fontPath.'") format("truetype");font-weight:normal;font-style:normal}.signature{font-family:"SignatureFont",cursive !important}.signature-sm{font-size:22px}</style>';
-          if (preg_match('#</head>#i',$html2)) { $html2 = preg_replace('#</head>#i', $inject.'</head>', $html2, 1); } else { $html2 = $inject.$html2; }
+          $fontData = @file_get_contents($fontPath);
+          if ($fontData) {
+            $b64Font = base64_encode($fontData);
+            $inject = '<style>@font-face{font-family:"SignatureFont";src:url("data:font/ttf;base64,'.$b64Font.'") format("truetype");font-weight:normal;font-style:normal}.signature{font-family:"SignatureFont",cursive !important}.signature-sm{font-size:22px}</style>';
+            if (preg_match('#</head>#i',$html2)) { $html2 = preg_replace('#</head>#i', $inject.'</head>', $html2, 1); } else { $html2 = $inject.$html2; }
+          }
         }
         $html2 = preg_replace('#(src|href)=["\"]/uploads/#','${1}="file://'.$root2.'/uploads/',$html2);
         $html2 = preg_replace_callback('#(src|href)=["\"]/arquivo\?p=([^"\"]+)#', function($m) use ($root2){ $p = rawurldecode($m[2]); $p = ltrim($p,'/'); return $m[1].'="file://'.$root2.'/'. $p; }, $html2);
@@ -546,8 +550,8 @@ class LoansController {
         if (!is_dir($sigDir)) { @mkdir($sigDir,0755,true); }
         $fontForImage = $sysFont ?: $fontPath;
         if (function_exists('imagecreatetruecolor') && file_exists($fontForImage)) {
-          $makeImg = function($text, $size, $outPath) use ($fontPath) {
-            $fp = $fontPath;
+          $makeImg = function($text, $size, $outPath) use ($fontForImage) {
+            $fp = $fontForImage;
             $bbox = @imagettfbbox($size, 0, $fp, $text);
             $w = max(300, ($bbox[2]-$bbox[0])+40);
             $h = max(60, ($bbox[1]-$bbox[7])+30);
@@ -611,6 +615,28 @@ class LoansController {
             }
           }
         }
+        $toDataUri = function($path) {
+          $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+          $mime = 'image/png';
+          if ($ext === 'jpg' || $ext === 'jpeg') { $mime = 'image/jpeg'; }
+          elseif ($ext === 'gif') { $mime = 'image/gif'; }
+          elseif ($ext === 'png') { $mime = 'image/png'; }
+          $data = @file_get_contents($path);
+          if ($data && strlen($data) > 0) { return 'data:'.$mime.';base64,'.base64_encode($data); }
+          return null;
+        };
+        $html2 = preg_replace_callback('#<img[^>]+src="file://([^"]+)"[^>]*>#i', function($m) use ($toDataUri) {
+          $p = $m[1];
+          $uri = $toDataUri($p);
+          if ($uri) { return preg_replace('#src="file://[^"]+"#','src="'.$uri.'"',$m[0]); }
+          return $m[0];
+        }, $html2);
+        $html2 = preg_replace_callback('#<img[^>]+src="/uploads/([^"]+)"[^>]*>#i', function($m) use ($root2, $toDataUri) {
+          $p = $root2.'/uploads/'.$m[1];
+          $uri = $toDataUri($p);
+          if ($uri) { return preg_replace('#src="/uploads/[^"]+"#','src="'.$uri.'"',$m[0]); }
+          return $m[0];
+        }, $html2);
         $pdf = $dir.'/contrato_assinado.pdf';
         try {
           $dompdf = new \Dompdf\Dompdf();
