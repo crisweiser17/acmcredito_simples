@@ -127,7 +127,7 @@
         </div>
       </div>
     </div>
-    <div class="space-y-4">
+    <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Documentos</div>
       <div class="space-y-2">
         <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>

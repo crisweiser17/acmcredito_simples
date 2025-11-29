@@ -127,7 +127,7 @@
         </div>
       </div>
     </div>
-    <div class="space-y-4">
+    <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Documentos</div>
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle" <?php echo ($c['cnh_arquivo_unico'] ? 'checked' : ''); ?>><span>Documento frente/verso no mesmo arquivo</span></label>
       <div class="font-medium">Documento de Identidade Frente e Verso <span class="text-red-600">*</span></div>
