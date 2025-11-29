@@ -143,6 +143,7 @@ class ClientesController {
       $ocupacao = trim($_POST['ocupacao'] ?? '');
       $tempo = trim($_POST['tempo_trabalho'] ?? '');
       $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
+      $observacoes = trim($_POST['observacoes'] ?? '');
       if ($nome === '' || $cpfNorm === '' || $data_nascimento === '' || $email === '' || $telefone === '' || $cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '' || $ocupacao === '' || $tempo === '' || $renda <= 0) {
         $error = 'Preencha todos os campos obrigatórios.';
         $title = 'Cadastro de Cliente';
@@ -159,11 +160,25 @@ class ClientesController {
         include __DIR__ . '/../Views/layout.php';
         return;
       }
-      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal)');
+      $cnhUnico = isset($_POST['cnh_arquivo_unico']);
+      $hasUnico = !empty($_FILES['cnh_unico']['name'] ?? '');
+      $hasFrente = !empty($_FILES['cnh_frente']['name'] ?? '');
+      $hasVerso = !empty($_FILES['cnh_verso']['name'] ?? '');
+      $hasSelfie = !empty($_FILES['selfie']['name'] ?? '');
+      $hasHol = !empty($_FILES['holerites']['name'][0] ?? '');
+      $okCnh = $cnhUnico ? $hasUnico : ($hasFrente && $hasVerso);
+      if (!$hasHol || !$okCnh || !$hasSelfie) {
+        $error = 'Envie CNH/RG (frente e verso ou arquivo único), pelo menos um holerite e Selfie.';
+        $title = 'Cadastro de Cliente';
+        $content = __DIR__ . '/../Views/cadastro_publico.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
+      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
       $stmt->execute([
         'nome'=>$nome, 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
         'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
-        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda
+        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda, 'cnh_arquivo_unico' => $cnhUnico ? 1 : 0, 'observacoes' => $observacoes
       ]);
       $clientId = (int)$pdo->lastInsertId();
       $refN = $_POST['ref_nome'] ?? [];
@@ -171,6 +186,35 @@ class ClientesController {
       $refs = [];
       for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; } }
       try { $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch(); if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]); } } catch (\Throwable $e) {}
+      $holerites = [];
+      if (!empty($_FILES['holerites']['name'][0])) {
+        for ($i=0; $i<count($_FILES['holerites']['name']); $i++) {
+          $file = [
+            'name' => $_FILES['holerites']['name'][$i],
+            'type' => $_FILES['holerites']['type'][$i],
+            'tmp_name' => $_FILES['holerites']['tmp_name'][$i],
+            'error' => $_FILES['holerites']['error'][$i],
+            'size' => $_FILES['holerites']['size'][$i]
+          ];
+          try { $holerites[] = Upload::save($file, $clientId, 'holerites'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+        }
+        $pdo->prepare('UPDATE clients SET doc_holerites = :j WHERE id = :id')->execute(['j'=>json_encode($holerites),'id'=>$clientId]);
+      }
+      if ($cnhUnico) {
+        if (!empty($_FILES['cnh_unico']['name'])) {
+          try { $path = Upload::save($_FILES['cnh_unico'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente = :f WHERE id = :id')->execute(['f'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+        }
+      } else {
+        if (!empty($_FILES['cnh_frente']['name'])) {
+          try { $path = Upload::save($_FILES['cnh_frente'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente = :f WHERE id = :id')->execute(['f'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+        }
+        if (!empty($_FILES['cnh_verso']['name'])) {
+          try { $path = Upload::save($_FILES['cnh_verso'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_verso = :v WHERE id = :id')->execute(['v'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+        }
+      }
+      if (!empty($_FILES['selfie']['name'])) {
+        try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie = :s WHERE id = :id')->execute(['s'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+      }
       \App\Helpers\Audit::log('create_public','clients',$clientId,'Cadastro público');
       $_SESSION['toast'] = 'Cadastro enviado com sucesso';
       $title = 'Cadastro de Cliente';

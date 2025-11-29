@@ -3,7 +3,7 @@
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
-  <form method="post" class="space-y-8">
+  <form method="post" enctype="multipart/form-data" class="space-y-8">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -127,6 +127,45 @@
         </div>
       </div>
     </div>
+    <div class="space-y-4">
+      <div class="text-lg font-semibold">Documentos</div>
+      <div class="space-y-2">
+        <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
+        <div>
+          <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
+          <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
+        <div id="cnh_separado" class="space-y-2">
+          <div>CNH/RG Frente <span class="text-red-600">*</span></div>
+          <div>
+            <input class="w-full" type="file" name="cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
+            <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
+          </div>
+          <div>CNH/RG Verso <span class="text-red-600">*</span></div>
+          <div>
+            <input class="w-full" type="file" name="cnh_verso" accept=".pdf,.jpg,.jpeg,.png" required>
+            <div class="text-sm text-gray-600 mt-0.5">Arquivo Verso</div>
+          </div>
+        </div>
+        <div id="cnh_unico" class="space-y-2 hidden">
+          <div>Documento Único <span class="text-red-600">*</span></div>
+          <div>
+            <input class="w-full" type="file" name="cnh_unico" accept=".pdf,.jpg,.jpeg,.png">
+            <div class="text-sm text-gray-600 mt-0.5">Documento Único</div>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div>Selfie <span class="text-red-600">*</span></div>
+        <div>
+          <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png" required>
+          <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
+        </div>
+      </div>
+    </div>
     <div class="space-y-2">
       <div class="text-lg font-semibold">Observações</div>
       <div>
@@ -159,6 +198,29 @@
       });
     }
   })();
+  const chk = document.getElementById('cnh_unico_toggle');
+  const sep = document.getElementById('cnh_separado');
+  const uni = document.getElementById('cnh_unico');
+  const inpFrente = document.querySelector('input[name="cnh_frente"]');
+  const inpVerso = document.querySelector('input[name="cnh_verso"]');
+  const inpUnico = document.querySelector('input[name="cnh_unico"]');
+  if (chk && sep && uni) {
+    chk.addEventListener('change', function(){
+      if (chk.checked) {
+        sep.classList.add('hidden');
+        uni.classList.remove('hidden');
+        if (inpUnico) inpUnico.required = true;
+        if (inpFrente) inpFrente.required = false;
+        if (inpVerso) inpVerso.required = false;
+      } else {
+        sep.classList.remove('hidden');
+        uni.classList.add('hidden');
+        if (inpUnico) inpUnico.required = false;
+        if (inpFrente) inpFrente.required = true;
+        if (inpVerso) inpVerso.required = true;
+      }
+    });
+  }
   document.getElementById('buscarCep').addEventListener('click', async function(){
     const cep = document.getElementById('cep').value.replace(/\D/g,'');
     if (cep.length !== 8) return;
