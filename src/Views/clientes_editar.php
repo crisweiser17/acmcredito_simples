@@ -130,8 +130,7 @@
     <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Documentos</div>
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle" <?php echo ($c['cnh_arquivo_unico'] ? 'checked' : ''); ?>><span>Documento frente/verso no mesmo arquivo</span></label>
-      <div class="font-medium">Documento de Identidade Frente e Verso <span class="text-red-600">*</span></div>
-      <div id="doc_row" class="grid gap-6 md:grid-cols-3">
+      <div id="doc_grid" class="grid gap-6 md:grid-cols-2">
         <div class="p-4 border rounded">
           <div class="font-medium mb-2"><span id="label_frente"><?php echo ($c['cnh_arquivo_unico'] ? 'Documento Único *' : 'Frente *'); ?></span></div>
           <?php if (!empty($c['doc_cnh_frente'])): ?>
@@ -146,7 +145,7 @@
             <?php endif; ?>
           <?php endif; ?>
           <div class="mt-2">
-            <input class="w-full" type="file" name="cnh_frente" accept=".pdf,.jpg,.jpeg,.png">
+            <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
           </div>
         </div>
@@ -164,7 +163,7 @@
             <?php endif; ?>
           <?php endif; ?>
           <div class="mt-2">
-            <input class="w-full" type="file" name="cnh_verso" accept=".pdf,.jpg,.jpeg,.png">
+            <input class="w-full" type="file" name="cnh_verso" id="inp_cnh_verso" accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Verso</div>
           </div>
         </div>
@@ -186,35 +185,35 @@
             <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
           </div>
         </div>
-      </div>
-      <div class="space-y-3">
-        <div class="font-medium">Holerites</div>
-        <div class="grid md:grid-cols-5 gap-3">
-          <?php $hol = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($hol)) $hol = []; ?>
-          <?php foreach ($hol as $h): ?>
-            <?php $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); ?>
-            <?php if ($exth === 'pdf'): ?>
-              <div class="p-2 border rounded flex items-center justify-between">
-                <span>PDF</span>
-                <a class="px-2 py-1 rounded bg-blue-100 text-blue-700" target="_blank" href="/arquivo/view?p=<?php echo rawurlencode($h); ?>">Abrir</a>
-              </div>
-            <?php else: ?>
-              <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>" class="w-24 h-24 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>')" />
-            <?php endif; ?>
-          <?php endforeach; ?>
-        </div>
+        <div class="p-4 border rounded">
+          <div class="font-medium mb-2">Holerites</div>
+          <div class="grid md:grid-cols-3 gap-3 mb-3">
+            <?php $hol = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($hol)) $hol = []; ?>
+            <?php foreach ($hol as $h): ?>
+              <?php $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); ?>
+              <?php if ($exth === 'pdf'): ?>
+                <div class="p-2 border rounded flex items-center justify-between">
+                  <span>PDF</span>
+                  <a class="px-2 py-1 rounded bg-blue-100 text-blue-700" target="_blank" href="/arquivo/view?p=<?php echo rawurlencode($h); ?>">Abrir</a>
+                </div>
+              <?php else: ?>
+                <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>" class="w-24 h-24 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>')" />
+              <?php endif; ?>
+            <?php endforeach; ?>
+          </div>
           <div>Adicionar novos holerites</div>
           <div>
             <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
           </div>
+        </div>
       </div>
     </div>
     <div class="space-y-2">
-      <div class="text-lg font-semibold">Observações</div>
+      <div class="text-lg font-semibold">Notas Internas</div>
       <div>
         <textarea class="w-full border rounded px-3 py-2" name="observacoes" rows="4"><?php echo htmlspecialchars($c['observacoes']); ?></textarea>
-        <div class="text-sm text-gray-600 mt-0.5">Observações</div>
+        <div class="text-sm text-gray-600 mt-0.5">Notas Internas</div>
       </div>
     </div>
     <div class="flex gap-3">
@@ -292,12 +291,11 @@
   const chk = document.getElementById('cnh_unico_toggle');
   const verso = document.getElementById('verso_block');
   const labelFrente = document.getElementById('label_frente');
-  const docRow = document.getElementById('doc_row');
   chk.addEventListener('change', function(){
-    if (chk.checked) { verso.style.display='none'; labelFrente.textContent = 'Documento Único *'; if (docRow){ docRow.classList.remove('md:grid-cols-3'); docRow.classList.add('md:grid-cols-2'); } }
-    else { verso.style.display=''; labelFrente.textContent = 'Frente *'; if (docRow){ docRow.classList.remove('md:grid-cols-2'); docRow.classList.add('md:grid-cols-3'); } }
+    if (chk.checked) { verso.style.display='none'; labelFrente.textContent = 'Documento Único *'; }
+    else { verso.style.display=''; labelFrente.textContent = 'Frente *'; }
   });
-  (function(){ if (chk.checked){ if (docRow){ docRow.classList.remove('md:grid-cols-3'); docRow.classList.add('md:grid-cols-2'); } labelFrente.textContent='Documento Único *'; } else { if (docRow){ docRow.classList.remove('md:grid-cols-2'); docRow.classList.add('md:grid-cols-3'); } labelFrente.textContent='Frente *'; } })();
+  (function(){ if (chk.checked){ labelFrente.textContent='Documento Único *'; } else { labelFrente.textContent='Frente *'; } })();
   let lb;
   function openLightbox(src){
     if (!lb){

@@ -144,48 +144,44 @@
     </div>
     <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Documentos</div>
-      <div class="space-y-2">
-        <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
-        <div>
-          <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-          <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
-        </div>
-      </div>
-      <div class="space-y-2">
-        <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
-        <div id="cnh_separado" class="space-y-2">
-          <div>CNH/RG Frente <span class="text-red-600">*</span></div>
+      <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <div id="lbl_frente">CNH/RG Frente <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
+            <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
           </div>
+        </div>
+        <div class="space-y-2" id="cnh_verso_cell">
           <div>CNH/RG Verso <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="cnh_verso" accept=".pdf,.jpg,.jpeg,.png" required>
+            <input class="w-full" type="file" name="cnh_verso" id="inp_cnh_verso" accept=".pdf,.jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Verso</div>
           </div>
         </div>
-        <div id="cnh_unico" class="space-y-2 hidden">
-          <div>Documento Único <span class="text-red-600">*</span></div>
+        <div class="space-y-2">
+          <div>Selfie <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="cnh_unico" accept=".pdf,.jpg,.jpeg,.png">
-            <div class="text-sm text-gray-600 mt-0.5">Documento Único</div>
+            <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png" required>
+            <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
+          <div>
+            <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
+            <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
           </div>
         </div>
       </div>
-      <div class="space-y-2">
-        <div>Selfie <span class="text-red-600">*</span></div>
-        <div>
-          <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png" required>
-          <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
-        </div>
-      </div>
+      <input type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
     </div>
     <div class="space-y-2">
-      <div class="text-lg font-semibold">Observações</div>
+      <div class="text-lg font-semibold">Notas Internas</div>
       <div>
         <textarea class="w-full border rounded px-3 py-2" name="observacoes" rows="4"></textarea>
-        <div class="text-sm text-gray-600 mt-0.5">Observações</div>
+        <div class="text-sm text-gray-600 mt-0.5">Notas Internas</div>
       </div>
     </div>
     <button class="btn-primary px-4 py-2 rounded" type="submit">Salvar Cliente</button>
@@ -226,26 +222,30 @@
     } catch (e) {}
   });
   const chk = document.getElementById('cnh_unico_toggle');
-  const sep = document.getElementById('cnh_separado');
-  const uni = document.getElementById('cnh_unico');
-  const inpFrente = document.querySelector('input[name="cnh_frente"]');
-  const inpVerso = document.querySelector('input[name="cnh_verso"]');
-  const inpUnico = document.querySelector('input[name="cnh_unico"]');
-  chk.addEventListener('change', function(){
+  const versoCell = document.getElementById('cnh_verso_cell');
+  const lblFrente = document.getElementById('lbl_frente');
+  const inpFrente = document.getElementById('inp_cnh_frente');
+  const inpVerso = document.getElementById('inp_cnh_verso');
+  const inpUnico = document.getElementById('inp_cnh_unico');
+  function toggleUnico(){
     if (chk.checked) {
-      sep.classList.add('hidden');
-      uni.classList.remove('hidden');
-      if (inpUnico) inpUnico.required = true;
-      if (inpFrente) inpFrente.required = false;
-      if (inpVerso) inpVerso.required = false;
+      versoCell.classList.add('hidden');
+      lblFrente.textContent = 'Documento Único *';
+      inpUnico.classList.remove('hidden');
+      inpUnico.required = true;
+      inpFrente.required = false;
+      inpVerso.required = false;
     } else {
-      sep.classList.remove('hidden');
-      uni.classList.add('hidden');
-      if (inpUnico) inpUnico.required = false;
-      if (inpFrente) inpFrente.required = true;
-      if (inpVerso) inpVerso.required = true;
+      versoCell.classList.remove('hidden');
+      lblFrente.textContent = 'CNH/RG Frente *';
+      inpUnico.classList.add('hidden');
+      inpUnico.required = false;
+      inpFrente.required = true;
+      inpVerso.required = true;
     }
-  });
+  }
+  chk.addEventListener('change', toggleUnico);
+  toggleUnico();
   (function(){
     var input = document.getElementById('indicador_search');
     var results = document.getElementById('indicador_results');
