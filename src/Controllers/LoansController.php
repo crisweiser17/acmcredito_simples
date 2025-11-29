@@ -549,6 +549,7 @@ class LoansController {
         $sigDir = $root2.'/uploads/'.$loan['cid'].'/signatures';
         if (!is_dir($sigDir)) { @mkdir($sigDir,0755,true); }
         $fontForImage = $sysFont ?: $fontPath;
+        $okDev = false; $okCred = false;
         if (function_exists('imagecreatetruecolor') && file_exists($fontForImage)) {
           $makeImg = function($text, $size, $outPath) use ($fontForImage) {
             $fp = $fontForImage;
@@ -570,12 +571,30 @@ class LoansController {
           $imgCred = $sigDir.'/credor.png';
           $okDev = $makeImg($nome, 36, $imgDev);
           $okCred = $empresaNome ? $makeImg($empresaNome, 28, $imgCred) : false;
-          if ($okDev) {
-            $html2 = preg_replace('#(<span[^>]*id="assin_devedor"[^>]*>)(.*?)(</span>)#i', '<img src="file://'.$imgDev.'" style="height:40px">', $html2, 1);
+        }
+        if ((!$okDev || !$okCred) && file_exists($fontForImage)) {
+          $magick = @shell_exec('command -v magick');
+          $convert = @shell_exec('command -v convert');
+          $empresaNome = $empresaNome ?? \App\Helpers\ConfigRepo::get('empresa_razao_social', '');
+          $imgDev = isset($imgDev) ? $imgDev : ($sigDir.'/devedor.png');
+          $imgCred = isset($imgCred) ? $imgCred : ($sigDir.'/credor.png');
+          $fontArg = escapeshellarg($fontForImage);
+          if (!$okDev && ($magick || $convert)) {
+            $cmd = ($magick?trim($magick):trim($convert)).' convert -background none -fill "#222222" -font '.$fontArg.' -pointsize 36 label:'.escapeshellarg($nome).' '.escapeshellarg($imgDev);
+            @shell_exec($cmd);
+            $okDev = file_exists($imgDev) && filesize($imgDev) > 1000;
           }
-          if ($okCred) {
-            $html2 = preg_replace('#(<span[^>]*class="signature[^>]*signature-sm[^>]*">)(.*?)(</span>)#i', '<img src="file://'.$imgCred.'" style="height:32px">', $html2, 1);
+          if (!$okCred && $empresaNome !== '' && ($magick || $convert)) {
+            $cmd2 = ($magick?trim($magick):trim($convert)).' convert -background none -fill "#222222" -font '.$fontArg.' -pointsize 28 label:'.escapeshellarg($empresaNome).' '.escapeshellarg($imgCred);
+            @shell_exec($cmd2);
+            $okCred = file_exists($imgCred) && filesize($imgCred) > 1000;
           }
+        }
+        if ($okDev) {
+          $html2 = preg_replace('#(<span[^>]*id="assin_devedor"[^>]*>)(.*?)(</span>)#i', '<img src="file://'.$imgDev.'" style="height:40px">', $html2, 1);
+        }
+        if ($okCred) {
+          $html2 = preg_replace('#(<span[^>]*class="signature[^>]*signature-sm[^>]*">)(.*?)(</span>)#i', '<img src="file://'.$imgCred.'" style="height:32px">', $html2, 1);
         }
         $previews2 = [];
         if (preg_match_all('#<iframe[^>]+src="(file://[^"]+\.pdf)"[^>]*>.*?</iframe>#i', $html2, $m2)) {
