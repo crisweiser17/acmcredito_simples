@@ -74,10 +74,13 @@
         <div class="text-xs text-gray-500 mt-1">Data do 1º pagamento para pró‑rata zero = <button type="button" id="pr_zero_btn" class="underline"><span id="pr_zero_date"></span></button></div>
       </div>
       <?php if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
-      <div>
-        <input class="w-full border rounded px-3 py-2" type="date" name="data_base" id="data_base">
-        <div class="text-sm text-gray-600 mt-0.5">Data base (admin)</div>
-        <div class="text-xs text-gray-500 mt-1">Usada para calcular pró‑rata e cronograma a partir de uma data específica</div>
+      <div class="space-y-2">
+        <label class="inline-flex items-center gap-2"><input type="checkbox" name="data_base_custom" id="data_base_toggle"><span>Customizar Data Base</span></label>
+        <div id="data_base_box" class="hidden">
+          <input class="w-full border rounded px-3 py-2" type="date" name="data_base" id="data_base">
+          <div class="text-sm text-gray-600 mt-0.5">Data base (admin)</div>
+          <div class="text-xs text-gray-500 mt-1">Usada para calcular pró‑rata e cronograma a partir de uma data específica</div>
+        </div>
       </div>
       <?php endif; ?>
       <div class="flex gap-3 pt-2">
@@ -180,8 +183,9 @@ function recalc(){
   let jurosProp = 0;
   if (dv) {
     let baseEl = document.getElementById('data_base');
+    let baseT = document.getElementById('data_base_toggle');
     let base = new Date();
-    if (baseEl && baseEl.value) {
+    if (baseT && baseT.checked && baseEl && baseEl.value) {
       const pb = baseEl.value.split('-');
       base = new Date(Number(pb[0]), Number(pb[1]) - 1, Number(pb[2]));
     }
@@ -310,7 +314,8 @@ function toggleModo(){
   }
 }
 document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.addEventListener('change', function(){ toggleModo(); recommendByParcela(); }); });
-toggleModo();
+  toggleModo();
+  (function(){ var t=document.getElementById('data_base_toggle'); var b=document.getElementById('data_base_box'); if(t&&b){ function upd(){ if(t.checked){ b.classList.remove('hidden'); } else { b.classList.add('hidden'); } } t.addEventListener('change', function(){ upd(); recalc(); }); upd(); } })();
 // initialize display of pro-rata zero date
 (function(){
   let base = new Date();

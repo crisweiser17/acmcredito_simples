@@ -17,7 +17,7 @@ class LoansController {
       $parcelas = (int)($_POST['num_parcelas'] ?? 0);
       $taxa = self::parsePercent($_POST['taxa_juros_mensal'] ?? (string)$taxaDefault);
       $primeiro = $_POST['data_primeiro_vencimento'] ?? null;
-      $dataBase = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id']===1) ? ($_POST['data_base'] ?? null) : null;
+      $dataBase = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id']===1 && !empty($_POST['data_base_custom'])) ? ($_POST['data_base'] ?? null) : null;
       if ($client_id && $valor > 0 && $parcelas > 0 && $primeiro) {
         $chk = $pdo->prepare("SELECT COUNT(*) AS c FROM loans WHERE client_id=:cid AND status IN ('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo')");
         $chk->execute(['cid'=>$client_id]);
