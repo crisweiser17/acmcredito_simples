@@ -41,6 +41,10 @@ class Router {
       \App\Controllers\FileController::download();
       return;
     }
+    if ($path === '/boletos') {
+      \App\Controllers\BoletosController::novo();
+      return;
+    }
     if ($path === '/admin/install') {
       \App\Controllers\InstallController::handle();
       return;

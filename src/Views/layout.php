@@ -78,6 +78,12 @@ $saved = isset($_GET['saved']);
           </div>
         </div>
         <div>
+          <a href="/boletos" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18v2H3V5zm0 4h18v2H3V9zm0 4h12v2H3v-2z"/></svg>
+            <span>Boletos</span>
+          </a>
+        </div>
+        <div>
           <button type="button" data-target="menu-config" aria-expanded="<?php echo $openCfg?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
             <span class="flex items-center gap-2">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.027 7.027 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.2 2h-3.4a.5.5 0 0 0-.49.41l-.36 2.54c-.6.24-1.15.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.97 8.93a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.6.22l2.39-.96c.48.39 1.03.7 1.63.94l.36 2.54c.06.29.31.41.49.41h3.4c.29 0 .43-.19.49-.41l.36-2.54c.6-.24 1.15-.55 1.63-.94l2.39.96c.17.12.46.02.6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
