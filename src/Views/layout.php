@@ -31,10 +31,7 @@ $saved = isset($_GET['saved']);
       </div>
       <nav>
         <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/admin/install' || $path==='/usuarios'); ?>
-        <a href="/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-          <span>Dashboard</span>
-        </a>
+        
         <div>
           <button type="button" data-target="menu-clientes" aria-expanded="<?php echo $openCli?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
             <span class="flex items-center gap-2">
@@ -58,7 +55,7 @@ $saved = isset($_GET['saved']);
           </button>
           <div id="menu-emprestimos" class="<?php echo $openEmp?'block':'hidden'; ?>">
             <a href="/emprestimos" class="block px-6 py-2 hover:bg-gray-800">Listar</a>
-            <a href="/emprestimos/calculadora" class="block px-6 py-2 hover:bg-gray-800">Calculadora</a>
+            <a href="/emprestimos/calculadora" class="block px-6 py-2 hover:bg-gray-800">Novo</a>
           </div>
         </div>
         <div>
@@ -70,8 +67,14 @@ $saved = isset($_GET['saved']);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
           <div id="menu-relatorios" class="<?php echo strpos($path,'/relatorios')===0?'block':'hidden'; ?>">
+            <?php if (isset($_SESSION['user_id'])): ?>
+              <a href="/relatorios/financeiro" class="block px-6 py-2 hover:bg-gray-800">Financeiro</a>
+            <?php endif; ?>
             <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
             <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
+            <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
+              <a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Emprestimos Apagados</a>
+            <?php endif; ?>
           </div>
         </div>
         <div>

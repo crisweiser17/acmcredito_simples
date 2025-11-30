@@ -125,7 +125,20 @@ class Router {
       \App\Controllers\ReportsController::logs();
       return;
     }
-    \App\Controllers\HomeController::handle();
+    if ($path === '/relatorios/emprestimos-apagados') {
+      \App\Controllers\ReportsController::emprestimosApagados();
+      return;
+    }
+    if ($path === '/relatorios/financeiro') {
+      \App\Controllers\ReportsController::financeiro();
+      return;
+    }
+    if ($path === '/relatorios/financeiro/export-csv') {
+      \App\Controllers\ReportsController::financeiroExportCsv();
+      return;
+    }
+    if ($path === '/') { \App\Controllers\ClientesController::lista(); return; }
+    \App\Controllers\ClientesController::lista();
   }
   private static function isPublic(string $path): bool {
     if ($path === '/login') return true;

@@ -97,4 +97,327 @@ class ReportsController {
     $content = __DIR__ . '/../Views/relatorios_logs.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function emprestimosApagados(): void {
+    if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) { header('Location: /'); return; }
+    $pdo = Connection::get();
+    try { $pdo->exec("CREATE TABLE IF NOT EXISTS loans_archive LIKE loans"); } catch (\Throwable $e) {}
+    try { $pdo->exec("CREATE TABLE IF NOT EXISTS loan_parcelas_archive LIKE loan_parcelas"); } catch (\Throwable $e) {}
+    $q = trim($_GET['q'] ?? '');
+    $periodo = trim($_GET['periodo'] ?? '');
+    $ini = trim($_GET['data_ini'] ?? '');
+    $fim = trim($_GET['data_fim'] ?? '');
+    if ($periodo !== '' && $periodo !== 'custom') {
+      $today = date('Y-m-d');
+      if ($periodo === 'hoje') { $ini=$today; $fim=$today; }
+      elseif ($periodo === 'ultimos7') { $ini=date('Y-m-d', strtotime('-6 days')); $fim=$today; }
+      elseif ($periodo === 'ultimos30') { $ini=date('Y-m-d', strtotime('-29 days')); $fim=$today; }
+      elseif ($periodo === 'semana_atual') { $ini=date('Y-m-d', strtotime('monday this week')); $fim=date('Y-m-d', strtotime('sunday this week')); }
+      elseif ($periodo === 'mes_atual') { $ini=date('Y-m-01'); $fim=date('Y-m-t'); }
+      elseif ($periodo === 'proximo_mes') { $ini=$today; $fim=$today; }
+    }
+    $today = date('Y-m-d');
+    if ($fim === '' || $fim > $today) { $fim = $today; }
+    if ($ini !== '' && $ini > $today) { $ini = $today; }
+    if ($ini !== '' && $ini > $fim) { $ini = $fim; }
+    $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans_archive l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $params = [];
+    if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
+    if ($ini !== '' && $fim !== '') { $sql .= ' AND DATE(l.created_at) BETWEEN :ini AND :fim'; $params['ini']=$ini; $params['fim']=$fim; }
+    elseif ($ini !== '') { $sql .= ' AND DATE(l.created_at) >= :ini'; $params['ini']=$ini; }
+    elseif ($fim !== '') { $sql .= ' AND DATE(l.created_at) <= :fim'; $params['fim']=$fim; }
+    $sql .= ' ORDER BY l.created_at DESC';
+    $rows = [];
+    try { $stmt = $pdo->prepare($sql); $stmt->execute($params); $rows = $stmt->fetchAll(); } catch (\Throwable $e) { $rows = []; }
+    $title = 'Empréstimos Apagados';
+    $content = __DIR__ . '/../Views/relatorios_emprestimos_apagados.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
+  public static function financeiro(): void {
+    if (!isset($_SESSION['user_id'])) { header('Location: /login'); return; }
+    $pdo = Connection::get();
+    $tipo = trim($_GET['tipo_data'] ?? 'vencimento');
+    $periodo = trim($_GET['periodo'] ?? '');
+    $ini = trim($_GET['data_ini'] ?? '');
+    $fim = trim($_GET['data_fim'] ?? '');
+    if ($periodo !== '' && $periodo !== 'custom') {
+      $today = date('Y-m-d');
+      if ($periodo === 'hoje') { $ini=$today; $fim=$today; }
+      elseif ($periodo === 'ultimos7') { $ini=date('Y-m-d', strtotime('-6 days')); $fim=$today; }
+      elseif ($periodo === 'ultimos30') { $ini=date('Y-m-d', strtotime('-29 days')); $fim=$today; }
+      elseif ($periodo === 'semana_atual') { $ini=date('Y-m-d', strtotime('monday this week')); $fim=date('Y-m-d', strtotime('sunday this week')); }
+      elseif ($periodo === 'mes_atual') { $ini=date('Y-m-01'); $fim=date('Y-m-t'); }
+      elseif ($periodo === 'proximo_mes') { $ini=date('Y-m-01', strtotime('+1 month')); $fim=date('Y-m-t', strtotime('+1 month')); }
+    }
+    $dateFieldLoan = $tipo==='financiamento' ? 'DATE(COALESCE(l.transferencia_data, l.created_at))' : 'DATE(l.created_at)';
+    $dateFieldPar = $tipo==='financiamento' ? 'DATE(COALESCE(l.transferencia_data, l.created_at))' : 'DATE(p.data_vencimento)';
+    $params = [];
+    $whereLoan = ' WHERE 1=1';
+    $wherePar = ' WHERE 1=1';
+    if ($ini !== '' && $fim !== '') { $whereLoan .= ' AND ' . $dateFieldLoan . ' BETWEEN :ini AND :fim'; $wherePar .= ' AND ' . $dateFieldPar . ' BETWEEN :ini AND :fim'; $params['ini']=$ini; $params['fim']=$fim; }
+    elseif ($ini !== '') { $whereLoan .= ' AND ' . $dateFieldLoan . ' >= :ini'; $wherePar .= ' AND ' . $dateFieldPar . ' >= :ini'; $params['ini']=$ini; }
+    elseif ($fim !== '') { $whereLoan .= ' AND ' . $dateFieldLoan . ' <= :fim'; $wherePar .= ' AND ' . $dateFieldPar . ' <= :fim'; $params['fim']=$fim; }
+    $emprestado = 0.0;
+    $loansCount = 0;
+    $clientsCount = 0;
+    $lucroPrevisto = 0.0;
+    $aReceber = 0.0;
+    $pendentesValor = 0.0;
+    $vencidasValor = 0.0;
+    $pendentesCount = 0;
+    $vencidasCount = 0;
+    $lucroRealizado = 0.0;
+    $valorRepagamento = 0.0;
+    $inadValor = 0.0;
+    $lucroBruto = 0.0;
+    $lucroBrutoPercent = 0.0;
+    $pddSugestao = 0.0;
+    $receberMesAtual = 0.0;
+    $receberProximoMes = 0.0;
+    try {
+      $sqlL = 'SELECT COUNT(*) AS c, SUM(l.valor_principal) AS s1, SUM(l.total_juros) AS s2 FROM loans l' . $whereLoan . ' AND l.status IN (\'aguardando_transferencia\',\'aguardando_boletos\',\'ativo\')';
+      $stmtL = $pdo->prepare($sqlL); $stmtL->execute($params); $rowL = $stmtL->fetch();
+      $loansCount = (int)($rowL['c'] ?? 0);
+      $emprestado = (float)($rowL['s1'] ?? 0);
+      $lucroPrevisto = (float)($rowL['s2'] ?? 0);
+    } catch (\Throwable $e) {}
+    try {
+      $sqlC = 'SELECT COUNT(*) AS c FROM clients';
+      $pC = [];
+      if ($ini !== '' && $fim !== '') { $sqlC .= ' WHERE DATE(created_at) BETWEEN :ini AND :fim'; $pC=['ini'=>$ini,'fim'=>$fim]; }
+      elseif ($ini !== '') { $sqlC .= ' WHERE DATE(created_at) >= :ini'; $pC=['ini'=>$ini]; }
+      elseif ($fim !== '') { $sqlC .= ' WHERE DATE(created_at) <= :fim'; $pC=['fim'=>$fim]; }
+      $stmtC = $pdo->prepare($sqlC); $stmtC->execute($pC); $clientsCount = (int)($stmtC->fetch()['c'] ?? 0);
+    } catch (\Throwable $e) {}
+    try {
+      $sqlPRec = 'SELECT SUM(p.valor) AS total, SUM(CASE WHEN p.status=\'pendente\' THEN p.valor ELSE 0 END) AS pend, SUM(CASE WHEN p.status=\'vencido\' THEN p.valor ELSE 0 END) AS venc, SUM(CASE WHEN p.status=\'pago\' THEN p.juros_embutido ELSE 0 END) AS lucro_rec, SUM(CASE WHEN p.status=\'pendente\' THEN 1 ELSE 0 END) AS cnt_pend, SUM(CASE WHEN p.status=\'vencido\' THEN 1 ELSE 0 END) AS cnt_venc FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id' . $wherePar . ' AND l.status IN (\'aguardando_transferencia\',\'aguardando_boletos\',\'ativo\')';
+      $stmtP = $pdo->prepare($sqlPRec); $stmtP->execute($params); $rowP = $stmtP->fetch();
+      $aReceber = (float)(($rowP['total'] ?? 0) - ($rowP['lucro_rec'] ?? 0));
+      $pendentesValor = (float)($rowP['pend'] ?? 0);
+      $vencidasValor = (float)($rowP['venc'] ?? 0);
+      $pendentesCount = (int)($rowP['cnt_pend'] ?? 0);
+      $vencidasCount = (int)($rowP['cnt_venc'] ?? 0);
+      $lucroRealizado = (float)($rowP['lucro_rec'] ?? 0);
+      $valorRepagamento = (float)($rowP['total'] ?? 0);
+      $inadValor = (float)($rowP['venc'] ?? 0);
+    } catch (\Throwable $e) {}
+    $jurosCompetencia = 0.0; $jurosCaixa = $lucroRealizado;
+    try {
+      $sqlJ = 'SELECT SUM(CASE WHEN p.status=\'pendente\' THEN p.juros_embutido ELSE 0 END) AS jpend, SUM(CASE WHEN p.status=\'vencido\' THEN p.juros_embutido ELSE 0 END) AS jvenc FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id' . $wherePar . ' AND l.status IN (\'aguardando_transferencia\',\'aguardando_boletos\',\'ativo\')';
+      $stmtJ = $pdo->prepare($sqlJ); $stmtJ->execute($params); $rowJ = $stmtJ->fetch();
+      $jurosCompetencia = (float)(($rowJ['jpend'] ?? 0) + ($rowJ['jvenc'] ?? 0));
+    } catch (\Throwable $e) {}
+    $inadValor = (float)(($aging['d61_90'] ?? 0.0) + ($aging['d90p'] ?? 0.0));
+    $inadPercent = 0.0; $baseRec = $pendentesValor + $vencidasValor; if ($baseRec > 0) { $inadPercent = ($inadValor / $baseRec) * 100.0; }
+    $lucroBruto = round($lucroRealizado, 2);
+    $lucroBrutoPercent = ($emprestado > 0) ? round(($lucroBruto / $emprestado) * 100, 2) : 0.0;
+    $pddSugestao = round($emprestado * 0.10, 2);
+    try {
+      $iniAtual = date('Y-m-01');
+      $fimAtual = date('Y-m-t');
+      $iniProx = date('Y-m-01', strtotime('+1 month'));
+      $fimProx = date('Y-m-t', strtotime('+1 month'));
+      $stmtA = $pdo->prepare("SELECT COALESCE(SUM(p.valor),0) AS s FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND DATE(p.data_vencimento) BETWEEN :ini AND :fim");
+      $stmtA->execute(['ini'=>$iniAtual,'fim'=>$fimAtual]); $receberMesAtual = (float)($stmtA->fetch()['s'] ?? 0);
+      $stmtB = $pdo->prepare("SELECT COALESCE(SUM(p.valor),0) AS s FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND DATE(p.data_vencimento) BETWEEN :ini AND :fim");
+      $stmtB->execute(['ini'=>$iniProx,'fim'=>$fimProx]); $receberProximoMes = (float)($stmtB->fetch()['s'] ?? 0);
+    } catch (\Throwable $e) {}
+    $aging = ['d1_30'=>0.0,'d31_60'=>0.0,'d61_90'=>0.0,'d90p'=>0.0];
+    try {
+      $stmtAging = $pdo->query("SELECT
+        SUM(CASE WHEN DATEDIFF(CURDATE(), p.data_vencimento) BETWEEN 1 AND 30 THEN p.valor ELSE 0 END) AS d1_30,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), p.data_vencimento) BETWEEN 31 AND 60 THEN p.valor ELSE 0 END) AS d31_60,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), p.data_vencimento) BETWEEN 61 AND 90 THEN p.valor ELSE 0 END) AS d61_90,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), p.data_vencimento) > 90 THEN p.valor ELSE 0 END) AS d90p
+        FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='vencido' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo')");
+      $rowA = $stmtAging ? $stmtAging->fetch() : [];
+      $aging = [
+        'd1_30' => round((float)($rowA['d1_30'] ?? 0), 2),
+        'd31_60' => round((float)($rowA['d31_60'] ?? 0), 2),
+        'd61_90' => round((float)($rowA['d61_90'] ?? 0), 2),
+        'd90p' => round((float)($rowA['d90p'] ?? 0), 2)
+      ];
+    } catch (\Throwable $e) {}
+    $projMensal = [];
+    try {
+      $stmtProj = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, SUM(p.valor) AS total FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND p.data_vencimento > CURDATE() GROUP BY ym ORDER BY ym ASC LIMIT 6");
+      foreach (($stmtProj ? $stmtProj->fetchAll() : []) as $r) { $projMensal[$r['ym']] = round((float)$r['total'], 2); }
+    } catch (\Throwable $e) {}
+    $mesesDisponiveis = [];
+    try {
+      $stmtYM = $pdo->query("SELECT DATE_FORMAT(COALESCE(transferencia_data, created_at), '%Y-%m') AS ym, COUNT(*) AS c FROM loans WHERE DATE(COALESCE(transferencia_data, created_at)) <= CURDATE() AND status IN ('aguardando_transferencia','aguardando_boletos','ativo') GROUP BY ym HAVING c > 0 ORDER BY ym DESC");
+      foreach (($stmtYM ? $stmtYM->fetchAll() : []) as $r) { $mesesDisponiveis[] = $r['ym']; }
+    } catch (\Throwable $e) {}
+    $ymDefault = $mesesDisponiveis[0] ?? date('Y-m');
+    $rows = [
+      'clientsCount' => $clientsCount,
+      'loansCount' => $loansCount,
+      'emprestado' => round($emprestado, 2),
+      'aReceber' => round($pendentesValor + $vencidasValor, 2),
+      'pendentesCount' => $pendentesCount,
+      'vencidasCount' => $vencidasCount,
+      'lucroPrevisto' => round($jurosCompetencia, 2),
+      'lucroRealizado' => round($lucroRealizado, 2),
+      'inadPercent' => round($inadPercent, 2),
+      'pendentesValor' => round($pendentesValor, 2),
+      'vencidasValor' => round($vencidasValor, 2),
+      'valorRepagamento' => round($pendentesValor + $vencidasValor, 2),
+      'inadValor' => round($inadValor, 2),
+      'lucroBruto' => round($lucroBruto, 2),
+      'lucroBrutoPercent' => round($lucroBrutoPercent, 2),
+      'pddSugestao' => round($pddSugestao, 2),
+      'receberMesAtual' => round($receberMesAtual, 2),
+      'receberProximoMes' => round($receberProximoMes, 2),
+      'jurosCompetencia' => round($jurosCompetencia, 2),
+      'jurosCaixa' => round($jurosCaixa, 2),
+      'aging' => $aging,
+      'projMensal' => $projMensal,
+      'tipo' => $tipo,
+      'ini' => $ini,
+      'fim' => $fim,
+      'periodo' => $periodo,
+      'mesesDisponiveis' => $mesesDisponiveis,
+      'ymDefault' => $ymDefault
+    ];
+    $title = 'Relatório Financeiro';
+    $content = __DIR__ . '/../Views/relatorios_financeiro.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
+  public static function financeiroExportCsv(): void {
+    if (!isset($_SESSION['user_id'])) { header('Location: /login'); return; }
+    $pdo = Connection::get();
+    @ini_set('display_errors', '0');
+    @error_reporting(E_ALL & ~E_DEPRECATED);
+    $ym = trim($_GET['ym'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}$/', $ym)) { $ym = date('Y-m', strtotime('-1 month')); }
+    $ini = $ym . '-01';
+    $fim = date('Y-m-t', strtotime($ini));
+    $stmtL = $pdo->prepare("SELECT l.id, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, COALESCE(l.transferencia_data, l.created_at) AS dt_financiamento, c.nome AS cliente_nome, c.cpf AS cliente_cpf, (SELECT MIN(p.data_vencimento) FROM loan_parcelas p WHERE p.loan_id=l.id) AS primeira_parcela FROM loans l JOIN clients c ON c.id=l.client_id WHERE DATE(COALESCE(l.transferencia_data, l.created_at)) BETWEEN :ini AND :fim AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') ORDER BY COALESCE(l.transferencia_data, l.created_at) ASC");
+    $stmtL->execute(['ini'=>$ini,'fim'=>$fim]);
+    $loans = $stmtL->fetchAll();
+    $stmtS1 = $pdo->prepare("SELECT COALESCE(SUM(valor_principal),0) AS s FROM loans WHERE DATE(COALESCE(transferencia_data, created_at)) BETWEEN :ini AND :fim AND status IN ('aguardando_transferencia','aguardando_boletos','ativo')");
+    $stmtS1->execute(['ini'=>$ini,'fim'=>$fim]);
+    $sumPrincipal = (float)($stmtS1->fetch()['s'] ?? 0);
+    $stmtS2 = $pdo->prepare("SELECT COALESCE(SUM(num_parcelas*valor_parcela),0) AS s FROM loans WHERE DATE(COALESCE(transferencia_data, created_at)) BETWEEN :ini AND :fim AND status IN ('aguardando_transferencia','aguardando_boletos','ativo')");
+    $stmtS2->execute(['ini'=>$ini,'fim'=>$fim]);
+    $sumParcelas = (float)($stmtS2->fetch()['s'] ?? 0);
+    $loanIds = array_map(function($x){ return (int)($x['id'] ?? 0); }, $loans);
+    $inClause = '';
+    if (!empty($loanIds)) { $inClause = implode(',', array_map('intval', $loanIds)); }
+    $sumVencidasMes = 0.0; $sumInadMes = 0.0;
+    if ($inClause !== '') {
+      try { $stmtV = $pdo->prepare("SELECT COALESCE(SUM(valor),0) AS s FROM loan_parcelas WHERE status='vencido' AND loan_id IN (".$inClause.") AND DATE(data_vencimento) BETWEEN :ini AND :fim"); $stmtV->execute(['ini'=>$ini,'fim'=>$fim]); $sumVencidasMes = (float)($stmtV->fetch()['s'] ?? 0); } catch (\Throwable $e) {}
+      try { $stmtI = $pdo->prepare("SELECT COALESCE(SUM(valor),0) AS s FROM loan_parcelas WHERE status='vencido' AND loan_id IN (".$inClause.") AND DATE(data_vencimento) BETWEEN :ini AND :fim AND DATEDIFF(CURDATE(), data_vencimento) > 60"); $stmtI->execute(['ini'=>$ini,'fim'=>$fim]); $sumInadMes = (float)($stmtI->fetch()['s'] ?? 0); } catch (\Throwable $e) {}
+    }
+    $fname = 'relatorio_mensal_' . $ym . '.csv';
+    $dir = __DIR__ . '/../../public/uploads/relatorios';
+    if (!is_dir($dir)) { @mkdir($dir, 0777, true); }
+    $filepath = $dir . '/' . $fname;
+    $sep = ';'; $enc = '"'; $esc = '\\';
+    $direct = false;
+    $fp = @fopen($filepath, 'w');
+    if ($fp === false) {
+      header('Content-Type: text/csv; charset=utf-8');
+      header('Content-Disposition: attachment; filename="' . $fname . '"');
+      $fp = fopen('php://output', 'w');
+      $direct = true;
+    }
+    
+    $stmtPrev = $pdo->prepare("SELECT l.id, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, COALESCE(l.transferencia_data, l.created_at) AS dt_financiamento, c.nome AS cliente_nome, c.cpf AS cliente_cpf, (SELECT MIN(p.data_vencimento) FROM loan_parcelas p WHERE p.loan_id=l.id) AS primeira_parcela FROM loans l JOIN clients c ON c.id=l.client_id WHERE DATE(COALESCE(l.transferencia_data, l.created_at)) < :ini AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') ORDER BY COALESCE(l.transferencia_data, l.created_at) ASC");
+    $stmtPrev->execute(['ini'=>$ini]);
+    $loansPrev = $stmtPrev->fetchAll();
+    $prevIds = array_map(function($x){ return (int)($x['id'] ?? 0); }, $loansPrev);
+    $mapAmort = []; $mapJurosRec = [];
+    if (!empty($prevIds)) {
+      $inPrev = implode(',', array_map('intval', $prevIds));
+      try {
+        $stmtAgg = $pdo->query("SELECT loan_id, COALESCE(SUM(CASE WHEN status='pago' THEN valor - juros_embutido ELSE 0 END),0) AS amort, COALESCE(SUM(CASE WHEN status='pago' THEN juros_embutido ELSE 0 END),0) AS juros_rec FROM loan_parcelas WHERE loan_id IN (".$inPrev.") GROUP BY loan_id");
+        foreach (($stmtAgg ? $stmtAgg->fetchAll() : []) as $r) { $mapAmort[(int)$r['loan_id']] = (float)$r['amort']; $mapJurosRec[(int)$r['loan_id']] = (float)$r['juros_rec']; }
+      } catch (\Throwable $e) {}
+    }
+    $mapAmortMes = []; $mapJurosMes = []; $mapSaldoReceber = [];
+    $allIds = array_values(array_unique(array_merge($prevIds, $loanIds)));
+    if (!empty($allIds)) {
+      $inAll = implode(',', array_map('intval', $allIds));
+      try {
+        $stmtMonth = $pdo->prepare("SELECT loan_id, COALESCE(SUM(CASE WHEN status='pago' THEN valor - juros_embutido ELSE 0 END),0) AS amort_mes, COALESCE(SUM(CASE WHEN status='pago' THEN juros_embutido ELSE 0 END),0) AS juros_mes FROM loan_parcelas WHERE loan_id IN (".$inAll.") AND DATE(pago_em) BETWEEN :ini AND :fim GROUP BY loan_id");
+        $stmtMonth->execute(['ini'=>$ini,'fim'=>$fim]);
+        foreach (($stmtMonth ? $stmtMonth->fetchAll() : []) as $r) { $mapAmortMes[(int)$r['loan_id']] = (float)$r['amort_mes']; $mapJurosMes[(int)$r['loan_id']] = (float)$r['juros_mes']; }
+      } catch (\Throwable $e) {}
+      try {
+        $stmtSaldo = $pdo->query("SELECT loan_id, COALESCE(SUM(CASE WHEN status IN ('pendente','vencido') THEN valor ELSE 0 END),0) AS saldo FROM loan_parcelas WHERE loan_id IN (".$inAll.") GROUP BY loan_id");
+        foreach (($stmtSaldo ? $stmtSaldo->fetchAll() : []) as $r) { $mapSaldoReceber[(int)$r['loan_id']] = (float)$r['saldo']; }
+      } catch (\Throwable $e) {}
+    }
+    fputcsv($fp, ['Indicadores do mês'], $sep, $enc, $esc);
+    fputcsv($fp, ['Total valor emprestado', 'R$ ' . number_format($sumPrincipal, 2, ',', '.')], $sep, $enc, $esc);
+    fputcsv($fp, ['Total receita gerada (parcelas)', 'R$ ' . number_format($sumParcelas, 2, ',', '.')], $sep, $enc, $esc);
+    fputcsv($fp, ['Principal amortizado (mês)', 'R$ ' . number_format(array_sum($mapAmortMes), 2, ',', '.')], $sep, $enc, $esc);
+    fputcsv($fp, ['Juros recebidos (mês)', 'R$ ' . number_format(array_sum($mapJurosMes), 2, ',', '.')], $sep, $enc, $esc);
+    fputcsv($fp, ['Saldo total a receber', 'R$ ' . number_format(array_sum($mapSaldoReceber), 2, ',', '.')], $sep, $enc, $esc);
+    fputcsv($fp, [], $sep, $enc, $esc);
+    fputcsv($fp, ['Empréstimos em andamento (anteriores)'], $sep, $enc, $esc);
+    fputcsv($fp, ['Emprestimo','Cliente','CPF','Data de financiamento','Status','Data 1ª parcela','Valor do Emprestimo','Num Parcelas','Valor Parcelas','Principal amortizado','Saldo principal em aberto','Juros recebidos','Principal amortizado (mês)','Juros recebidos (mês)','Saldo total a receber'], $sep, $enc, $esc);
+    foreach ($loansPrev as $r) {
+      $am = (float)($mapAmort[(int)$r['id']] ?? 0);
+      $saldo = max(0.0, ((float)$r['valor_principal']) - $am);
+      $jr = (float)($mapJurosRec[(int)$r['id']] ?? 0);
+      $amMes = (float)($mapAmortMes[(int)$r['id']] ?? 0);
+      $jrMes = (float)($mapJurosMes[(int)$r['id']] ?? 0);
+      $saldoRec = (float)($mapSaldoReceber[(int)$r['id']] ?? 0);
+      $linhaPrev = [
+        '#'.(int)$r['id'],
+        (string)($r['cliente_nome'] ?? ''),
+        (string)($r['cliente_cpf'] ?? ''),
+        (string)($r['dt_financiamento'] ?? ''),
+        (string)($r['status'] ?? ''),
+        (string)($r['primeira_parcela'] ?? ''),
+        'R$ ' . number_format((float)$r['valor_principal'], 2, ',', '.'),
+        (int)($r['num_parcelas'] ?? 0),
+        'R$ ' . number_format((float)$r['valor_parcela'], 2, ',', '.'),
+        'R$ ' . number_format($am, 2, ',', '.'),
+        'R$ ' . number_format($saldo, 2, ',', '.'),
+        'R$ ' . number_format($jr, 2, ',', '.'),
+        'R$ ' . number_format($amMes, 2, ',', '.'),
+        'R$ ' . number_format($jrMes, 2, ',', '.'),
+        'R$ ' . number_format($saldoRec, 2, ',', '.')
+      ];
+      fputcsv($fp, $linhaPrev, $sep, $enc, $esc);
+    }
+    fputcsv($fp, [], $sep, $enc, $esc);
+    fputcsv($fp, ['Novas emissões do mês'], $sep, $enc, $esc);
+    fputcsv($fp, ['Emprestimo','Cliente','CPF','Data de financiamento','Status','Data 1ª parcela','Valor do Emprestimo','Num Parcelas','Valor Parcelas','Valor Total','Principal amortizado (mês)','Juros recebidos (mês)','Saldo total a receber'], $sep, $enc, $esc);
+    foreach ($loans as $r) {
+      $total = ((float)($r['num_parcelas'] ?? 0)) * ((float)($r['valor_parcela'] ?? 0));
+      $amMes = (float)($mapAmortMes[(int)$r['id']] ?? 0);
+      $jrMes = (float)($mapJurosMes[(int)$r['id']] ?? 0);
+      $saldoRec = (float)($mapSaldoReceber[(int)$r['id']] ?? 0);
+      $linhaCurr = [
+        '#'.(int)$r['id'],
+        (string)($r['cliente_nome'] ?? ''),
+        (string)($r['cliente_cpf'] ?? ''),
+        (string)($r['dt_financiamento'] ?? ''),
+        (string)($r['status'] ?? ''),
+        (string)($r['primeira_parcela'] ?? ''),
+        'R$ ' . number_format((float)$r['valor_principal'], 2, ',', '.'),
+        (int)($r['num_parcelas'] ?? 0),
+        'R$ ' . number_format((float)$r['valor_parcela'], 2, ',', '.'),
+        'R$ ' . number_format($total, 2, ',', '.'),
+        'R$ ' . number_format($amMes, 2, ',', '.'),
+        'R$ ' . number_format($jrMes, 2, ',', '.'),
+        'R$ ' . number_format($saldoRec, 2, ',', '.')
+      ];
+      fputcsv($fp, $linhaCurr, $sep, $enc, $esc);
+    }
+    fputcsv($fp, [], $sep, $enc, $esc);
+    fputcsv($fp, ['Resumo de atraso'], $sep, $enc, $esc);
+    fputcsv($fp, ['Total parcelas em atraso (mês)', 'R$ ' . number_format($sumVencidasMes, 2, ',', '.')], $sep, $enc, $esc);
+    fputcsv($fp, ['Total inadimplência >60 dias (mês)', 'R$ ' . number_format($sumInadMes, 2, ',', '.')], $sep, $enc, $esc);
+    if (is_resource($fp)) { fclose($fp); }
+    if ($direct) { exit; }
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $fname . '"');
+    header('Content-Length: ' . (string)filesize($filepath));
+    readfile($filepath);
+    exit;
+  }
 }
