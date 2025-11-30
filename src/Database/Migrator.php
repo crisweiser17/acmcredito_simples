@@ -26,6 +26,10 @@ class Migrator {
     try {
       $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'");
     } catch (\Throwable $e) {}
+    try {
+      $colDb = $pdo->query("SHOW COLUMNS FROM loans LIKE 'data_base'")->fetch();
+      if (!$colDb) { $pdo->exec("ALTER TABLE loans ADD COLUMN data_base DATE NULL"); }
+    } catch (\Throwable $e) {}
     $cols = $pdo->query("SHOW COLUMNS FROM clients")->fetchAll();
     $haveIndicador = false; $haveReferencias = false;
     foreach ($cols as $col) { if (($col['Field'] ?? '') === 'indicado_por_id') { $haveIndicador = true; } if (($col['Field'] ?? '') === 'referencias') { $haveReferencias = true; } }
@@ -47,5 +51,7 @@ class Migrator {
       $pdo->exec("UPDATE users SET role='superadmin' WHERE id=1");
       $pdo->exec("UPDATE users SET role='admin' WHERE id<>1");
     } catch (\Throwable $e) {}
+    try { $pdo->exec("CREATE TABLE IF NOT EXISTS loans_archive LIKE loans"); } catch (\Throwable $e) {}
+    try { $pdo->exec("CREATE TABLE IF NOT EXISTS loan_parcelas_archive LIKE loan_parcelas"); } catch (\Throwable $e) {}
   }
 }
