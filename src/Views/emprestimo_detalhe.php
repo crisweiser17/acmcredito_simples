@@ -197,11 +197,7 @@
       <div class="flex flex-wrap gap-2">
         <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>">
           <input type="hidden" name="acao" value="boletos_api">
-          <button class="btn-primary px-4 py-2 rounded <?php echo $gate3Disabled?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo $gate3Disabled?'disabled':''; ?>>Gerar Boleto Via API</button>
-        </form>
-        <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>">
-          <input type="hidden" name="acao" value="boletos_manuais">
-          <button class="px-4 py-2 rounded bg-gray-100 <?php echo $gate3Disabled?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo $gate3Disabled?'disabled':''; ?>>Registrar Geração de Boletos Manual</button>
+          <button class="btn-primary px-4 py-2 rounded <?php echo $gate3Disabled?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo $gate3Disabled?'disabled':''; ?>>Gerar Boletos via API</button>
         </form>
       </div>
     <?php endif; ?>

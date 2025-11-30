@@ -72,16 +72,11 @@ $saved = isset($_GET['saved']);
             <?php endif; ?>
             <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
             <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
+            <a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a>
             <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
               <a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Emprestimos Apagados</a>
             <?php endif; ?>
           </div>
-        </div>
-        <div>
-          <a href="/boletos" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18v2H3V5zm0 4h18v2H3V9zm0 4h12v2H3v-2z"/></svg>
-            <span>Boletos</span>
-          </a>
         </div>
         <div>
           <button type="button" data-target="menu-config" aria-expanded="<?php echo $openCfg?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">

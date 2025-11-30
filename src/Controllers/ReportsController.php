@@ -3,7 +3,7 @@ namespace App\Controllers;
 
 use App\Database\Connection;
 
-class ReportsController {
+  class ReportsController {
   public static function parcelas(): void {
     $pdo = Connection::get();
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -419,5 +419,62 @@ class ReportsController {
     header('Content-Length: ' . (string)filesize($filepath));
     readfile($filepath);
     exit;
+  }
+  public static function filas(): void {
+    $pdo = Connection::get();
+    $tab = trim($_GET['tab'] ?? 'fila');
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $acao = $_POST['acao'] ?? '';
+      if ($acao === 'fila_marcar_processado') {
+        $qid = (int)($_POST['qid'] ?? 0);
+        $processed = isset($_POST['processed']) ? (int)$_POST['processed'] : 0;
+        if ($qid > 0) {
+          try {
+            if ($processed === 1) {
+              $stmtU = $pdo->prepare("UPDATE billing_queue SET status='sucesso', processed_at=NOW(), payment_id=COALESCE(payment_id,'MANUAL'), api_response=:resp, last_error=NULL WHERE id=:id");
+              $stmtU->execute(['resp'=>json_encode(['manual'=>true]), 'id'=>$qid]);
+              $_SESSION['toast'] = 'Item marcado como processado';
+            } else {
+              $stmtU = $pdo->prepare("UPDATE billing_queue SET status='aguardando', processed_at=NULL, payment_id=NULL, api_response=NULL, last_error=NULL, try_count=CASE WHEN try_count>0 THEN try_count-1 ELSE 0 END WHERE id=:id");
+              $stmtU->execute(['id'=>$qid]);
+              $_SESSION['toast'] = 'Item desmarcado como processado';
+            }
+          } catch (\Throwable $e) { $_SESSION['toast'] = 'Falha ao atualizar: ' . $e->getMessage(); }
+        }
+        $qs = $_SERVER['QUERY_STRING'] ?? '';
+        header('Location: /relatorios/filas' . ($qs ? ('?'.$qs) : ''));
+        return;
+      }
+      if ($acao === 'executar') {
+        $vraw = trim($_POST['valor_teste'] ?? '');
+        $valorCents = null;
+        if ($vraw !== '') { $valorCents = (int)round((float)str_replace(',', '.', $vraw) * 100); if ($valorCents <= 0) { $valorCents = null; } }
+        try { $result = \App\Services\BillingQueueService::executeLytex(100, $valorCents); $_SESSION['toast'] = 'Execução enviada: ' . (int)($result['processed'] ?? 0) . ' itens.'; } catch (\Throwable $e) { $_SESSION['toast'] = 'Erro ao executar: ' . $e->getMessage(); }
+        $qs = $_SERVER['QUERY_STRING'] ?? '';
+        header('Location: /relatorios/filas' . ($qs ? ('?'.$qs) : ''));
+        return;
+      }
+    }
+    try { $pdo->exec("CREATE TABLE IF NOT EXISTS billing_queue (id INT PRIMARY KEY AUTO_INCREMENT, parcela_id INT NOT NULL, loan_id INT NOT NULL, client_id INT NOT NULL, status ENUM('aguardando','processando','sucesso','erro') NOT NULL DEFAULT 'aguardando', try_count INT NOT NULL DEFAULT 0, last_error TEXT NULL, api_response JSON NULL, payment_id VARCHAR(100) NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, processed_at DATETIME NULL, UNIQUE KEY uniq_parcela (parcela_id), INDEX idx_status (status), INDEX idx_loan (loan_id))"); } catch (\Throwable $e) {}
+    $status = trim($_GET['status'] ?? '');
+    $sql = 'SELECT q.*, c.nome AS cliente_nome FROM billing_queue q JOIN loans l ON l.id=q.loan_id JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $params = [];
+    if ($status !== '' && in_array($status, ['aguardando','processando','sucesso','erro'], true)) { $sql .= ' AND q.status = :st'; $params['st']=$status; }
+    $sql .= ' ORDER BY q.created_at DESC, q.id DESC';
+    $stmt = $pdo->prepare($sql); $stmt->execute($params); $rows = $stmt->fetchAll();
+    $logs = []; $runs = [];
+    if ($tab === 'logs') {
+      try { $pdo->exec("CREATE TABLE IF NOT EXISTS billing_logs (id INT PRIMARY KEY AUTO_INCREMENT, queue_id INT NULL, action VARCHAR(50) NOT NULL, http_code INT NULL, request_json JSON NULL, response_json JSON NULL, run_id VARCHAR(64) NULL, note VARCHAR(255) NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_action (action), INDEX idx_queue (queue_id), INDEX idx_run (run_id))"); } catch (\Throwable $e) {}
+      $runSel = trim($_GET['run'] ?? '');
+      if ($runSel === '') {
+        try { $stmtR = $pdo->query("SELECT run_id, MAX(created_at) AS created_at FROM billing_logs WHERE run_id IS NOT NULL GROUP BY run_id ORDER BY created_at DESC LIMIT 50"); $runs = $stmtR ? $stmtR->fetchAll() : []; } catch (\Throwable $e) { $runs = []; }
+        if (!$runs || count($runs)===0) { try { $stmtL = $pdo->query("SELECT * FROM billing_logs ORDER BY created_at DESC, id DESC LIMIT 200"); $logs = $stmtL ? $stmtL->fetchAll() : []; } catch (\Throwable $e) { $logs = []; } }
+      } else {
+        try { $stmtL = $pdo->prepare("SELECT * FROM billing_logs WHERE run_id=:rid ORDER BY created_at ASC, id ASC"); $stmtL->execute(['rid'=>$runSel]); $logs = $stmtL->fetchAll(); } catch (\Throwable $e) { $logs = []; }
+      }
+    }
+    $title = 'Filas';
+    $content = __DIR__ . '/../Views/relatorios_filas.php';
+    include __DIR__ . '/../Views/layout.php';
   }
 }

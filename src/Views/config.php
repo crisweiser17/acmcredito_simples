@@ -116,6 +116,38 @@ $production = readEnvFile('.env.production');
         </div>
       </div>
     </div>
+    <div class="space-y-4">
+      <div class="text-lg font-semibold">Integração com Boletos - Lytex</div>
+      <?php $lytexClientId = \App\Helpers\ConfigRepo::get('lytex_client_id', ''); ?>
+      <?php $lytexClientSecret = \App\Helpers\ConfigRepo::get('lytex_client_secret', ''); ?>
+      <?php $lytexCallbackSecret = \App\Helpers\ConfigRepo::get('lytex_callback_secret', ''); ?>
+      <?php $lytexEnv = \App\Helpers\ConfigRepo::get('lytex_env', 'sandbox'); ?>
+      <input class="w-full border rounded px-3 py-2" name="lytex_client_id" placeholder="Client ID" value="<?php echo htmlspecialchars($lytexClientId); ?>">
+      <input class="w-full border rounded px-3 py-2" name="lytex_client_secret" placeholder="Client Secret" value="<?php echo htmlspecialchars($lytexClientSecret); ?>">
+      <input class="w-full border rounded px-3 py-2" name="lytex_callback_secret" placeholder="Callback Secret" value="<?php echo htmlspecialchars($lytexCallbackSecret); ?>">
+      <div class="mt-2">
+        <label class="block text-sm mb-1">Ambiente Lytex</label>
+        <div class="flex items-center gap-6">
+          <label class="inline-flex items-center gap-2"><input type="radio" name="lytex_env" value="sandbox" <?php echo $lytexEnv==='sandbox'?'checked':''; ?>><span>Sandbox</span></label>
+          <label class="inline-flex items-center gap-2"><input type="radio" name="lytex_env" value="producao" <?php echo $lytexEnv==='producao'?'checked':''; ?>><span>Produção</span></label>
+        </div>
+      </div>
+      <div class="text-sm text-gray-600">Webhook configurado para <code>https://app.acmcredito.com.br/webhook/</code>.</div>
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <?php $lytexMulta = \App\Helpers\ConfigRepo::get('lytex_multa_percentual', '2'); ?>
+        <?php $lytexJuros = \App\Helpers\ConfigRepo::get('lytex_juros_percentual_dia', '0.033'); ?>
+        <div>
+          <label class="block text-sm mb-1">Multa por Atraso (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="lytex_multa_percentual" placeholder="Ex: 2" value="<?php echo htmlspecialchars($lytexMulta); ?>">
+          <div class="text-xs text-gray-500 mt-1">Percentual de multa aplicado após o vencimento</div>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Juros por Dia (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.001" name="lytex_juros_percentual_dia" placeholder="Ex: 0.033" value="<?php echo htmlspecialchars($lytexJuros); ?>">
+          <div class="text-xs text-gray-500 mt-1">Percentual de juros diário aplicado após o vencimento</div>
+        </div>
+      </div>
+    </div>
     <button class="btn-primary px-4 py-2 rounded" type="submit">Salvar Configurações</button>
   </form>
   <div class="text-sm text-gray-600">Para alternar manualmente o ambiente, edite <code>config/app.php</code> e troque o valor de <code>'env'</code> entre <code>staging</code> e <code>production</code>.</div>

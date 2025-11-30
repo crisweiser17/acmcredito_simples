@@ -41,10 +41,6 @@ class Router {
       \App\Controllers\FileController::download();
       return;
     }
-    if ($path === '/boletos') {
-      \App\Controllers\BoletosController::novo();
-      return;
-    }
     if ($path === '/admin/install') {
       \App\Controllers\InstallController::handle();
       return;
@@ -79,6 +75,10 @@ class Router {
     }
     if (preg_match('#^/emprestimos/(\d+)/boletos$#', $path, $m)) {
       \App\Controllers\LoansController::boletos((int)$m[1]);
+      return;
+    }
+    if ($path === '/cron/billing') {
+      \App\Controllers\CronController::billing();
       return;
     }
     if (preg_match('#^/emprestimos/(\d+)/cancelar-contrato$#', $path, $m)) {
@@ -139,6 +139,10 @@ class Router {
     }
     if ($path === '/relatorios/financeiro/export-csv') {
       \App\Controllers\ReportsController::financeiroExportCsv();
+      return;
+    }
+    if ($path === '/relatorios/filas') {
+      \App\Controllers\ReportsController::filas();
       return;
     }
     if ($path === '/') { \App\Controllers\ClientesController::lista(); return; }

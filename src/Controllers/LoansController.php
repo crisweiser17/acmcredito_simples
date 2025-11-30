@@ -173,33 +173,11 @@ class LoansController {
         return;
       }
       if ($acao === 'boletos_api') {
-        $loan = $pdo->prepare('SELECT l.*, c.nome, c.cpf, c.email FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
-        $loan->execute(['id'=>$id]);
-        $lrow = $loan->fetch();
-        if ($lrow) {
-          $payload = [ 'cliente' => ['nome'=>$lrow['nome'],'cpf'=>$lrow['cpf'],'email'=>$lrow['email']], 'parcelas' => [] ];
-          $ps = $pdo->prepare('SELECT * FROM loan_parcelas WHERE loan_id=:id ORDER BY numero_parcela');
-          $ps->execute(['id'=>$id]);
-          foreach ($ps->fetchAll() as $p) {
-            $payload['parcelas'][] = [
-              'numero' => (int)$p['numero_parcela'],
-              'valor' => (float)$p['valor'],
-              'vencimento' => $p['data_vencimento'],
-              'multa' => (float)ConfigRepo::get('multa_percentual','2'),
-              'juros_dia' => (float)ConfigRepo::get('juros_mora_percentual_dia','0.033')
-            ];
-          }
-          try {
-            $pdo->prepare('UPDATE loans SET boletos_api_response=:r, boletos_metodo=\'api\', boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')
-                ->execute(['r'=>json_encode($payload), 'id'=>$id]);
-          } catch (\Throwable $e) {
-            try { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_metodo ENUM('api','manual') NULL"); } catch (\Throwable $e2) {}
-            try { $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'"); } catch (\Throwable $e3) {}
-            $pdo->prepare('UPDATE loans SET boletos_api_response=:r, boletos_metodo=\'api\', boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')
-                ->execute(['r'=>json_encode($payload), 'id'=>$id]);
-          }
-          Audit::log('gerar_boletos_api','loans',$id,null);
-        }
+        try { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_metodo ENUM('api','manual') NULL"); } catch (\Throwable $e2) {}
+        try { $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'"); } catch (\Throwable $e3) {}
+        try { $pdo->prepare("UPDATE loans SET boletos_metodo='api', boletos_gerados=0, boletos_api_response=NULL, status='aguardando_boletos' WHERE id=:id")->execute(['id'=>$id]); } catch (\Throwable $e4) {}
+        try { \App\Services\BillingQueueService::enqueueLoan($id); } catch (\Throwable $e) {}
+        Audit::log('fila_boletos_api','loans',$id,null);
         header('Location: /emprestimos/' . $id);
         return;
       }
@@ -350,43 +328,11 @@ class LoansController {
     if (!$l) { header('Location:/'); return; }
     if ($_SERVER['REQUEST_METHOD']==='POST') {
       if (isset($_POST['acao']) && $_POST['acao']==='gerar_api') {
-        $payload = [
-          'cliente' => ['nome'=>$l['nome'],'cpf'=>$l['cpf'],'email'=>$l['email']],
-          'parcelas' => []
-        ];
-        $ps = $pdo->prepare('SELECT * FROM loan_parcelas WHERE loan_id=:id ORDER BY numero_parcela');
-        $ps->execute(['id'=>$id]);
-        foreach ($ps->fetchAll() as $p) {
-          $payload['parcelas'][] = [
-            'numero' => (int)$p['numero_parcela'],
-            'valor' => (float)$p['valor'],
-            'vencimento' => $p['data_vencimento'],
-            'multa' => (float)ConfigRepo::get('multa_percentual','2'),
-            'juros_dia' => (float)ConfigRepo::get('juros_mora_percentual_dia','0.033')
-          ];
-        }
-        try {
-          $pdo->prepare('UPDATE loans SET boletos_api_response=:r, boletos_metodo=\'api\', boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')
-              ->execute(['r'=>json_encode($payload), 'id'=>$id]);
-        } catch (\Throwable $e) {
-          try { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_metodo ENUM('api','manual') NULL"); } catch (\Throwable $e2) {}
-          try { $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'"); } catch (\Throwable $e3) {}
-          $pdo->prepare('UPDATE loans SET boletos_api_response=:r, boletos_metodo=\'api\', boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')
-              ->execute(['r'=>json_encode($payload), 'id'=>$id]);
-        }
-        Audit::log('gerar_boletos_api','loans',$id,null);
-        header('Location:/emprestimos/'.$id);
-        return;
-      }
-      if (isset($_POST['acao']) && $_POST['acao']==='manuais') {
-        try {
-          $pdo->prepare('UPDATE loans SET boletos_metodo=\'manual\', boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')->execute(['id'=>$id]);
-        } catch (\Throwable $e) {
-          try { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_metodo ENUM('api','manual') NULL"); } catch (\Throwable $e2) {}
-          try { $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'"); } catch (\Throwable $e3) {}
-          $pdo->prepare('UPDATE loans SET boletos_metodo=\'manual\', boletos_gerados=1, boletos_gerados_em=NOW(), status=\'ativo\' WHERE id=:id')->execute(['id'=>$id]);
-        }
-        Audit::log('boletos_manuais','loans',$id,null);
+        try { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_metodo ENUM('api','manual') NULL"); } catch (\Throwable $e2) {}
+        try { $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'"); } catch (\Throwable $e3) {}
+        try { $pdo->prepare("UPDATE loans SET boletos_metodo='api', status='aguardando_boletos' WHERE id=:id")->execute(['id'=>$id]); } catch (\Throwable $e4) {}
+        try { \App\Services\BillingQueueService::enqueueLoan($id); } catch (\Throwable $e) {}
+        Audit::log('fila_boletos_api','loans',$id,null);
         header('Location:/emprestimos/'.$id);
         return;
       }

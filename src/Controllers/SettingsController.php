@@ -28,6 +28,26 @@ class SettingsController {
       if ($token !== '') { ConfigRepo::set('api_cpf_cnpj_token', $token, 'Token API CPF/CNPJ'); }
       if ($pacote !== '') { ConfigRepo::set('api_cpf_cnpj_pacote', $pacote, 'Pacote API CPF/CNPJ'); }
       ConfigRepo::set('api_cpf_cnpj_env', $teste, 'Ambiente API CPF/CNPJ');
+      $lytexClientId = trim($_POST['lytex_client_id'] ?? '');
+      $lytexClientSecret = trim($_POST['lytex_client_secret'] ?? '');
+      $lytexCallbackSecret = trim($_POST['lytex_callback_secret'] ?? '');
+      $lytexEnv = trim($_POST['lytex_env'] ?? '');
+      try {
+        $pdo = \App\Database\Connection::get();
+        $col = $pdo->query("SHOW COLUMNS FROM config LIKE 'valor'")->fetch();
+        $type = strtolower($col['Type'] ?? '');
+        if ($type !== '' && preg_match('/varchar\((\d+)\)/', $type, $m) && (int)$m[1] < 1000) {
+          $pdo->exec("ALTER TABLE config MODIFY COLUMN valor VARCHAR(1000) NOT NULL");
+        }
+      } catch (\Throwable $e) {}
+      if ($lytexClientId !== '') { ConfigRepo::set('lytex_client_id', $lytexClientId, 'Lytex Client ID'); }
+      if ($lytexClientSecret !== '') { ConfigRepo::set('lytex_client_secret', $lytexClientSecret, 'Lytex Client Secret'); }
+      if ($lytexCallbackSecret !== '') { ConfigRepo::set('lytex_callback_secret', $lytexCallbackSecret, 'Lytex Callback Secret'); }
+      if ($lytexEnv !== '' && in_array($lytexEnv, ['sandbox','producao'], true)) { ConfigRepo::set('lytex_env', $lytexEnv, 'Lytex Ambiente'); }
+      $lytexMulta = trim($_POST['lytex_multa_percentual'] ?? '');
+      $lytexJuros = trim($_POST['lytex_juros_percentual_dia'] ?? '');
+      if ($lytexMulta !== '') { ConfigRepo::set('lytex_multa_percentual', $lytexMulta, 'Lytex Multa Percentual'); }
+      if ($lytexJuros !== '') { ConfigRepo::set('lytex_juros_percentual_dia', $lytexJuros, 'Lytex Juros Percentual/Dia'); }
       $empresaEndereco = trim($_POST['empresa_endereco'] ?? '');
       $empresaRazao = trim($_POST['empresa_razao_social'] ?? '');
       $empresaCnpj = trim($_POST['empresa_cnpj'] ?? '');
