@@ -81,6 +81,10 @@ class Router {
       \App\Controllers\CronController::billing();
       return;
     }
+    if ($path === '/api/webhook/lytex') {
+      \App\Controllers\WebhookController::lytex();
+      return;
+    }
     if (preg_match('#^/emprestimos/(\d+)/cancelar-contrato$#', $path, $m)) {
       \App\Controllers\LoansController::cancelarContrato((int)$m[1]);
       return;
@@ -154,6 +158,7 @@ class Router {
     if ($path === '/arquivo' || $path === '/arquivo/view' || $path === '/arquivo/download') return true;
     if (preg_match('#^/uploads/#', $path)) return true;
     if ($path === '/cadastro') return true;
+    if (preg_match('#^/api/webhook/#', $path)) return true;
     return false;
   }
 }

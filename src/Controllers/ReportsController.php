@@ -422,7 +422,7 @@ use App\Database\Connection;
   }
   public static function filas(): void {
     $pdo = Connection::get();
-    $tab = trim($_GET['tab'] ?? 'fila');
+    $tab = trim($_GET['tab'] ?? 'envios');
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $acao = $_POST['acao'] ?? '';
       if ($acao === 'fila_marcar_processado') {
@@ -445,11 +445,14 @@ use App\Database\Connection;
         header('Location: /relatorios/filas' . ($qs ? ('?'.$qs) : ''));
         return;
       }
-      if ($acao === 'executar') {
-        $vraw = trim($_POST['valor_teste'] ?? '');
-        $valorCents = null;
-        if ($vraw !== '') { $valorCents = (int)round((float)str_replace(',', '.', $vraw) * 100); if ($valorCents <= 0) { $valorCents = null; } }
-        try { $result = \App\Services\BillingQueueService::executeLytex(100, $valorCents); $_SESSION['toast'] = 'Execução enviada: ' . (int)($result['processed'] ?? 0) . ' itens.'; } catch (\Throwable $e) { $_SESSION['toast'] = 'Erro ao executar: ' . $e->getMessage(); }
+      if ($acao === 'executar_envios') {
+        try { $result = \App\Services\BillingQueueService::executeLytex(100, null); $_SESSION['toast'] = 'Fila de envios processada: ' . (int)($result['processed'] ?? 0) . ' cobranças criadas.'; } catch (\Throwable $e) { $_SESSION['toast'] = 'Erro ao executar: ' . $e->getMessage(); }
+        $qs = $_SERVER['QUERY_STRING'] ?? '';
+        header('Location: /relatorios/filas' . ($qs ? ('?'.$qs) : ''));
+        return;
+      }
+      if ($acao === 'executar_webhooks') {
+        try { $result = \App\Services\WebhookQueueService::processQueue(100); $_SESSION['toast'] = 'Fila de webhooks processada: ' . (int)($result['processed'] ?? 0) . ' processados, ' . (int)($result['ignored'] ?? 0) . ' ignorados.'; } catch (\Throwable $e) { $_SESSION['toast'] = 'Erro ao executar: ' . $e->getMessage(); }
         $qs = $_SERVER['QUERY_STRING'] ?? '';
         header('Location: /relatorios/filas' . ($qs ? ('?'.$qs) : ''));
         return;
@@ -462,6 +465,12 @@ use App\Database\Connection;
     if ($status !== '' && in_array($status, ['aguardando','processando','sucesso','erro'], true)) { $sql .= ' AND q.status = :st'; $params['st']=$status; }
     $sql .= ' ORDER BY q.created_at DESC, q.id DESC';
     $stmt = $pdo->prepare($sql); $stmt->execute($params); $rows = $stmt->fetchAll();
+    $webhooks = [];
+    $webhookStats = ['pendente'=>0, 'processado'=>0, 'erro'=>0, 'ignorado'=>0, 'total'=>0];
+    if ($tab === 'webhooks') {
+      $webhooks = \App\Services\WebhookQueueService::listWebhooks($status, 200);
+      $webhookStats = \App\Services\WebhookQueueService::getStats();
+    }
     $logs = []; $runs = [];
     if ($tab === 'logs') {
       try { $pdo->exec("CREATE TABLE IF NOT EXISTS billing_logs (id INT PRIMARY KEY AUTO_INCREMENT, queue_id INT NULL, action VARCHAR(50) NOT NULL, http_code INT NULL, request_json JSON NULL, response_json JSON NULL, run_id VARCHAR(64) NULL, note VARCHAR(255) NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_action (action), INDEX idx_queue (queue_id), INDEX idx_run (run_id))"); } catch (\Throwable $e) {}
