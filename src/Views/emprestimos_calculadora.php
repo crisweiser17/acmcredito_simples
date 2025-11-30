@@ -73,6 +73,13 @@
         <div class="text-sm text-gray-600 mt-0.5">Primeiro Vencimento</div>
         <div class="text-xs text-gray-500 mt-1">Data do 1º pagamento para pró‑rata zero = <button type="button" id="pr_zero_btn" class="underline"><span id="pr_zero_date"></span></button></div>
       </div>
+      <?php if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
+      <div>
+        <input class="w-full border rounded px-3 py-2" type="date" name="data_base" id="data_base">
+        <div class="text-sm text-gray-600 mt-0.5">Data base (admin)</div>
+        <div class="text-xs text-gray-500 mt-1">Usada para calcular pró‑rata e cronograma a partir de uma data específica</div>
+      </div>
+      <?php endif; ?>
       <div class="flex gap-3 pt-2">
         <button class="btn-primary px-4 py-2 rounded" type="submit">Gerar Solicitação de Empréstimo</button>
       </div>
@@ -172,7 +179,12 @@ function recalc(){
   let diasPadrao = 0, diasSel = 0;
   let jurosProp = 0;
   if (dv) {
+    let baseEl = document.getElementById('data_base');
     let base = new Date();
+    if (baseEl && baseEl.value) {
+      const pb = baseEl.value.split('-');
+      base = new Date(Number(pb[0]), Number(pb[1]) - 1, Number(pb[2]));
+    }
     base.setDate(base.getDate()+1);
     while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
     const parts = dv.split('-');

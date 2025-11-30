@@ -17,6 +17,7 @@ class LoansController {
       $parcelas = (int)($_POST['num_parcelas'] ?? 0);
       $taxa = self::parsePercent($_POST['taxa_juros_mensal'] ?? (string)$taxaDefault);
       $primeiro = $_POST['data_primeiro_vencimento'] ?? null;
+      $dataBase = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id']===1) ? ($_POST['data_base'] ?? null) : null;
       if ($client_id && $valor > 0 && $parcelas > 0 && $primeiro) {
         $chk = $pdo->prepare("SELECT COUNT(*) AS c FROM loans WHERE client_id=:cid AND status IN ('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo')");
         $chk->execute(['cid'=>$client_id]);
@@ -27,7 +28,7 @@ class LoansController {
           include __DIR__ . '/../Views/layout.php';
           return;
         }
-        $calc = self::calcularPrice($valor, $parcelas, $taxa, $primeiro);
+        $calc = self::calcularPrice($valor, $parcelas, $taxa, $primeiro, $dataBase);
         $stmt = $pdo->prepare("INSERT INTO loans (client_id, valor_principal, num_parcelas, taxa_juros_mensal, valor_parcela, valor_total, total_juros, data_primeiro_vencimento, dias_primeiro_periodo, juros_proporcional_primeiro_mes, cet_percentual, status, created_by_user_id) VALUES (:client_id,:valor_principal,:num_parcelas,:taxa_juros_mensal,:valor_parcela,:valor_total,:total_juros,:data_primeiro_vencimento,:dias_primeiro_periodo,:juros_proporcional_primeiro_mes,:cet_percentual,'calculado',:user_id)");
         $stmt->execute([
           'client_id' => $client_id,
@@ -63,6 +64,10 @@ class LoansController {
           $dt->modify('+1 month');
         }
         Audit::log('create_loan','loans',$loan_id,null);
+        if ($dataBase) {
+          try { $pdo->exec("ALTER TABLE loans ADD COLUMN data_base DATE NULL"); } catch (\Throwable $e) {}
+          try { $pdo->prepare('UPDATE loans SET data_base=:db WHERE id=:id')->execute(['db'=>$dataBase,'id'=>$loan_id]); } catch (\Throwable $e) {}
+        }
         header('Location: /emprestimos/' . $loan_id);
         exit;
       }
@@ -72,8 +77,8 @@ class LoansController {
     include __DIR__ . '/../Views/layout.php';
   }
 
-  private static function calcularPrice(float $valor, int $parcelas, float $taxa, string $primeiroVenc): array {
-    $base = new \DateTime();
+  private static function calcularPrice(float $valor, int $parcelas, float $taxa, string $primeiroVenc, ?string $dataBase = null): array {
+    $base = $dataBase ? new \DateTime($dataBase) : new \DateTime();
     $base->modify('+1 day');
     while (in_array((int)$base->format('w'), [0,6], true)) { $base->modify('+1 day'); }
     $y = (int)$base->format('Y');
@@ -115,9 +120,25 @@ class LoansController {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $acao = $_POST['acao'] ?? '';
       if ($acao === 'excluir') {
+        try { $pdo->exec("CREATE TABLE IF NOT EXISTS loans_archive LIKE loans"); } catch (\Throwable $e) {}
+        try { $pdo->exec("CREATE TABLE IF NOT EXISTS loan_parcelas_archive LIKE loan_parcelas"); } catch (\Throwable $e) {}
+        try {
+          $rowL = $pdo->prepare('SELECT * FROM loans WHERE id=:id'); $rowL->execute(['id'=>$id]); $orig = $rowL->fetch();
+          if ($orig) {
+            $cols = array_keys($orig);
+            $insert = 'INSERT INTO loans_archive (`'.implode('`,`',$cols).'`) VALUES ('.implode(',', array_fill(0,count($cols),'?')).')';
+            $pdo->prepare($insert)->execute(array_values($orig));
+          }
+          $ps = $pdo->prepare('SELECT * FROM loan_parcelas WHERE loan_id=:id'); $ps->execute(['id'=>$id]); $allP = $ps->fetchAll();
+          foreach ($allP as $p) {
+            $colsP = array_keys($p);
+            $insP = 'INSERT INTO loan_parcelas_archive (`'.implode('`,`',$colsP).'`) VALUES ('.implode(',', array_fill(0,count($colsP),'?')).')';
+            $pdo->prepare($insP)->execute(array_values($p));
+          }
+        } catch (\Throwable $e) {}
         $pdo->prepare('DELETE FROM loan_parcelas WHERE loan_id = :id')->execute(['id'=>$id]);
         $pdo->prepare('DELETE FROM loans WHERE id = :id')->execute(['id'=>$id]);
-        Audit::log('delete_loan','loans',$id,null);
+        Audit::log('archive_loan','loans',$id,'move_to_archive');
         header('Location: /emprestimos');
         return;
       }
