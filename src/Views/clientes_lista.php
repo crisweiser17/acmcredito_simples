@@ -67,7 +67,7 @@
       if (sel && ini && fim){ upd(); sel.addEventListener('change', upd); }
     })();
   </script>
-  <table class="w-full border-collapse">
+  <table class="w-full border-collapse table-fixed">
     <thead>
       <tr>
         <th class="border px-2 py-1">ID</th>
@@ -75,10 +75,10 @@
         <th class="border px-2 py-1">CPF</th>
         <th class="border px-2 py-1">Prova de Vida</th>
         <th class="border px-2 py-1">Consulta CPF</th>
-        <th class="border px-2 py-1">Criterios de Emprestimo</th>
+        <th class="border px-2 py-1 whitespace-nowrap text-sm" style="width: 120px;">Critérios</th>
         <th class="border px-2 py-1">Elegivel</th>
         <th class="border px-2 py-1">Criado em</th>
-        <th class="border px-2 py-1">Ações</th>
+        <th class="border px-2 py-1 whitespace-nowrap">Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -89,22 +89,22 @@
           <td class="border px-2 py-1"><?php $cpfDigits = preg_replace('/\D+/', '', (string)$c['cpf']); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); echo htmlspecialchars($cpfFmt); } else { echo htmlspecialchars((string)$c['cpf']); } ?></td>
           <td class="border px-2 py-1"><?php $pv = strtolower((string)($c['prova_vida_status'] ?? '')); $pvClass = 'bg-gray-100 text-gray-800'; if ($pv==='aprovado'){ $pvClass='bg-green-100 text-green-800'; } elseif ($pv==='pendente'){ $pvClass='bg-yellow-100 text-yellow-800'; } elseif ($pv==='reprovado'){ $pvClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $pvClass; ?>"><?php echo htmlspecialchars($pv ? ucfirst($pv) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php $cs2 = strtolower((string)($c['cpf_check_status'] ?? '')); $csClass = 'bg-gray-100 text-gray-800'; if ($cs2==='aprovado'){ $csClass='bg-green-100 text-green-800'; } elseif ($cs2==='pendente'){ $csClass='bg-yellow-100 text-yellow-800'; } elseif ($cs2==='reprovado'){ $csClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $csClass; ?>"><?php echo htmlspecialchars($cs2 ? ucfirst($cs2) : '—'); ?></span></td>
-          <td class="border px-2 py-1"><?php $cr = strtolower((string)($c['criterios_status'] ?? '')); $crClass = 'bg-gray-100 text-gray-800'; if ($cr==='aprovado'){ $crClass='bg-green-100 text-green-800'; } elseif ($cr==='pendente'){ $crClass='bg-yellow-100 text-yellow-800'; } elseif ($cr==='reprovado'){ $crClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $crClass; ?>"><?php echo htmlspecialchars($cr ? ucfirst($cr) : '—'); ?></span></td>
+          <td class="border px-2 py-1 whitespace-nowrap"><?php $cr = strtolower((string)($c['criterios_status'] ?? '')); $crClass = 'bg-gray-100 text-gray-800'; if ($cr==='aprovado'){ $crClass='bg-green-100 text-green-800'; } elseif ($cr==='pendente'){ $crClass='bg-yellow-100 text-yellow-800'; } elseif ($cr==='reprovado'){ $crClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $crClass; ?>"><?php echo htmlspecialchars($cr ? ucfirst($cr) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php $elig = (strtolower((string)($c['prova_vida_status'] ?? ''))==='aprovado' && strtolower((string)($c['cpf_check_status'] ?? ''))==='aprovado' && strtolower((string)($c['criterios_status'] ?? ''))==='aprovado'); $elClass = $elig ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $elClass; ?>"><?php echo $elig ? 'Sim' : 'Não'; ?></span></td>
           <td class="border px-2 py-1"><?php echo !empty($c['created_at'])?date('d/m/Y', strtotime($c['created_at'])):'—'; ?></td>
-          <td class="border px-2 py-1">
-            <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
-              <i class="fa fa-check text-[18px]" aria-hidden="true"></i>
+          <td class="border px-2 py-1 whitespace-nowrap">
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
+              <i class="fa fa-check text-[16px]" aria-hidden="true"></i>
             </a>
-            <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 ml-1" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
-              <i class="fa fa-eye text-[18px]" aria-hidden="true"></i>
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 ml-0.5" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
+              <i class="fa fa-eye text-[16px]" aria-hidden="true"></i>
             </a>
-            <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 ml-1" href="/clientes/<?php echo (int)$c['id']; ?>/editar" title="Editar" aria-label="Editar">
-              <i class="fa fa-pencil text-[18px]" aria-hidden="true"></i>
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 ml-0.5" href="/clientes/<?php echo (int)$c['id']; ?>/editar" title="Editar" aria-label="Editar">
+              <i class="fa fa-pencil text-[16px]" aria-hidden="true"></i>
             </a>
             <?php if (!empty($c['loans_count']) && (int)$c['loans_count'] > 0): ?>
-            <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 ml-1" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>" title="Empréstimos" aria-label="Empréstimos">
-              <i class="fa fa-money text-[18px]" aria-hidden="true"></i>
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 ml-0.5" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>" title="Empréstimos" aria-label="Empréstimos">
+              <i class="fa fa-money text-[16px]" aria-hidden="true"></i>
             </a>
             <?php endif; ?>
           </td>
