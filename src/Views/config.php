@@ -46,6 +46,10 @@ $production = readEnvFile('.env.production');
       <?php $apiToken = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_token', 'bccbaf9e9af13fc49739b8a43fff0fe8'); ?>
       <?php $apiPacote = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_pacote', '8'); ?>
       <?php $apiEnv = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_env', 'prod'); ?>
+      <?php $cpfSaldoId = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_saldo_pacote_id', ''); ?>
+      <?php $cpfSaldoNome = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_saldo_nome', ''); ?>
+      <?php $cpfSaldoCred = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_saldo_creditos', ''); ?>
+      <?php $cpfSaldoCheckedAt = \App\Helpers\ConfigRepo::get('api_cpf_cnpj_saldo_checked_at', ''); ?>
       <input class="w-full border rounded px-3 py-2" name="api_cpf_cnpj_token" placeholder="Token" value="<?php echo htmlspecialchars($apiToken); ?>">
       <input class="w-full border rounded px-3 py-2" name="api_cpf_cnpj_pacote" placeholder="Pacote" value="<?php echo htmlspecialchars($apiPacote); ?>">
       <label class="inline-flex items-center gap-2 mt-2">
@@ -60,6 +64,14 @@ $production = readEnvFile('.env.production');
           <?php $pacNome = isset($pac['nome']) ? (string)$pac['nome'] : ''; ?>
           <?php $pacSaldo = isset($pac['saldo']) ? (string)$pac['saldo'] : (string)($saldoResp['saldo'] ?? ($saldoResp['creditos'] ?? '-')); ?>
           <input class="border rounded px-3 py-2" readonly value="<?php echo htmlspecialchars('ID '.$pacId.' · '.$pacNome.' · saldo '.$pacSaldo); ?>">
+          <?php if (!empty($cpfSaldoCheckedAt)): ?>
+            <div class="text-xs text-gray-500">Última verificação: <?php echo htmlspecialchars(date('d/m/Y H:i:s', strtotime($cpfSaldoCheckedAt))); ?></div>
+          <?php endif; ?>
+        <?php elseif ($cpfSaldoId !== '' || $cpfSaldoNome !== '' || $cpfSaldoCred !== ''): ?>
+          <input class="border rounded px-3 py-2" readonly value="<?php echo htmlspecialchars('ID '.$cpfSaldoId.' · '.$cpfSaldoNome.' · saldo '.$cpfSaldoCred); ?>">
+          <?php if (!empty($cpfSaldoCheckedAt)): ?>
+            <div class="text-xs text-gray-500">Última verificação: <?php echo htmlspecialchars(date('d/m/Y H:i:s', strtotime($cpfSaldoCheckedAt))); ?></div>
+          <?php endif; ?>
         <?php endif; ?>
       </div>
       <?php if (isset($saldoErr) && !empty($saldoErr)): ?>

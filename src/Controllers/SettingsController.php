@@ -31,6 +31,18 @@ class SettingsController {
         } else {
           $saldoErr = 'Token ou Pacote ausente';
         }
+        if (empty($saldoErr) && is_array($saldoResp)) {
+          $p = $saldoResp['pacote'] ?? null;
+          if (is_array($p)) {
+            $pid = (string)($p['id'] ?? '');
+            $pnome = (string)($p['nome'] ?? '');
+            $psaldo = (string)($p['saldo'] ?? '');
+            if ($pid !== '') { ConfigRepo::set('api_cpf_cnpj_saldo_pacote_id', $pid, 'API CPF/CNPJ saldo pacote ID'); }
+            if ($pnome !== '') { ConfigRepo::set('api_cpf_cnpj_saldo_nome', $pnome, 'API CPF/CNPJ saldo pacote nome'); }
+            if ($psaldo !== '') { ConfigRepo::set('api_cpf_cnpj_saldo_creditos', $psaldo, 'API CPF/CNPJ saldo créditos'); }
+            ConfigRepo::set('api_cpf_cnpj_saldo_checked_at', date('Y-m-d H:i:s'), 'API CPF/CNPJ saldo verificado em');
+          }
+        }
         $title = 'Configurações';
         $content = __DIR__ . '/../Views/config.php';
         include __DIR__ . '/../Views/layout.php';
