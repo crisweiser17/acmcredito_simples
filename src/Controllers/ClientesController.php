@@ -232,6 +232,7 @@ class ClientesController {
   }
   public static function lista(): void {
     $pdo = Connection::get();
+    try { $col = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$col) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     $q = trim($_GET['q'] ?? '');
     $ini = trim($_GET['data_ini'] ?? '');
     $fim = trim($_GET['data_fim'] ?? '');
@@ -529,6 +530,7 @@ class ClientesController {
   }
   public static function buscar(): void {
     $pdo = Connection::get();
+    try { $col = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$col) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     $q = trim($_GET['q'] ?? '');
     $limit = 20;
     $sql = "SELECT id, nome, cpf, telefone FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado'";

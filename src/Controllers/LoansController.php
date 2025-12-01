@@ -8,6 +8,7 @@ use App\Helpers\Audit;
 class LoansController {
   public static function calculadora(): void {
     $pdo = Connection::get();
+    try { $col = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$col) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     $taxaDefault = ConfigRepo::get('taxa_juros_padrao_mensal', '2.5');
     $clients = $pdo->query("SELECT id, nome, cpf FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado' ORDER BY nome")->fetchAll();
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
