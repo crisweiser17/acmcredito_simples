@@ -158,14 +158,17 @@
       <span class="px-2 py-1 rounded text-white <?php echo $critStatus==='aprovado'?'bg-green-600':($critStatus==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($critStatus); ?></span>
     </div>
     <div class="space-y-3">
-      <?php $rendaVal = (float)($c['renda_mensal'] ?? 0); $rendaFmt = 'R$ '.number_format($rendaVal,2,',','.'); $maxParc = $rendaVal>0? number_format($rendaVal*0.20,2,',','.') : '0,00'; $tt = trim((string)($c['tempo_trabalho'] ?? '')); $sugNegar = in_array($tt, ['menos de 6 meses','até 1 ano'], true); ?>
+      <?php $critPct = (float)(\App\Helpers\ConfigRepo::get('criterios_percentual_parcela_max','20')); ?>
+      <?php $critTempo = (string)(\App\Helpers\ConfigRepo::get('criterios_tempo_minimo_trabalho','de 1 a 2 anos')); ?>
+      <?php $rendaVal = (float)($c['renda_mensal'] ?? 0); $rendaFmt = 'R$ '.number_format($rendaVal,2,',','.'); $maxParc = $rendaVal>0? number_format($rendaVal*($critPct/100.0),2,',','.') : '0,00'; $tt = trim((string)($c['tempo_trabalho'] ?? '')); ?>
+      <?php $rank = ['menos de 6 meses'=>0,'até 1 ano'=>1,'de 1 a 2 anos'=>2,'de 3 a 5 anos'=>3,'mais de 5 anos'=>4]; $minRank = $rank[$critTempo] ?? 2; $curRank = $rank[$tt] ?? -1; $sugNegar = ($curRank >= 0 && $curRank < $minRank); ?>
       <div class="grid md:grid-cols-3 gap-3 items-end">
         <div>
           <label class="text-sm text-gray-600">Renda Mensal</label>
           <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($rendaFmt); ?>" readonly>
         </div>
         <div>
-          <label class="text-sm text-gray-600">Parcela Máxima (20%)</label>
+          <label class="text-sm text-gray-600">Parcela Máxima (<?php echo htmlspecialchars((string)$critPct); ?>%)</label>
           <input class="border rounded px-3 py-2 w-full" value="<?php echo 'R$ '.htmlspecialchars($maxParc); ?>" readonly>
         </div>
         <div>
@@ -174,7 +177,7 @@
         </div>
       </div>
       <?php if ($sugNegar): ?>
-      <div class="text-sm text-red-600">Sugerir negar empréstimo: tempo de trabalho inferior a 2 anos.</div>
+      <div class="text-sm text-red-600">Sugerir reprovar: tempo de trabalho abaixo de "<?php echo htmlspecialchars($critTempo); ?>".</div>
       <?php endif; ?>
     </div>
     <div class="flex gap-2">

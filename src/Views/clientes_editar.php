@@ -122,7 +122,7 @@
           <div class="text-sm text-gray-600 mt-0.5">Tempo de Trabalho <span class="text-red-600">*</span></div>
         </div>
         <div class="md:col-span-2">
-          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" value="<?php echo htmlspecialchars($c['renda_mensal']); ?>" required>
+          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" value="<?php echo htmlspecialchars(number_format((float)($c['renda_mensal'] ?? 0), 2, ',', '.')); ?>" required>
           <div class="text-sm text-gray-600 mt-0.5">Renda Mensal <span class="text-red-600">*</span></div>
         </div>
       </div>

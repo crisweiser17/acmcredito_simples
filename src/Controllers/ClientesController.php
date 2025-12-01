@@ -11,8 +11,22 @@ class ClientesController {
     $s = trim((string)$val);
     if ($s === '') return 0.0;
     $s = preg_replace('/[^\d,\.]/', '', $s);
-    $s = str_replace('.', '', $s);
-    $s = str_replace(',', '.', $s);
+    $hasComma = strpos($s, ',') !== false;
+    $hasDot = strpos($s, '.') !== false;
+    if ($hasComma && $hasDot) {
+      $lastComma = strrpos($s, ',');
+      $lastDot = strrpos($s, '.');
+      if ($lastDot !== false && $lastComma !== false && $lastDot > $lastComma) {
+        $s = str_replace(',', '', $s);
+      } else {
+        $s = str_replace('.', '', $s);
+        $s = str_replace(',', '.', $s);
+      }
+    } elseif ($hasComma) {
+      $s = str_replace(',', '.', $s);
+    } else {
+      $s = $s;
+    }
     $f = (float)$s;
     if ($f > 99999999.99) $f = 99999999.99;
     if ($f < 0) $f = 0.0;
@@ -548,7 +562,7 @@ class ClientesController {
   }
   public static function buscarPorId(int $id): void {
     $pdo = Connection::get();
-    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone FROM clients WHERE id=:id');
+    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone, renda_mensal, tempo_trabalho FROM clients WHERE id=:id');
     $stmt->execute(['id'=>$id]);
     $row = $stmt->fetch();
     header('Content-Type: application/json');

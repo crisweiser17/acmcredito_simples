@@ -105,6 +105,8 @@
         <div>
           <input class="border rounded px-3 py-2 w-full" id="pmt" readonly>
           <div class="text-sm text-gray-600 mt-1">Valor da Parcela (R$)</div>
+          <?php $critPct = (float)(\App\Helpers\ConfigRepo::get('criterios_percentual_parcela_max','20')); ?>
+          <div id="sug_max_parcela" class="text-sm text-red-600 mt-1"></div>
         </div>
         <div>
           <input class="border rounded px-3 py-2 w-full" id="total" readonly>
@@ -335,6 +337,16 @@ document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.a
   if (nd.getMonth() !== target) { while (nd.getMonth() !== target) { nd.setDate(nd.getDate()-1); } }
   const el = document.getElementById('pr_zero_date');
   if (el) el.textContent = nd.toLocaleDateString('pt-BR');
+})();
+// Suggested max parcela based on selected client's renda
+(function(){
+  var pct = <?php echo json_encode($critPct); ?>;
+  function formatBR(n){ return 'R$ ' + new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}).format(n); }
+  async function fetchClient(id){ try{ var r=await fetch('/api/clientes/'+id); return await r.json(); } catch(e){ return null; } }
+  async function updateSug(){ var cidEl=document.getElementById('client_id'); var out=document.getElementById('sug_max_parcela'); var cid=parseInt(cidEl.value||'0',10); if(!out){return;} if(!cid){ out.textContent=''; return; } var d=await fetchClient(cid); var renda = d && d.renda_mensal ? parseFloat(d.renda_mensal) : 0; if (renda>0){ var sug = renda * (pct/100.0); out.textContent = 'Sugerido: parcela máxima ' + formatBR(sug) + ' ('+pct.toLocaleString('pt-BR')+'%)'; } else { out.textContent=''; } }
+  var cidEl=document.getElementById('client_id'); if (cidEl){ ['change','input'].forEach(function(evt){ cidEl.addEventListener(evt, updateSug); }); }
+  // hydrate on initial preselection
+  updateSug();
 })();
   (function(){ var d=document.getElementById('data_base'); if(d){ var f=function(){ recalc(); recommendByParcela(); var base=getBaseDate(); var y=base.getFullYear(), m=base.getMonth(), dd=base.getDate(); var nd=new Date(y, m+1, dd); var target=(m+1)%12; if (nd.getMonth()!==target) { while (nd.getMonth()!==target) { nd.setDate(nd.getDate()-1); } } var el=document.getElementById('pr_zero_date'); if(el) el.textContent = nd.toLocaleDateString('pt-BR'); var dpv=document.getElementById('data_primeiro_vencimento'); if (dpv && !dpv.value) { var base2=getBaseDate(); var y2=base2.getFullYear(), m2=base2.getMonth(), d2=base2.getDate(); var nd2=new Date(y2, m2+1, d2); var target2=(m2+1)%12; if (nd2.getMonth()!==target2) { while (nd2.getMonth()!==target2) { nd2.setDate(nd2.getDate()-1); } } var iso=`${nd2.getFullYear()}-${String(nd2.getMonth()+1).padStart(2,'0')}-${String(nd2.getDate()).padStart(2,'0')}`; dpv.value = iso; } }; d.addEventListener('change', f); d.addEventListener('input', f); } })();
   (function(){ var t=document.getElementById('data_base_toggle'); if(t){ var f=function(){ var base=getBaseDate(); var y=base.getFullYear(), m=base.getMonth(), dd=base.getDate(); var nd=new Date(y, m+1, dd); var target=(m+1)%12; if (nd.getMonth()!==target) { while (nd.getMonth()!==target) { nd.setDate(nd.getDate()-1); } } var el=document.getElementById('pr_zero_date'); if(el) el.textContent = nd.toLocaleDateString('pt-BR'); }; t.addEventListener('change', f); } })();
@@ -602,7 +614,7 @@ function copyTabelaImagem(){
     if (!items || items.length===0){ results.innerHTML=''; results.classList.add('hidden'); return; }
     results.innerHTML = items.map(function(it){ var cpf = it.cpf||''; var tel = it.telefone||''; return '<button type="button" data-id="'+it.id+'" data-name="'+(it.nome||'')+'" class="block w-full text-left px-3 py-2 hover:bg-gray-100">'+(it.nome||'')+'<span class="ml-2 text-xs text-gray-500">'+cpf+' '+tel+'</span></button>'; }).join('');
     results.classList.remove('hidden');
-    Array.from(results.querySelectorAll('button[data-id]')).forEach(function(btn){ btn.addEventListener('click', function(){ hidden.value = btn.getAttribute('data-id'); selected.textContent = btn.getAttribute('data-name'); results.classList.add('hidden'); if(clearBtn){ clearBtn.classList.remove('hidden'); } }); });
+    Array.from(results.querySelectorAll('button[data-id]')).forEach(function(btn){ btn.addEventListener('click', function(){ hidden.value = btn.getAttribute('data-id'); selected.textContent = btn.getAttribute('data-name'); results.classList.add('hidden'); if(clearBtn){ clearBtn.classList.remove('hidden'); } try{ hidden.dispatchEvent(new Event('input')); }catch(e){} }); });
   }
   function clearSel(){ if(hidden){ hidden.value=''; } if(selected){ selected.textContent=''; } if(clearBtn){ clearBtn.classList.add('hidden'); } }
   if (clearBtn) clearBtn.addEventListener('click', clearSel);

@@ -126,6 +126,10 @@ class SettingsController {
       if ($pl6v !== '') { ConfigRepo::set('plano6_valor', $pl6v, 'Plano 6 Valor'); }
       if ($pl6n !== '') { ConfigRepo::set('plano6_parcelas', $pl6n, 'Plano 6 Parcelas'); }
       if ($taxaPadrao !== '') { ConfigRepo::set('taxa_juros_padrao_mensal', $taxaPadrao, 'Taxa de Juros Padrão Mensal (% a.m.)'); }
+      $critPct = trim($_POST['criterios_percentual_parcela_max'] ?? '');
+      $critTempo = trim($_POST['criterios_tempo_minimo_trabalho'] ?? '');
+      if ($critPct !== '') { ConfigRepo::set('criterios_percentual_parcela_max', $critPct, 'Percentual sugerido para parcela máxima'); }
+      if ($critTempo !== '') { ConfigRepo::set('criterios_tempo_minimo_trabalho', $critTempo, 'Tempo mínimo de trabalho para pré-aprovação'); }
       header('Location: /config?saved=1');
       exit;
     }

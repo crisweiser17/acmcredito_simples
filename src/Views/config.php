@@ -209,6 +209,28 @@ $production = readEnvFile('.env.production');
       })();
       </script>
     </div>
+  <div class="space-y-4">
+      <div class="text-lg font-semibold">Criterios de Emprestimo</div>
+      <?php $critPct = \App\Helpers\ConfigRepo::get('criterios_percentual_parcela_max', '20'); ?>
+      <?php $critTempo = \App\Helpers\ConfigRepo::get('criterios_tempo_minimo_trabalho', 'de 1 a 2 anos'); ?>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm mb-1">Percentual sugerido para parcela máxima (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="criterios_percentual_parcela_max" value="<?php echo htmlspecialchars($critPct); ?>">
+          <div class="text-xs text-gray-500 mt-1">Ex.: 20 significa 20% da renda mensal</div>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Tempo mínimo de trabalho</label>
+          <?php $opts = ['menos de 6 meses','até 1 ano','de 1 a 2 anos','de 3 a 5 anos','mais de 5 anos']; ?>
+          <select class="w-full border rounded px-3 py-2" name="criterios_tempo_minimo_trabalho">
+            <?php foreach ($opts as $op): ?>
+            <option value="<?php echo htmlspecialchars($op); ?>" <?php echo $critTempo===$op?'selected':''; ?>><?php echo htmlspecialchars($op); ?></option>
+            <?php endforeach; ?>
+          </select>
+          <div class="text-xs text-gray-500 mt-1">Candidatos abaixo desse nível serão sugeridos como reprovados</div>
+        </div>
+      </div>
+    </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Integração com Boletos - Lytex</div>
       <?php $lytexClientId = \App\Helpers\ConfigRepo::get('lytex_client_id', ''); ?>
