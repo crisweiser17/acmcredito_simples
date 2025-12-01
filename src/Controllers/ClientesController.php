@@ -260,19 +260,31 @@ class ClientesController {
     }
     $ps = trim($_GET['prova_status'] ?? '');
     $cs = trim($_GET['cpf_status'] ?? '');
-    $sql = 'SELECT id, nome, cpf, prova_vida_status, cpf_check_status, criterios_status, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count FROM clients WHERE 1=1';
+    $baseSql = 'FROM clients WHERE 1=1';
     $params = [];
-    if ($q !== '') { $sql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
-    if ($ini !== '') { $sql .= ' AND DATE(created_at) >= :ini'; $params['ini'] = $ini; }
-    if ($fim !== '') { $sql .= ' AND DATE(created_at) <= :fim'; $params['fim'] = $fim; }
-    if ($ps !== '' && in_array($ps, ['aprovado','reprovado','pendente'], true)) { $sql .= ' AND prova_vida_status = :ps'; $params['ps'] = $ps; }
-    if ($cs !== '' && in_array($cs, ['aprovado','reprovado','pendente'], true)) { $sql .= ' AND cpf_check_status = :cs'; $params['cs'] = $cs; }
-    $sql .= ' ORDER BY created_at DESC';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $rows = $stmt->fetchAll();
+    if ($q !== '') { $baseSql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
+    if ($ini !== '') { $baseSql .= ' AND DATE(created_at) >= :ini'; $params['ini'] = $ini; }
+    if ($fim !== '') { $baseSql .= ' AND DATE(created_at) <= :fim'; $params['fim'] = $fim; }
+    if ($ps !== '' && in_array($ps, ['aprovado','reprovado','pendente'], true)) { $baseSql .= ' AND prova_vida_status = :ps'; $params['ps'] = $ps; }
+    if ($cs !== '' && in_array($cs, ['aprovado','reprovado','pendente'], true)) { $baseSql .= ' AND cpf_check_status = :cs'; $params['cs'] = $cs; }
+
+    $perSel = (int)($_GET['per_page'] ?? 25);
+    $allowed = [25,50,100];
+    if (!in_array($perSel, $allowed, true)) { $perSel = 25; }
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $offset = ($page - 1) * $perSel;
+
+    $countStmt = $pdo->prepare('SELECT COUNT(*) AS total ' . $baseSql);
+    $countStmt->execute($params);
+    $total = (int)($countStmt->fetch()['total'] ?? 0);
+
+    $rowsStmt = $pdo->prepare('SELECT id, nome, cpf, prova_vida_status, cpf_check_status, criterios_status, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count ' . $baseSql . ' ORDER BY created_at DESC LIMIT ' . (int)$perSel . ' OFFSET ' . (int)$offset);
+    $rowsStmt->execute($params);
+    $rows = $rowsStmt->fetchAll();
+    $pagesTotal = $perSel > 0 ? max(1, (int)ceil($total / $perSel)) : 1;
     $title = 'Clientes';
     $content = __DIR__ . '/../Views/clientes_lista.php';
+    $_PAGINACAO = ['total'=>$total,'per_page'=>$perSel,'page'=>$page,'pages_total'=>$pagesTotal];
     include __DIR__ . '/../Views/layout.php';
   }
   public static function validar(int $id): void {

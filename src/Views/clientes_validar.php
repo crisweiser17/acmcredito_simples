@@ -177,7 +177,10 @@
         </div>
       </div>
       <?php if ($sugNegar): ?>
-      <div class="text-sm text-red-600">Sugerir reprovar: tempo de trabalho abaixo de "<?php echo htmlspecialchars($critTempo); ?>".</div>
+      <div class="text-sm text-red-600">
+        <div>Sugestão: Reprovar:</div>
+        <div>Motivo: tempo de trabalho abaixo de "<?php echo htmlspecialchars($critTempo); ?>".</div>
+      </div>
       <?php endif; ?>
     </div>
     <div class="flex gap-2">

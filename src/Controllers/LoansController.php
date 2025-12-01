@@ -222,19 +222,31 @@ class LoansController {
       elseif ($periodo === 'mes_atual') { $ini = date('Y-m-01'); $fim = $today; }
     }
     $status = trim($_GET['status'] ?? '');
-    $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.taxa_juros_mensal, l.valor_total, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $baseSql = 'FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
-    if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
-    if ($cid > 0) { $sql .= ' AND l.client_id = :cid'; $params['cid'] = $cid; }
-    if ($ini !== '') { $sql .= ' AND DATE(l.created_at) >= :ini'; $params['ini'] = $ini; }
-    if ($fim !== '') { $sql .= ' AND DATE(l.created_at) <= :fim'; $params['fim'] = $fim; }
-    if ($status !== '' && in_array($status, ['aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado'], true)) { $sql .= ' AND l.status = :st'; $params['st'] = $status; }
-    $sql .= ' ORDER BY l.created_at DESC';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $rows = $stmt->fetchAll();
+    if ($q !== '') { $baseSql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
+    if ($cid > 0) { $baseSql .= ' AND l.client_id = :cid'; $params['cid'] = $cid; }
+    if ($ini !== '') { $baseSql .= ' AND DATE(l.created_at) >= :ini'; $params['ini'] = $ini; }
+    if ($fim !== '') { $baseSql .= ' AND DATE(l.created_at) <= :fim'; $params['fim'] = $fim; }
+    if ($status !== '' && in_array($status, ['aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado'], true)) { $baseSql .= ' AND l.status = :st'; $params['st'] = $status; }
+
+    $perSel = (int)($_GET['per_page'] ?? 25);
+    $allowed = [25,50,100];
+    if (!in_array($perSel, $allowed, true)) { $perSel = 25; }
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $offset = ($page - 1) * $perSel;
+
+    $countStmt = $pdo->prepare('SELECT COUNT(*) AS total ' . $baseSql);
+    $countStmt->execute($params);
+    $total = (int)($countStmt->fetch()['total'] ?? 0);
+
+    $rowsStmt = $pdo->prepare('SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.taxa_juros_mensal, l.valor_total, l.status, l.created_at ' . $baseSql . ' ORDER BY l.created_at DESC LIMIT ' . (int)$perSel . ' OFFSET ' . (int)$offset);
+    $rowsStmt->execute($params);
+    $rows = $rowsStmt->fetchAll();
+    $pagesTotal = $perSel > 0 ? max(1, (int)ceil($total / $perSel)) : 1;
     $title = 'Empréstimos';
     $content = __DIR__ . '/../Views/emprestimos_lista.php';
+    $_PAGINACAO = ['total'=>$total,'per_page'=>$perSel,'page'=>$page,'pages_total'=>$pagesTotal];
     include __DIR__ . '/../Views/layout.php';
   }
 

@@ -44,6 +44,15 @@
         <option value="cancelado" <?php echo $st==='cancelado'?'selected':''; ?>>Cancelado</option>
       </select>
     </div>
+    <div class="w-48">
+      <div class="text-xs text-gray-500 mb-1">Resultados por página</div>
+      <?php $pp = (int)($_GET['per_page'] ?? 25); $pp = in_array($pp,[25,50,100],true)?$pp:25; ?>
+      <select class="w-full border rounded px-3 py-2" name="per_page">
+        <option value="25" <?php echo $pp===25?'selected':''; ?>>25</option>
+        <option value="50" <?php echo $pp===50?'selected':''; ?>>50</option>
+        <option value="100" <?php echo $pp===100?'selected':''; ?>>100</option>
+      </select>
+    </div>
     <div class="ml-auto flex gap-2">
       <a class="px-4 py-2 rounded bg-gray-100" href="/emprestimos">Limpar</a>
       <button class="px-4 py-2 rounded btn-primary" type="submit">Filtrar</button>
@@ -59,10 +68,10 @@
       if (sel && ini && fim){ upd(); sel.addEventListener('change', upd); }
     })();
   </script>
-  <table class="w-full border-collapse">
+  <table class="w-full border-collapse table-auto">
     <thead>
       <tr>
-        <th class="border px-2 py-1">ID</th>
+        <th class="border px-2 py-1" style="width: 64px;">ID</th>
         <th class="border px-2 py-1">Cliente</th>
         <th class="border px-2 py-1">Principal</th>
         <th class="border px-2 py-1">Parcelas</th>
@@ -78,7 +87,7 @@
       <?php foreach ($rows as $l): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$l['id']; ?></td>
-          <td class="border px-2 py-1"><a class="text-blue-700 underline" href="/clientes/<?php echo (int)$l['cid']; ?>/ver"><?php echo htmlspecialchars($l['nome']); ?></a></td>
+          <td class="border px-2 py-1 break-words"><a class="text-blue-700 underline" href="/clientes/<?php echo (int)$l['cid']; ?>/ver"><?php echo htmlspecialchars($l['nome']); ?></a></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?></td>
           <td class="border px-2 py-1"><?php echo (int)$l['num_parcelas']; ?></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></td>
@@ -87,23 +96,34 @@
           <td class="border px-2 py-1"><?php $st = (string)($l['status'] ?? ''); $stLabel = $st; if ($st==='aguardando_assinatura'){ $stLabel='Aguardando assinatura'; } elseif ($st==='aguardando_transferencia'){ $stLabel='Aguardando transferência'; } elseif ($st==='aguardando_boletos'){ $stLabel='Aguardando boletos'; } elseif ($st==='ativo'){ $stLabel='Ativo'; } elseif ($st==='cancelado'){ $stLabel='Cancelado'; } $stClass = 'bg-gray-100 text-gray-800'; if ($st==='ativo'){ $stClass='bg-green-100 text-green-800'; } elseif ($st==='cancelado'){ $stClass='bg-red-100 text-red-800'; } elseif (strpos($st,'aguardando_')===0){ $stClass='bg-yellow-100 text-yellow-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $stClass; ?>"><?php echo htmlspecialchars($stLabel ?: '—'); ?></span></td>
           <td class="border px-2 py-1"><?php echo !empty($l['created_at'])?date('d/m/Y', strtotime($l['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">
-            <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" title="Abrir" aria-label="Abrir">
-              <i class="fa fa-eye text-[18px]" aria-hidden="true"></i>
-            </a>
-            <?php if ($l['status']==='aguardando_assinatura'): ?>
-              <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 ml-1" href="/emprestimos/<?php echo (int)$l['id']; ?>" onclick="return confirm('Editar irá invalidar o link de assinatura atual. Prosseguir?');" title="Editar" aria-label="Editar">
-                <i class="fa fa-pencil text-[18px]" aria-hidden="true"></i>
+            <div class="flex items-center gap-0.5">
+              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" title="Abrir" aria-label="Abrir">
+                <i class="fa fa-eye text-[14px]" aria-hidden="true"></i>
               </a>
-            <?php endif; ?>
-            <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" style="display:inline" onsubmit="return confirm('Excluir este empréstimo?');">
-              <input type="hidden" name="acao" value="excluir">
-              <button class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50 ml-1" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c">
-                <i class="fa fa-trash text-[18px]" aria-hidden="true"></i>
-              </button>
-            </form>
+              <?php if ($l['status']==='aguardando_assinatura'): ?>
+                <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" onclick="return confirm('Editar irá invalidar o link de assinatura atual. Prosseguir?');" title="Editar" aria-label="Editar">
+                  <i class="fa fa-pencil text-[14px]" aria-hidden="true"></i>
+                </a>
+              <?php endif; ?>
+              <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" style="display:inline" onsubmit="return confirm('Excluir este empréstimo?');">
+                <input type="hidden" name="acao" value="excluir">
+                <button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c">
+                  <i class="fa fa-trash text-[14px]" aria-hidden="true"></i>
+                </button>
+              </form>
+            </div>
           </td>
         </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
+  <?php if (!empty($_PAGINACAO)) { $pg = (int)($_PAGINACAO['page'] ?? 1); $totPg = (int)($_PAGINACAO['pages_total'] ?? 1); $qsBase = $_GET; unset($qsBase['page']); $makeUrl = function($p) use ($qsBase){ $qs = $qsBase; $qs['page'] = $p; return '/emprestimos?' . http_build_query($qs); }; ?>
+  <div class="flex items-center justify-between mt-3">
+    <div class="text-sm text-gray-600">Página <?php echo $pg; ?> de <?php echo $totPg; ?> • Total <?php echo (int)($_PAGINACAO['total'] ?? 0); ?></div>
+    <div class="flex items-center gap-2">
+      <a class="px-2 py-1 rounded border <?php echo $pg<=1?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(max(1,$pg-1)); ?>">Anterior</a>
+      <a class="px-2 py-1 rounded border <?php echo $pg>=$totPg?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(min($totPg,$pg+1)); ?>">Próxima</a>
+    </div>
+  </div>
+  <?php } ?>
 </div>

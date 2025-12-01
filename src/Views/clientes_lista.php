@@ -52,6 +52,15 @@
         <option value="reprovado" <?php echo $cs==='reprovado'?'selected':''; ?>>Reprovado</option>
       </select>
     </div>
+    <div class="w-48">
+      <div class="text-xs text-gray-500 mb-1">Resultados por página</div>
+      <?php $pp = (int)($_GET['per_page'] ?? 25); $pp = in_array($pp,[25,50,100],true)?$pp:25; ?>
+      <select class="w-full border rounded px-3 py-2" name="per_page">
+        <option value="25" <?php echo $pp===25?'selected':''; ?>>25</option>
+        <option value="50" <?php echo $pp===50?'selected':''; ?>>50</option>
+        <option value="100" <?php echo $pp===100?'selected':''; ?>>100</option>
+      </select>
+    </div>
     <div class="ml-auto flex gap-2">
       <a class="px-4 py-2 rounded bg-gray-100" href="/clientes">Limpar</a>
       <button class="px-4 py-2 rounded btn-primary" type="submit">Filtrar</button>
@@ -95,7 +104,7 @@
           <td class="border px-2 py-1">
             <div class="flex items-center gap-0.5">
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
-                <i class="fa fa-check text-[14px]" aria-hidden="true"></i>
+                <i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i>
               </a>
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
                 <i class="fa fa-eye text-[14px]" aria-hidden="true"></i>
@@ -114,4 +123,13 @@
       <?php endforeach; ?>
     </tbody>
   </table>
+  <?php if (!empty($_PAGINACAO)) { $pg = (int)($_PAGINACAO['page'] ?? 1); $totPg = (int)($_PAGINACAO['pages_total'] ?? 1); $qsBase = $_GET; unset($qsBase['page']); $makeUrl = function($p) use ($qsBase){ $qs = $qsBase; $qs['page'] = $p; return '/clientes?' . http_build_query($qs); }; ?>
+  <div class="flex items-center justify-between mt-3">
+    <div class="text-sm text-gray-600">Página <?php echo $pg; ?> de <?php echo $totPg; ?> • Total <?php echo (int)($_PAGINACAO['total'] ?? 0); ?></div>
+    <div class="flex items-center gap-2">
+      <a class="px-2 py-1 rounded border <?php echo $pg<=1?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(max(1,$pg-1)); ?>">Anterior</a>
+      <a class="px-2 py-1 rounded border <?php echo $pg>=$totPg?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(min($totPg,$pg+1)); ?>">Próxima</a>
+    </div>
+  </div>
+  <?php } ?>
 </div>
