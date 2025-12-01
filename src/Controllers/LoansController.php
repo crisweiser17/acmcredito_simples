@@ -9,7 +9,7 @@ class LoansController {
   public static function calculadora(): void {
     $pdo = Connection::get();
     $taxaDefault = ConfigRepo::get('taxa_juros_padrao_mensal', '2.5');
-    $clients = $pdo->query("SELECT id, nome, cpf FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' ORDER BY nome")->fetchAll();
+    $clients = $pdo->query("SELECT id, nome, cpf FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado' ORDER BY nome")->fetchAll();
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $client_id = (int)($_POST['client_id'] ?? 0);
       $valor = self::parseMoney($_POST['valor_principal'] ?? 0);

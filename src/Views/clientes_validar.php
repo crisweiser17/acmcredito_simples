@@ -151,6 +151,44 @@
       </form>
     </div>
   </div>
+  <div class="space-y-4">
+    <?php $critStatus = trim((string)($c['criterios_status'] ?? 'pendente')); ?>
+    <div class="flex items-center justify-between">
+      <div class="text-lg font-semibold">Criterios de Emprestimo</div>
+      <span class="px-2 py-1 rounded text-white <?php echo $critStatus==='aprovado'?'bg-green-600':($critStatus==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($critStatus); ?></span>
+    </div>
+    <div class="space-y-3">
+      <?php $rendaVal = (float)($c['renda_mensal'] ?? 0); $rendaFmt = 'R$ '.number_format($rendaVal,2,',','.'); $maxParc = $rendaVal>0? number_format($rendaVal*0.20,2,',','.') : '0,00'; $tt = trim((string)($c['tempo_trabalho'] ?? '')); $sugNegar = in_array($tt, ['menos de 6 meses','até 1 ano'], true); ?>
+      <div class="grid md:grid-cols-3 gap-3 items-end">
+        <div>
+          <label class="text-sm text-gray-600">Renda Mensal</label>
+          <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($rendaFmt); ?>" readonly>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Parcela Máxima (20%)</label>
+          <input class="border rounded px-3 py-2 w-full" value="<?php echo 'R$ '.htmlspecialchars($maxParc); ?>" readonly>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Tempo de Trabalho</label>
+          <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($tt); ?>" readonly>
+        </div>
+      </div>
+      <?php if ($sugNegar): ?>
+      <div class="text-sm text-red-600">Sugerir negar empréstimo: tempo de trabalho inferior a 2 anos.</div>
+      <?php endif; ?>
+    </div>
+    <div class="flex gap-2">
+      <form method="post" class="flex gap-2 items-center">
+        <input type="hidden" name="action" value="aprovar_criterios">
+        <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo" required>
+        <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Criterios de Emprestimo</button>
+      </form>
+      <form method="post">
+        <input type="hidden" name="action" value="reprovar_criterios">
+        <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+      </form>
+    </div>
+  </div>
   <div class="border rounded p-4">
     <div class="font-semibold mb-2">Checklist</div>
     <div class="flex gap-4 items-center">
@@ -162,9 +200,13 @@
         <span class="inline-block w-3 h-3 rounded-full <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
         <span>Consulta CPF</span>
       </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-3 h-3 rounded-full <?php echo ($critStatus==='aprovado')?'bg-green-600':'bg-gray-400'; ?>"></span>
+        <span>Criterios de Emprestimo</span>
+      </div>
     </div>
   </div>
-  <?php if ($c['prova_vida_status'] === 'aprovado' && $c['cpf_check_status'] === 'aprovado'): ?>
+  <?php if ($c['prova_vida_status'] === 'aprovado' && $c['cpf_check_status'] === 'aprovado' && ($critStatus==='aprovado')): ?>
   <div class="border-t pt-6 mt-6">
     <div class="flex items-center justify-center">
       <a href="/emprestimos/calculadora?client_id=<?php echo (int)$c['id']; ?>" class="px-6 py-3 rounded bg-royal text-white text-lg font-semibold hover:bg-blue-700 transition-colors">

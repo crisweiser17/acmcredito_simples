@@ -245,7 +245,7 @@ class ClientesController {
     }
     $ps = trim($_GET['prova_status'] ?? '');
     $cs = trim($_GET['cpf_status'] ?? '');
-    $sql = 'SELECT id, nome, cpf, prova_vida_status, cpf_check_status, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count FROM clients WHERE 1=1';
+    $sql = 'SELECT id, nome, cpf, prova_vida_status, cpf_check_status, criterios_status, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count FROM clients WHERE 1=1';
     $params = [];
     if ($q !== '') { $sql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
     if ($ini !== '') { $sql .= ' AND DATE(created_at) >= :ini'; $params['ini'] = $ini; }
@@ -266,6 +266,7 @@ class ClientesController {
     $stmt->execute(['id' => $id]);
     $client = $stmt->fetch();
     if (!$client) { header('Location: /'); return; }
+    try { $hasCrit = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$hasCrit) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (isset($_POST['action']) && $_POST['action'] === 'aprovar_prova') {
         $pdo->prepare("UPDATE clients SET prova_vida_status='aprovado', prova_vida_data=NOW(), prova_vida_user_id=:u WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'id'=>$id]);
@@ -348,6 +349,20 @@ class ClientesController {
           $pdo->prepare('INSERT INTO cpf_checks (client_id, json_response, checked_by_user_id) VALUES (:cid, :j, :u)')
               ->execute(['cid'=>$id, 'j'=>json_encode(['error'=>$e->getMessage()]), 'u'=>$_SESSION['user_id'] ?? null]);
         }
+        header('Location: /clientes/'.$id.'/validar');
+        exit;
+      }
+      if (isset($_POST['action']) && $_POST['action'] === 'aprovar_criterios') {
+        $motivo = trim($_POST['motivo'] ?? '');
+        if ($motivo === '') { $_SESSION['toast'] = 'Informe o motivo para aprovar os critérios de empréstimo.'; header('Location: /clientes/'.$id.'/validar'); exit; }
+        $pdo->prepare("UPDATE clients SET criterios_status='aprovado', criterios_data=NOW(), criterios_user_id=:u, observacoes=CONCAT(IFNULL(observacoes,''),' ',:m) WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo,'id'=>$id]);
+        Audit::log('aprovar_criterios','clients',$id,$motivo);
+        header('Location: /clientes/'.$id.'/validar');
+        exit;
+      }
+      if (isset($_POST['action']) && $_POST['action'] === 'reprovar_criterios') {
+        $pdo->prepare("UPDATE clients SET criterios_status='reprovado', criterios_data=NOW(), criterios_user_id=:u WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'id'=>$id]);
+        Audit::log('reprovar_criterios','clients',$id,null);
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
@@ -516,7 +531,7 @@ class ClientesController {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');
     $limit = 20;
-    $sql = 'SELECT id, nome, cpf, telefone FROM clients WHERE 1=1';
+    $sql = "SELECT id, nome, cpf, telefone FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado'";
     $params = [];
     if ($q !== '') {
       $params['q'] = '%'.$q.'%';
