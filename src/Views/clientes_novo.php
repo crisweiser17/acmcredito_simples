@@ -281,3 +281,23 @@
     document.addEventListener('click', function(e){ if (!results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
   })();
 </script>
+<?php if (!empty($showSuccessModal) && !empty($createdId)): ?>
+<div id="novo_cli_modal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+  <div class="bg-white rounded shadow-lg w-full max-w-md p-6">
+    <h3 class="text-xl font-semibold mb-4">Cliente criado com sucesso</h3>
+    <div class="space-y-3">
+      <a href="/clientes" class="block w-full text-center px-4 py-2 rounded bg-gray-100">Retornar à listagem de clientes</a>
+      <a href="/clientes/novo" class="block w-full text-center px-4 py-2 rounded btn-primary">Adicionar novo cliente</a>
+      <a href="/clientes/<?php echo (int)$createdId; ?>/validar" class="block w-full text-center px-4 py-2 rounded bg-green-600 text-white">Validar cliente adicionado</a>
+    </div>
+  </div>
+  <button id="novo_cli_modal_close" class="absolute top-4 right-4 text-white text-2xl" aria-label="Fechar">×</button>
+  <script>
+    (function(){
+      var m=document.getElementById('novo_cli_modal');
+      var c=document.getElementById('novo_cli_modal_close');
+      if (c && m) { c.addEventListener('click', function(){ m.parentNode.removeChild(m); }); }
+    })();
+  </script>
+</div>
+<?php endif; ?>

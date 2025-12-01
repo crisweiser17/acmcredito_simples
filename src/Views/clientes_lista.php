@@ -98,6 +98,11 @@
             <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 ml-1" href="/clientes/<?php echo (int)$c['id']; ?>/editar" title="Editar" aria-label="Editar">
               <i class="fa fa-pencil text-[18px]" aria-hidden="true"></i>
             </a>
+            <?php if (!empty($c['loans_count']) && (int)$c['loans_count'] > 0): ?>
+            <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 ml-1" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>" title="Empréstimos" aria-label="Empréstimos">
+              <i class="fa fa-money text-[18px]" aria-hidden="true"></i>
+            </a>
+            <?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>

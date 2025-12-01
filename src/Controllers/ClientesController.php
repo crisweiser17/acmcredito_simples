@@ -118,8 +118,12 @@ class ClientesController {
         try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie = :s WHERE id = :id')->execute(['s'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
       }
       Audit::log('create', 'clients', $clientId, 'Cliente criado');
-      header('Location: /clientes/' . $clientId . '/validar');
-      exit;
+      $createdId = $clientId;
+      $showSuccessModal = true;
+      $title = 'Novo Cliente';
+      $content = __DIR__ . '/../Views/clientes_novo.php';
+      include __DIR__ . '/../Views/layout.php';
+      return;
     }
     $title = 'Novo Cliente';
     $content = __DIR__ . '/../Views/clientes_novo.php';
@@ -241,7 +245,7 @@ class ClientesController {
     }
     $ps = trim($_GET['prova_status'] ?? '');
     $cs = trim($_GET['cpf_status'] ?? '');
-    $sql = 'SELECT id, nome, cpf, prova_vida_status, cpf_check_status, created_at FROM clients WHERE 1=1';
+    $sql = 'SELECT id, nome, cpf, prova_vida_status, cpf_check_status, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count FROM clients WHERE 1=1';
     $params = [];
     if ($q !== '') { $sql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
     if ($ini !== '') { $sql .= ' AND DATE(created_at) >= :ini'; $params['ini'] = $ini; }
