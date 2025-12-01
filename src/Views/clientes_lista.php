@@ -75,7 +75,7 @@
         <th class="border px-2 py-1">CPF</th>
         <th class="border px-2 py-1">Prova de Vida</th>
         <th class="border px-2 py-1">Consulta CPF</th>
-        <th class="border px-2 py-1 whitespace-nowrap text-sm" style="width: 120px;">Critérios</th>
+        <th class="border px-2 py-1 whitespace-nowrap" style="width: 120px;">Critérios de Emprestimo</th>
         <th class="border px-2 py-1">Elegivel</th>
         <th class="border px-2 py-1">Criado em</th>
         <th class="border px-2 py-1 whitespace-nowrap">Ações</th>
@@ -96,14 +96,14 @@
             <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
               <i class="fa fa-check text-[16px]" aria-hidden="true"></i>
             </a>
-            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 ml-0.5" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
               <i class="fa fa-eye text-[16px]" aria-hidden="true"></i>
             </a>
-            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 ml-0.5" href="/clientes/<?php echo (int)$c['id']; ?>/editar" title="Editar" aria-label="Editar">
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/editar" title="Editar" aria-label="Editar">
               <i class="fa fa-pencil text-[16px]" aria-hidden="true"></i>
             </a>
             <?php if (!empty($c['loans_count']) && (int)$c['loans_count'] > 0): ?>
-            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 ml-0.5" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>" title="Empréstimos" aria-label="Empréstimos">
+            <a class="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>" title="Empréstimos" aria-label="Empréstimos">
               <i class="fa fa-money text-[16px]" aria-hidden="true"></i>
             </a>
             <?php endif; ?>
