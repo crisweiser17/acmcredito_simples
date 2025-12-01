@@ -53,7 +53,7 @@ class ClientesController {
       }
       $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
       $stmt->execute([
-        'nome' => trim($_POST['nome'] ?? ''),
+        'nome' => (function($n){ $n = trim((string)$n); if (function_exists('mb_convert_case')) { return mb_convert_case($n, MB_CASE_TITLE, 'UTF-8'); } return ucwords(strtolower($n)); })(($_POST['nome'] ?? '')),
         'cpf' => $cpfNorm,
         'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
         'email' => trim($_POST['email'] ?? ''),
@@ -176,7 +176,7 @@ class ClientesController {
       }
       $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
       $stmt->execute([
-        'nome'=>$nome, 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
+        'nome'=>(function($n){ $n = trim((string)$n); if (function_exists('mb_convert_case')) { return mb_convert_case($n, MB_CASE_TITLE, 'UTF-8'); } return ucwords(strtolower($n)); })($nome), 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
         'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
         'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda, 'cnh_arquivo_unico' => $cnhUnico ? 1 : 0, 'observacoes' => $observacoes
       ]);

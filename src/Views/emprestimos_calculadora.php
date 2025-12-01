@@ -24,13 +24,16 @@
         </div>
       </div>
       <div>
-        <?php $preselectedClientId = (int)($_GET['client_id'] ?? 0); ?>
-        <select class="w-full border rounded px-3 py-2" name="client_id" required>
-          <option value="">Selecione o cliente</option>
-          <?php foreach ($clients as $cl): ?>
-            <option value="<?php echo $cl['id']; ?>" <?php echo ($preselectedClientId === (int)$cl['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($cl['nome'].' - '.$cl['cpf']); ?></option>
-          <?php endforeach; ?>
-        </select>
+        <?php $preselectedClientId = (int)($_GET['client_id'] ?? 0); $preselectedName = ''; $preselectedCpf = ''; foreach (($clients ?? []) as $cl){ if ((int)$cl['id'] === $preselectedClientId){ $preselectedName = (string)$cl['nome']; $preselectedCpf = (string)$cl['cpf']; break; } } ?>
+        <div class="relative">
+          <input class="w-full border rounded px-3 py-2" id="cliente_search" placeholder="Buscar cliente por nome ou CPF">
+          <input type="hidden" name="client_id" id="client_id" value="<?php echo $preselectedClientId>0?(int)$preselectedClientId:''; ?>" required>
+          <div id="cliente_results" class="absolute bg-white border rounded shadow hidden w-full max-h-56 overflow-auto z-10"></div>
+          <div class="mt-1 flex items-center gap-2">
+            <div id="cliente_selected" class="text-sm text-gray-700"><?php echo $preselectedName!==''?htmlspecialchars($preselectedName):''; ?></div>
+            <button type="button" id="cliente_clear" class="px-2 py-1 rounded bg-gray-200 <?php echo $preselectedClientId>0?'':'hidden'; ?>">Remover</button>
+          </div>
+        </div>
         <div class="text-sm text-gray-600 mt-0.5">Cliente</div>
       </div>
       <div>
@@ -392,17 +395,13 @@ function adjustRate(delta){
 }
 if (btnDec) btnDec.addEventListener('click', ()=>adjustRate(-0.5));
 if (btnInc) btnInc.addEventListener('click', ()=>adjustRate(0.5));
-const btnCopy = document.getElementById('btn_copy_simulacao');
+    const btnCopy = document.getElementById('btn_copy_simulacao');
 if (btnCopy) {
   btnCopy.addEventListener('click', async ()=>{
     recalc();
-    const cliSel = document.querySelector('select[name="client_id"]');
     let clienteNome = '';
-    if (cliSel) {
-      const opt = cliSel.options[cliSel.selectedIndex];
-      const txt = opt ? opt.text : '';
-      clienteNome = txt.split(' - ')[0] || '';
-    }
+    const selEl = document.getElementById('cliente_selected');
+    if (selEl) { clienteNome = (selEl.textContent||'').trim(); }
     const vp = parseMoneyBR(document.getElementById('valor_principal').value);
     const parcelas = document.getElementById('num_parcelas').value||'';
     const pmt = document.getElementById('pmt').value||'';
@@ -460,7 +459,7 @@ if (dateEl && !dateEl.value) {
   dateEl.value = iso;
 }
 const btnTbl = document.getElementById('btn_copy_tabela');
-if (btnTbl) {
+  if (btnTbl) {
   btnTbl.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); copyTabelaImagem(); });
 }
 function copyTabelaImagem(){
@@ -544,4 +543,32 @@ function copyTabelaImagem(){
     const a = document.createElement('a'); a.href = url; a.download = 'tabela_amortizacao.png'; a.click();
   }
 }
+// Autocomplete cliente
+(function(){
+  var input = document.getElementById('cliente_search');
+  var results = document.getElementById('cliente_results');
+  var hidden = document.getElementById('client_id');
+  var selected = document.getElementById('cliente_selected');
+  var clearBtn = document.getElementById('cliente_clear');
+  var timer = null;
+  function render(items){
+    if (!items || items.length===0){ results.innerHTML=''; results.classList.add('hidden'); return; }
+    results.innerHTML = items.map(function(it){ var cpf = it.cpf||''; var tel = it.telefone||''; return '<button type="button" data-id="'+it.id+'" data-name="'+(it.nome||'')+'" class="block w-full text-left px-3 py-2 hover:bg-gray-100">'+(it.nome||'')+'<span class="ml-2 text-xs text-gray-500">'+cpf+' '+tel+'</span></button>'; }).join('');
+    results.classList.remove('hidden');
+    Array.from(results.querySelectorAll('button[data-id]')).forEach(function(btn){ btn.addEventListener('click', function(){ hidden.value = btn.getAttribute('data-id'); selected.textContent = btn.getAttribute('data-name'); results.classList.add('hidden'); if(clearBtn){ clearBtn.classList.remove('hidden'); } }); });
+  }
+  function clearSel(){ if(hidden){ hidden.value=''; } if(selected){ selected.textContent=''; } if(clearBtn){ clearBtn.classList.add('hidden'); } }
+  if (clearBtn) clearBtn.addEventListener('click', clearSel);
+  if (input) {
+    input.addEventListener('input', function(){
+      clearTimeout(timer);
+      var q = input.value.trim();
+      if (q.length<2){ results.classList.add('hidden'); return; }
+      timer = setTimeout(async function(){
+        try{ var r = await fetch('/api/clientes/search?q='+encodeURIComponent(q)); var d = await r.json(); render(d||[]); } catch(e){ results.classList.add('hidden'); }
+      }, 250);
+    });
+  }
+  document.addEventListener('click', function(e){ if (results && !results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
+})();
 </script>
