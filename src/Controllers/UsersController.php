@@ -67,6 +67,27 @@ class UsersController {
         header('Location: /usuarios');
         return;
       }
+      if ($acao === 'apagar') {
+        $role = ((int)($_SESSION['user_id'] ?? 0) === 1) ? 'superadmin' : ($_SESSION['user_role'] ?? 'admin');
+        if ($role !== 'superadmin') { header('Location: /usuarios'); return; }
+        $id = (int)($_POST['id'] ?? 0);
+        $currentId = (int)($_SESSION['user_id'] ?? 0);
+        if ($id > 0) {
+          if ($id === 1) {
+            $_SESSION['toast'] = 'Não é permitido apagar o superadmin';
+          } elseif ($id === $currentId) {
+            $_SESSION['toast'] = 'Não é permitido apagar o próprio usuário';
+          } else {
+            try {
+              $pdo->prepare('DELETE FROM users WHERE id=:id')->execute(['id'=>$id]);
+              \App\Helpers\Audit::log('delete','users',$id,null);
+              $_SESSION['toast'] = 'Usuário apagado com sucesso';
+            } catch (\Throwable $e) {}
+          }
+        }
+        header('Location: /usuarios');
+        return;
+      }
       header('Location: /usuarios');
       return;
     }

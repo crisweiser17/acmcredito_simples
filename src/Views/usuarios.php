@@ -38,6 +38,7 @@
             <th class="px-3 py-2 text-left border">Criado em</th>
             <?php if ($role === 'superadmin'): ?><th class="px-3 py-2 text-left border">Editar Usuário/Nome</th><?php endif; ?>
             <th class="px-3 py-2 text-left border">Atualizar Senha</th>
+            <?php if ($role === 'superadmin'): ?><th class="px-3 py-2 text-left border">Apagar</th><?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -70,6 +71,19 @@
                 <div class="text-sm text-gray-600">Apenas o superadmin pode alterar a senha de outros usuários.</div>
               <?php endif; ?>
             </td>
+            <?php if ($role === 'superadmin'): ?>
+            <td class="px-3 py-2 border">
+              <?php if ((int)$u['id'] !== 1): ?>
+              <form method="post" class="inline-block" onsubmit="return confirm('Apagar este usuário? Esta ação é permanente.');">
+                <input type="hidden" name="acao" value="apagar">
+                <input type="hidden" name="id" value="<?php echo (int)$u['id']; ?>">
+                <button class="px-3 py-1 rounded bg-red-600 text-white" type="submit">Apagar</button>
+              </form>
+              <?php else: ?>
+                <div class="text-sm text-gray-600">—</div>
+              <?php endif; ?>
+            </td>
+            <?php endif; ?>
           </tr>
           <?php endforeach; ?>
         </tbody>
