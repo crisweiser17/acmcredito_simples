@@ -343,7 +343,7 @@ document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.a
   var pct = <?php echo json_encode($critPct); ?>;
   function formatBR(n){ return 'R$ ' + new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}).format(n); }
   async function fetchClient(id){ try{ var r=await fetch('/api/clientes/'+id); return await r.json(); } catch(e){ return null; } }
-  async function updateSug(){ var cidEl=document.getElementById('client_id'); var out=document.getElementById('sug_max_parcela'); var cid=parseInt(cidEl.value||'0',10); if(!out){return;} if(!cid){ out.textContent=''; return; } var d=await fetchClient(cid); var renda = d && d.renda_mensal ? parseFloat(d.renda_mensal) : 0; if (renda>0){ var sug = renda * (pct/100.0); out.textContent = 'Sugerido: parcela máxima ' + formatBR(sug) + ' ('+pct.toLocaleString('pt-BR')+'%)'; } else { out.textContent=''; } }
+  async function updateSug(){ var cidEl=document.getElementById('client_id'); var out=document.getElementById('sug_max_parcela'); var cid=parseInt(cidEl.value||'0',10); if(!out){return;} if(!cid){ out.textContent=''; return; } var d=await fetchClient(cid); var renda = d && d.renda_mensal ? parseFloat(d.renda_mensal) : 0; if (renda>0){ var sug = renda * (pct/100.0); out.textContent = 'Sugestão de parcela máxima ' + formatBR(sug) + ' ('+pct.toLocaleString('pt-BR')+'% da renda mensal)'; } else { out.textContent=''; } }
   var cidEl=document.getElementById('client_id'); if (cidEl){ ['change','input'].forEach(function(evt){ cidEl.addEventListener(evt, updateSug); }); }
   // hydrate on initial preselection
   updateSug();
