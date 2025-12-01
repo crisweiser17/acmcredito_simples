@@ -6,38 +6,58 @@
       <div class="text-lg font-semibold">Prova de Vida</div>
       <span class="px-2 py-1 rounded text-white <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':($c['prova_vida_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['prova_vida_status']); ?></span>
     </div>
-    <div class="grid md:grid-cols-2 gap-6">
+    <div class="grid gap-6 <?php echo !empty($c['doc_cnh_verso']) ? 'md:grid-cols-3' : 'md:grid-cols-2'; ?>">
       <div class="space-y-4">
         <?php if (!empty($c['doc_cnh_frente'])): ?>
           <?php $ext = strtolower(pathinfo($c['doc_cnh_frente'], PATHINFO_EXTENSION)); ?>
+          <?php $urlF = '/arquivo?p=' . rawurlencode($c['doc_cnh_frente']); ?>
           <?php if ($ext === 'pdf'): ?>
             <div>
               <div class="h-56 border rounded overflow-hidden">
-                <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-full h-full"></iframe>
+                <iframe src="<?php echo $urlF; ?>" class="w-full h-full" title="Documento Frente"></iframe>
               </div>
               <div class="mt-2">
-                <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>">Abrir tela cheia</a>
+                <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlF; ?>">Abrir tela cheia</a>
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
+            <img src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo $urlF; ?>')" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
+      <?php if (!empty($c['doc_cnh_verso'])): ?>
+      <div class="space-y-4">
+        <?php $extV = strtolower(pathinfo($c['doc_cnh_verso'], PATHINFO_EXTENSION)); ?>
+        <?php $urlV = '/arquivo?p=' . rawurlencode($c['doc_cnh_verso']); ?>
+        <?php if ($extV === 'pdf'): ?>
+          <div>
+            <div class="h-56 border rounded overflow-hidden">
+              <iframe src="<?php echo $urlV; ?>" class="w-full h-full" title="Documento Verso"></iframe>
+            </div>
+            <div class="mt-2">
+              <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlV; ?>">Abrir tela cheia</a>
+            </div>
+          </div>
+        <?php else: ?>
+          <img src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo $urlV; ?>')" />
+        <?php endif; ?>
+      </div>
+      <?php endif; ?>
       <div class="space-y-4">
         <?php if (!empty($c['doc_selfie'])): ?>
           <?php $ext2 = strtolower(pathinfo($c['doc_selfie'], PATHINFO_EXTENSION)); ?>
+          <?php $urlS = '/arquivo?p=' . rawurlencode($c['doc_selfie']); ?>
           <?php if ($ext2 === 'pdf'): ?>
             <div>
               <div class="h-56 border rounded overflow-hidden">
-                <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-full h-full"></iframe>
+                <iframe src="<?php echo $urlS; ?>" class="w-full h-full" title="Selfie"></iframe>
               </div>
               <div class="mt-2">
-                <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>">Abrir tela cheia</a>
+                <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlS; ?>">Abrir tela cheia</a>
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
+            <img src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo $urlS; ?>')" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
