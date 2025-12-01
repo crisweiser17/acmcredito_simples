@@ -52,15 +52,6 @@
         <option value="reprovado" <?php echo $cs==='reprovado'?'selected':''; ?>>Reprovado</option>
       </select>
     </div>
-    <div class="w-48">
-      <div class="text-xs text-gray-500 mb-1">Resultados por página</div>
-      <?php $pp = (int)($_GET['per_page'] ?? 25); $pp = in_array($pp,[25,50,100],true)?$pp:25; ?>
-      <select class="w-full border rounded px-3 py-2" name="per_page">
-        <option value="25" <?php echo $pp===25?'selected':''; ?>>25</option>
-        <option value="50" <?php echo $pp===50?'selected':''; ?>>50</option>
-        <option value="100" <?php echo $pp===100?'selected':''; ?>>100</option>
-      </select>
-    </div>
     <div class="ml-auto flex gap-2">
       <a class="px-4 py-2 rounded bg-gray-100" href="/clientes">Limpar</a>
       <button class="px-4 py-2 rounded btn-primary" type="submit">Filtrar</button>
@@ -90,7 +81,7 @@
         <th class="border px-2 py-1">Ações</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="cli_tbody">
       <?php foreach ($rows as $c): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$c['id']; ?></td>
@@ -123,13 +114,60 @@
       <?php endforeach; ?>
     </tbody>
   </table>
-  <?php if (!empty($_PAGINACAO)) { $pg = (int)($_PAGINACAO['page'] ?? 1); $totPg = (int)($_PAGINACAO['pages_total'] ?? 1); $qsBase = $_GET; unset($qsBase['page']); $makeUrl = function($p) use ($qsBase){ $qs = $qsBase; $qs['page'] = $p; return '/clientes?' . http_build_query($qs); }; ?>
+  <?php if (!empty($_PAGINACAO)) { $pg = (int)($_PAGINACAO['page'] ?? 1); $totPg = (int)($_PAGINACAO['pages_total'] ?? 1); $qsBase = $_GET; unset($qsBase['page']); $makeUrl = function($p) use ($qsBase){ $qs = $qsBase; $qs['page'] = $p; return '/clientes?' . http_build_query($qs); }; $ppCur = (int)($_PAGINACAO['per_page'] ?? 25); ?>
   <div class="flex items-center justify-between mt-3">
-    <div class="text-sm text-gray-600">Página <?php echo $pg; ?> de <?php echo $totPg; ?> • Total <?php echo (int)($_PAGINACAO['total'] ?? 0); ?></div>
+    <div id="cli_pageinfo" class="text-sm text-gray-600">Página <?php echo $pg; ?> de <?php echo $totPg; ?> • Total <?php echo (int)($_PAGINACAO['total'] ?? 0); ?></div>
     <div class="flex items-center gap-2">
       <a class="px-2 py-1 rounded border <?php echo $pg<=1?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(max(1,$pg-1)); ?>">Anterior</a>
       <a class="px-2 py-1 rounded border <?php echo $pg>=$totPg?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(min($totPg,$pg+1)); ?>">Próxima</a>
+      <div class="ml-4 flex items-center gap-2">
+        <span class="text-xs text-gray-500">Resultados:</span>
+        <select id="cli_per_page" class="border rounded px-2 py-1 text-xs">
+          <option value="25" <?php echo $ppCur===25?'selected':''; ?>>25</option>
+          <option value="50" <?php echo $ppCur===50?'selected':''; ?>>50</option>
+          <option value="100" <?php echo $ppCur===100?'selected':''; ?>>100</option>
+        </select>
+      </div>
     </div>
   </div>
   <?php } ?>
+  <script>
+    (function(){
+      var perSel = document.getElementById('cli_per_page');
+      if (!perSel) return;
+      function fmtCPF(c){ var d = (c||'').replace(/\D+/g,''); if (d.length===11){ return d.substring(0,3)+'.'+d.substring(3,6)+'.'+d.substring(6,9)+'-'+d.substring(9); } return c||''; }
+      function badge(val){ var v = String(val||'').toLowerCase(); var cls = 'bg-gray-100 text-gray-800'; if (v==='aprovado'){ cls='bg-green-100 text-green-800'; } else if (v==='pendente'){ cls='bg-yellow-100 text-yellow-800'; } else if (v==='reprovado'){ cls='bg-red-100 text-red-800'; } return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(v? (v.charAt(0).toUpperCase()+v.slice(1)) : '—')+'</span>'; }
+      function elig(pv,cpf,cr){ var ok = (String(pv).toLowerCase()==='aprovado' && String(cpf).toLowerCase()==='aprovado' && String(cr).toLowerCase()==='aprovado'); var cls = ok?'bg-green-100 text-green-800':'bg-red-100 text-red-800'; return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(ok?'Sim':'Não')+'</span>'; }
+      function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); return dd+'/'+mm+'/'+yy; }
+      perSel.addEventListener('change', function(){
+        var form = document.querySelector('form[method="get"]');
+        var params = new URLSearchParams();
+        if (form){ var fd = new FormData(form); fd.forEach(function(v,k){ if (v!==null && v!=='') params.set(k, v); }); }
+        params.set('per_page', perSel.value);
+        params.set('page', '1');
+        params.set('ajax', '1');
+        fetch('/clientes?'+params.toString(), {headers:{'Accept':'application/json'}})
+          .then(function(r){ return r.json(); })
+          .then(function(j){ var tb = document.getElementById('cli_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(c){ out += '<tr>'+
+            '<td class="border px-2 py-1">'+(c.id||'')+'</td>'+
+            '<td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline" href="/clientes/'+(c.id||'')+'/ver">'+(c.nome? String(c.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
+            '<td class="border px-2 py-1">'+fmtCPF(c.cpf||'')+'</td>'+
+            '<td class="border px-2 py-1">'+badge(c.prova_vida_status)+'</td>'+
+            '<td class="border px-2 py-1">'+badge(c.cpf_check_status)+'</td>'+
+            '<td class="border px-2 py-1">'+badge(c.criterios_status)+'</td>'+
+            '<td class="border px-2 py-1">'+elig(c.prova_vida_status, c.cpf_check_status, c.criterios_status)+'</td>'+
+            '<td class="border px-2 py-1">'+toBRDate(c.created_at)+'</td>'+
+            '<td class="border px-2 py-1">'+
+              '<div class="flex items-center gap-0.5">'+
+                '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/validar" title="Validar" aria-label="Validar"><i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i></a>'+
+                '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/ver" title="Ver" aria-label="Ver"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
+                '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/editar" title="Editar" aria-label="Editar"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>'+
+                ((c.loans_count&&parseInt(c.loans_count,10)>0)?('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos?client_id='+(c.id||'')+'" title="Empréstimos" aria-label="Empréstimos"><i class="fa fa-money text-[14px]" aria-hidden="true"></i></a>'):'')+
+              '</div>'+
+            '</td>'+
+          '</tr>'; }); tb.innerHTML = out; var pi = document.getElementById('cli_pageinfo'); if (pi){ var p = j.pagination||{}; pi.textContent = 'Página '+(p.page||1)+' de '+(p.pages_total||1)+' • Total '+(p.total||0); }
+          });
+      });
+    })();
+  </script>
 </div>

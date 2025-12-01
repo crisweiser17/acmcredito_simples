@@ -282,9 +282,14 @@ class ClientesController {
     $rowsStmt->execute($params);
     $rows = $rowsStmt->fetchAll();
     $pagesTotal = $perSel > 0 ? max(1, (int)ceil($total / $perSel)) : 1;
+    $_PAGINACAO = ['total'=>$total,'per_page'=>$perSel,'page'=>$page,'pages_total'=>$pagesTotal];
+    if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
+      header('Content-Type: application/json');
+      echo json_encode(['rows'=>$rows,'pagination'=>$_PAGINACAO]);
+      return;
+    }
     $title = 'Clientes';
     $content = __DIR__ . '/../Views/clientes_lista.php';
-    $_PAGINACAO = ['total'=>$total,'per_page'=>$perSel,'page'=>$page,'pages_total'=>$pagesTotal];
     include __DIR__ . '/../Views/layout.php';
   }
   public static function validar(int $id): void {

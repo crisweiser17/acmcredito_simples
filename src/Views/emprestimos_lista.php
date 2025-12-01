@@ -44,15 +44,6 @@
         <option value="cancelado" <?php echo $st==='cancelado'?'selected':''; ?>>Cancelado</option>
       </select>
     </div>
-    <div class="w-48">
-      <div class="text-xs text-gray-500 mb-1">Resultados por página</div>
-      <?php $pp = (int)($_GET['per_page'] ?? 25); $pp = in_array($pp,[25,50,100],true)?$pp:25; ?>
-      <select class="w-full border rounded px-3 py-2" name="per_page">
-        <option value="25" <?php echo $pp===25?'selected':''; ?>>25</option>
-        <option value="50" <?php echo $pp===50?'selected':''; ?>>50</option>
-        <option value="100" <?php echo $pp===100?'selected':''; ?>>100</option>
-      </select>
-    </div>
     <div class="ml-auto flex gap-2">
       <a class="px-4 py-2 rounded bg-gray-100" href="/emprestimos">Limpar</a>
       <button class="px-4 py-2 rounded btn-primary" type="submit">Filtrar</button>
@@ -83,7 +74,7 @@
         <th class="border px-2 py-1">Ações</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="loan_tbody">
       <?php foreach ($rows as $l): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$l['id']; ?></td>
@@ -117,13 +108,59 @@
       <?php endforeach; ?>
     </tbody>
   </table>
-  <?php if (!empty($_PAGINACAO)) { $pg = (int)($_PAGINACAO['page'] ?? 1); $totPg = (int)($_PAGINACAO['pages_total'] ?? 1); $qsBase = $_GET; unset($qsBase['page']); $makeUrl = function($p) use ($qsBase){ $qs = $qsBase; $qs['page'] = $p; return '/emprestimos?' . http_build_query($qs); }; ?>
+  <?php if (!empty($_PAGINACAO)) { $pg = (int)($_PAGINACAO['page'] ?? 1); $totPg = (int)($_PAGINACAO['pages_total'] ?? 1); $qsBase = $_GET; unset($qsBase['page']); $makeUrl = function($p) use ($qsBase){ $qs = $qsBase; $qs['page'] = $p; return '/emprestimos?' . http_build_query($qs); }; $ppCur = (int)($_PAGINACAO['per_page'] ?? 25); ?>
   <div class="flex items-center justify-between mt-3">
-    <div class="text-sm text-gray-600">Página <?php echo $pg; ?> de <?php echo $totPg; ?> • Total <?php echo (int)($_PAGINACAO['total'] ?? 0); ?></div>
+    <div id="loan_pageinfo" class="text-sm text-gray-600">Página <?php echo $pg; ?> de <?php echo $totPg; ?> • Total <?php echo (int)($_PAGINACAO['total'] ?? 0); ?></div>
     <div class="flex items-center gap-2">
       <a class="px-2 py-1 rounded border <?php echo $pg<=1?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(max(1,$pg-1)); ?>">Anterior</a>
       <a class="px-2 py-1 rounded border <?php echo $pg>=$totPg?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $makeUrl(min($totPg,$pg+1)); ?>">Próxima</a>
+      <div class="ml-4 flex items-center gap-2">
+        <span class="text-xs text-gray-500">Resultados:</span>
+        <select id="loan_per_page" class="border rounded px-2 py-1 text-xs">
+          <option value="25" <?php echo $ppCur===25?'selected':''; ?>>25</option>
+          <option value="50" <?php echo $ppCur===50?'selected':''; ?>>50</option>
+          <option value="100" <?php echo $ppCur===100?'selected':''; ?>>100</option>
+        </select>
+      </div>
     </div>
   </div>
   <?php } ?>
+  <script>
+    (function(){
+      var perSel = document.getElementById('loan_per_page');
+      if (!perSel) return;
+      function fmtMoney(n){ var f = parseFloat(n||0); if (isNaN(f)) f = 0; return 'R$ '+f.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+      function badgeStatus(st){ var s = String(st||''); var lbl = s; if(s==='aguardando_assinatura'){ lbl='Aguardando assinatura'; } else if(s==='aguardando_transferencia'){ lbl='Aguardando transferência'; } else if(s==='aguardando_boletos'){ lbl='Aguardando boletos'; } else if(s==='ativo'){ lbl='Ativo'; } else if(s==='cancelado'){ lbl='Cancelado'; } var cls='bg-gray-100 text-gray-800'; if(s==='ativo'){ cls='bg-green-100 text-green-800'; } else if(s==='cancelado'){ cls='bg-red-100 text-red-800'; } else if(s.indexOf('aguardando_')===0){ cls='bg-yellow-100 text-yellow-800'; } return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+lbl+'</span>'; }
+      function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); return dd+'/'+mm+'/'+yy; }
+      perSel.addEventListener('change', function(){
+        var form = document.querySelector('form[method="get"]');
+        var params = new URLSearchParams();
+        if (form){ var fd = new FormData(form); fd.forEach(function(v,k){ if (v!==null && v!=='') params.set(k, v); }); }
+        params.set('per_page', perSel.value);
+        params.set('page', '1');
+        params.set('ajax', '1');
+        fetch('/emprestimos?'+params.toString(), {headers:{'Accept':'application/json'}})
+          .then(function(r){ return r.json(); })
+          .then(function(j){ var tb = document.getElementById('loan_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(l){ out += '<tr>'+
+            '<td class="border px-2 py-1">'+(l.id||'')+'</td>'+
+            '<td class="border px-2 py-1 break-words"><a class="text-blue-700 underline" href="/clientes/'+(l.cid||'')+'/ver">'+(l.nome? String(l.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
+            '<td class="border px-2 py-1">'+fmtMoney(l.valor_principal)+'</td>'+
+            '<td class="border px-2 py-1">'+(l.num_parcelas||'')+'</td>'+
+            '<td class="border px-2 py-1">'+fmtMoney(l.valor_parcela)+'</td>'+
+            '<td class="border px-2 py-1">'+(l.taxa_juros_mensal!=null ? (parseFloat(l.taxa_juros_mensal).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2})+'% am') : '—')+'</td>'+
+            '<td class="border px-2 py-1">'+(l.valor_total!=null ? fmtMoney(l.valor_total) : '—')+'</td>'+
+            '<td class="border px-2 py-1">'+badgeStatus(l.status)+'</td>'+
+            '<td class="border px-2 py-1">'+toBRDate(l.created_at)+'</td>'+
+            '<td class="border px-2 py-1">'+
+              '<div class="flex items-center gap-0.5">'+
+                '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/'+(l.id||'')+'" title="Abrir" aria-label="Abrir"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
+                ((String(l.status||'')==='aguardando_assinatura')?('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/'+(l.id||'')+'" onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');" title="Editar" aria-label="Editar"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>'):'')+
+                '<form method="post" action="/emprestimos/'+(l.id||'')+'" style="display:inline" onsubmit="return confirm(\'Excluir este empréstimo?\');"><input type="hidden" name="acao" value="excluir"><button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button></form>'+
+              '</div>'+
+            '</td>'+
+          '</tr>'; }); tb.innerHTML = out; var pi = document.getElementById('loan_pageinfo'); if (pi){ var p = j.pagination||{}; pi.textContent = 'Página '+(p.page||1)+' de '+(p.pages_total||1)+' • Total '+(p.total||0); }
+          });
+      });
+    })();
+  </script>
 </div>
