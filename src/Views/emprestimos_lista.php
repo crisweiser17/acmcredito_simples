@@ -80,7 +80,7 @@
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?></td>
           <td class="border px-2 py-1"><?php echo (int)$l['num_parcelas']; ?></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></td>
-          <td class="border px-2 py-1"><?php echo htmlspecialchars($l['status']); ?></td>
+          <td class="border px-2 py-1"><?php $st = (string)($l['status'] ?? ''); $stLabel = $st; if ($st==='aguardando_assinatura'){ $stLabel='Aguardando assinatura'; } elseif ($st==='aguardando_transferencia'){ $stLabel='Aguardando transferência'; } elseif ($st==='aguardando_boletos'){ $stLabel='Aguardando boletos'; } elseif ($st==='ativo'){ $stLabel='Ativo'; } elseif ($st==='cancelado'){ $stLabel='Cancelado'; } $stClass = 'bg-gray-100 text-gray-800'; if ($st==='ativo'){ $stClass='bg-green-100 text-green-800'; } elseif ($st==='cancelado'){ $stClass='bg-red-100 text-red-800'; } elseif (strpos($st,'aguardando_')===0){ $stClass='bg-yellow-100 text-yellow-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $stClass; ?>"><?php echo htmlspecialchars($stLabel ?: '—'); ?></span></td>
           <td class="border px-2 py-1"><?php echo !empty($l['created_at'])?date('d/m/Y', strtotime($l['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">
             <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" title="Abrir" aria-label="Abrir">

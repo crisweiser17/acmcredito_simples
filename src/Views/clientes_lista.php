@@ -43,7 +43,7 @@
       </select>
     </div>
     <div class="w-52">
-      <div class="text-xs text-gray-500 mb-1">CPF Check</div>
+      <div class="text-xs text-gray-500 mb-1">Consulta CPF</div>
       <select class="w-full border rounded px-3 py-2" name="cpf_status">
         <?php $cs = $_GET['cpf_status'] ?? ''; ?>
         <option value=""></option>
@@ -74,7 +74,7 @@
         <th class="border px-2 py-1">Nome</th>
         <th class="border px-2 py-1">CPF</th>
         <th class="border px-2 py-1">Prova de Vida</th>
-        <th class="border px-2 py-1">CPF Check</th>
+        <th class="border px-2 py-1">Consulta CPF</th>
         <th class="border px-2 py-1">Criado em</th>
         <th class="border px-2 py-1">Ações</th>
       </tr>
@@ -83,10 +83,10 @@
       <?php foreach ($rows as $c): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$c['id']; ?></td>
-          <td class="border px-2 py-1"><?php echo htmlspecialchars($c['nome']); ?></td>
-          <td class="border px-2 py-1"><?php echo htmlspecialchars($c['cpf']); ?></td>
-          <td class="border px-2 py-1"><?php echo htmlspecialchars($c['prova_vida_status']); ?></td>
-          <td class="border px-2 py-1"><?php echo htmlspecialchars($c['cpf_check_status']); ?></td>
+          <td class="border px-2 py-1"><a class="text-blue-600 hover:underline" href="/clientes/<?php echo (int)$c['id']; ?>/ver"><?php echo htmlspecialchars($c['nome']); ?></a></td>
+          <td class="border px-2 py-1"><?php $cpfDigits = preg_replace('/\D+/', '', (string)$c['cpf']); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); echo htmlspecialchars($cpfFmt); } else { echo htmlspecialchars((string)$c['cpf']); } ?></td>
+          <td class="border px-2 py-1"><?php $pv = strtolower((string)($c['prova_vida_status'] ?? '')); $pvClass = 'bg-gray-100 text-gray-800'; if ($pv==='aprovado'){ $pvClass='bg-green-100 text-green-800'; } elseif ($pv==='pendente'){ $pvClass='bg-yellow-100 text-yellow-800'; } elseif ($pv==='reprovado'){ $pvClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $pvClass; ?>"><?php echo htmlspecialchars($pv ? ucfirst($pv) : '—'); ?></span></td>
+          <td class="border px-2 py-1"><?php $cs2 = strtolower((string)($c['cpf_check_status'] ?? '')); $csClass = 'bg-gray-100 text-gray-800'; if ($cs2==='aprovado'){ $csClass='bg-green-100 text-green-800'; } elseif ($cs2==='pendente'){ $csClass='bg-yellow-100 text-yellow-800'; } elseif ($cs2==='reprovado'){ $csClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $csClass; ?>"><?php echo htmlspecialchars($cs2 ? ucfirst($cs2) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php echo !empty($c['created_at'])?date('d/m/Y', strtotime($c['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">
             <a class="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
