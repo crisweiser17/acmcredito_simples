@@ -52,6 +52,19 @@ $production = readEnvFile('.env.production');
         <input type="checkbox" name="api_cpf_cnpj_teste" <?php echo $apiEnv==='test'?'checked':''; ?>>
         <span>Ambiente de Testes (retorna dados fictícios)</span>
       </label>
+      <div class="mt-3 flex items-center gap-3">
+        <button class="px-3 py-2 rounded bg-gray-100" name="action" value="consulta_saldo" type="submit">Consultar saldo do pacote</button>
+        <?php if (!empty($saldoResp) && is_array($saldoResp) && empty($saldoErr)): ?>
+          <?php $pac = $saldoResp['pacote'] ?? []; ?>
+          <?php $pacId = isset($pac['id']) ? (string)$pac['id'] : (string)$apiPacote; ?>
+          <?php $pacNome = isset($pac['nome']) ? (string)$pac['nome'] : ''; ?>
+          <?php $pacSaldo = isset($pac['saldo']) ? (string)$pac['saldo'] : (string)($saldoResp['saldo'] ?? ($saldoResp['creditos'] ?? '-')); ?>
+          <input class="border rounded px-3 py-2" readonly value="<?php echo htmlspecialchars('ID '.$pacId.' · '.$pacNome.' · saldo '.$pacSaldo); ?>">
+        <?php endif; ?>
+      </div>
+      <?php if (isset($saldoErr) && !empty($saldoErr)): ?>
+        <div class="mt-2 text-red-700">Erro: <?php echo htmlspecialchars($saldoErr); ?></div>
+      <?php endif; ?>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Info da Empresa</div>

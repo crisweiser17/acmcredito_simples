@@ -6,6 +6,36 @@ use App\Helpers\ConfigRepo;
 class SettingsController {
   public static function handle(): void {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $action = trim($_POST['action'] ?? '');
+      if ($action === 'consulta_saldo') {
+        $token = trim($_POST['api_cpf_cnpj_token'] ?? '') ?: ConfigRepo::get('api_cpf_cnpj_token', '');
+        $pacote = trim($_POST['api_cpf_cnpj_pacote'] ?? '') ?: ConfigRepo::get('api_cpf_cnpj_pacote', '');
+        $saldoResp = null; $saldoErr = null;
+        if ($token !== '' && $pacote !== '') {
+          try {
+            $endpoint = 'https://api.cpfcnpj.com.br/' . rawurlencode((string)$token) . '/saldo/' . rawurlencode((string)$pacote);
+            $ch = curl_init($endpoint);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
+            $out = curl_exec($ch);
+            $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($out === false) { $saldoErr = 'cURL error: ' . curl_error($ch); }
+            curl_close($ch);
+            if ($out !== false) {
+              $j = json_decode($out, true);
+              $saldoResp = is_array($j) ? $j : ['raw' => $out];
+              if ($http >= 400) { $saldoErr = 'HTTP ' . $http; }
+            }
+          } catch (\Throwable $e) { $saldoErr = $e->getMessage(); }
+        } else {
+          $saldoErr = 'Token ou Pacote ausente';
+        }
+        $title = 'Configurações';
+        $content = __DIR__ . '/../Views/config.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
       $env = $_POST['env'] === 'production' ? 'production' : 'staging';
       $staging = [
         'DB_HOST' => trim($_POST['staging_db_host'] ?? ''),
