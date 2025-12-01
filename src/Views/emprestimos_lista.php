@@ -67,6 +67,8 @@
         <th class="border px-2 py-1">Principal</th>
         <th class="border px-2 py-1">Parcelas</th>
         <th class="border px-2 py-1">Parcela</th>
+        <th class="border px-2 py-1">Juros</th>
+        <th class="border px-2 py-1">Repagamento</th>
         <th class="border px-2 py-1">Status</th>
         <th class="border px-2 py-1">Criado em</th>
         <th class="border px-2 py-1">Ações</th>
@@ -80,6 +82,8 @@
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?></td>
           <td class="border px-2 py-1"><?php echo (int)$l['num_parcelas']; ?></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></td>
+          <td class="border px-2 py-1"><?php echo isset($l['taxa_juros_mensal']) ? (number_format((float)$l['taxa_juros_mensal'],2,',','.').'% am') : '—'; ?></td>
+          <td class="border px-2 py-1"><?php echo isset($l['valor_total']) ? ('R$ '.number_format((float)$l['valor_total'],2,',','.')) : '—'; ?></td>
           <td class="border px-2 py-1"><?php $st = (string)($l['status'] ?? ''); $stLabel = $st; if ($st==='aguardando_assinatura'){ $stLabel='Aguardando assinatura'; } elseif ($st==='aguardando_transferencia'){ $stLabel='Aguardando transferência'; } elseif ($st==='aguardando_boletos'){ $stLabel='Aguardando boletos'; } elseif ($st==='ativo'){ $stLabel='Ativo'; } elseif ($st==='cancelado'){ $stLabel='Cancelado'; } $stClass = 'bg-gray-100 text-gray-800'; if ($st==='ativo'){ $stClass='bg-green-100 text-green-800'; } elseif ($st==='cancelado'){ $stClass='bg-red-100 text-red-800'; } elseif (strpos($st,'aguardando_')===0){ $stClass='bg-yellow-100 text-yellow-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $stClass; ?>"><?php echo htmlspecialchars($stLabel ?: '—'); ?></span></td>
           <td class="border px-2 py-1"><?php echo !empty($l['created_at'])?date('d/m/Y', strtotime($l['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">

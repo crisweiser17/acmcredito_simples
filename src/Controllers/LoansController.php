@@ -221,7 +221,7 @@ class LoansController {
       elseif ($periodo === 'mes_atual') { $ini = date('Y-m-01'); $fim = $today; }
     }
     $status = trim($_GET['status'] ?? '');
-    $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.taxa_juros_mensal, l.valor_total, l.status, l.created_at FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
     if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
     if ($cid > 0) { $sql .= ' AND l.client_id = :cid'; $params['cid'] = $cid; }
