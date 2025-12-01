@@ -48,10 +48,10 @@
           <th class="px-2 py-2 text-left text-xs">Status</th>
           <th class="px-2 py-2 text-left text-xs">Tentativas</th>
           <th class="px-2 py-2 text-left text-xs">Payment</th>
-          <th class="px-2 py-2 text-left text-xs">Processado</th>
+          <th class="px-2 py-2 text-left text-xs">Boleto Criado</th>
           <th class="px-2 py-2 text-left text-xs">Erro</th>
           <th class="px-2 py-2 text-left text-xs">Criado</th>
-          <th class="px-2 py-2 text-left text-xs">Processado</th>
+          <th class="px-2 py-2 text-left text-xs">Processado em</th>
         </tr>
       </thead>
       <tbody>
@@ -68,7 +68,7 @@
               <form method="post" action="/relatorios/filas">
                 <input type="hidden" name="acao" value="fila_marcar_processado">
                 <input type="hidden" name="qid" value="<?php echo (int)$r['id']; ?>">
-                <input type="checkbox" name="processed" value="1" <?php echo ($r['status']==='sucesso')?'checked':''; ?> onchange="this.form.submit();">
+                <input type="checkbox" name="processed" value="1" <?php echo ($r['status']==='sucesso')?'checked':''; ?> onchange="this.form.submit();" title="Marcar como boleto criado">
               </form>
             </td>
             <td class="px-2 py-2 text-xs text-red-300"><?php echo htmlspecialchars($r['last_error'] ?? ''); ?></td>
@@ -131,7 +131,7 @@
           <th class="px-2 py-2 text-left text-xs">Tentativas</th>
           <th class="px-2 py-2 text-left text-xs">Erro</th>
           <th class="px-2 py-2 text-left text-xs">Recebido</th>
-          <th class="px-2 py-2 text-left text-xs">Processado</th>
+          <th class="px-2 py-2 text-left text-xs">Processado em</th>
           <th class="px-2 py-2 text-left text-xs">Payload</th>
         </tr>
       </thead>
