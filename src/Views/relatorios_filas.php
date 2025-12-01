@@ -41,39 +41,39 @@
     <table class="min-w-full border">
       <thead>
         <tr class="bg-gray-100">
-          <th class="px-3 py-2 text-left">ID</th>
-          <th class="px-3 py-2 text-left">Cliente</th>
-          <th class="px-3 py-2 text-left">Loan</th>
-          <th class="px-3 py-2 text-left">Parcela</th>
-          <th class="px-3 py-2 text-left">Status</th>
-          <th class="px-3 py-2 text-left">Tentativas</th>
+          <th class="px-2 py-2 text-left text-xs">ID</th>
+          <th class="px-2 py-2 text-left text-xs">Cliente</th>
+          <th class="px-2 py-2 text-left text-xs">Loan</th>
+          <th class="px-2 py-2 text-left text-xs">Parcela</th>
+          <th class="px-2 py-2 text-left text-xs">Status</th>
+          <th class="px-2 py-2 text-left text-xs">Tentativas</th>
           <th class="px-2 py-2 text-left text-xs">Payment</th>
-          <th class="px-3 py-2 text-left">Processado</th>
-          <th class="px-3 py-2 text-left">Erro</th>
-          <th class="px-3 py-2 text-left">Criado</th>
-          <th class="px-3 py-2 text-left">Processado</th>
+          <th class="px-2 py-2 text-left text-xs">Processado</th>
+          <th class="px-2 py-2 text-left text-xs">Erro</th>
+          <th class="px-2 py-2 text-left text-xs">Criado</th>
+          <th class="px-2 py-2 text-left text-xs">Processado</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
           <tr class="border-t">
-            <td class="px-3 py-2"><?php echo (int)$r['id']; ?></td>
-            <td class="px-3 py-2"><?php echo htmlspecialchars($r['cliente_nome'] ?? ''); ?></td>
-            <td class="px-3 py-2">#<?php echo (int)$r['loan_id']; ?></td>
-            <td class="px-3 py-2">#<?php echo (int)$r['parcela_id']; ?></td>
-            <td class="px-3 py-2"><?php echo htmlspecialchars(($r['status']==='aguardando')?'Aguardando':$r['status']); ?></td>
-            <td class="px-3 py-2"><?php echo (int)$r['try_count']; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo (int)$r['id']; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['cliente_nome'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs">#<?php echo (int)$r['loan_id']; ?></td>
+            <td class="px-2 py-2 text-xs">#<?php echo (int)$r['parcela_id']; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars(($r['status']==='aguardando')?'Aguardando':$r['status']); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo (int)$r['try_count']; ?></td>
             <td class="px-2 py-2 text-xs whitespace-pre-wrap break-words max-w-[20ch]"><?php echo htmlspecialchars($r['payment_id'] ?? ''); ?></td>
-            <td class="px-3 py-2">
+            <td class="px-2 py-2">
               <form method="post" action="/relatorios/filas">
                 <input type="hidden" name="acao" value="fila_marcar_processado">
                 <input type="hidden" name="qid" value="<?php echo (int)$r['id']; ?>">
                 <input type="checkbox" name="processed" value="1" <?php echo ($r['status']==='sucesso')?'checked':''; ?> onchange="this.form.submit();">
               </form>
             </td>
-            <td class="px-3 py-2 text-xs text-red-300"><?php echo htmlspecialchars($r['last_error'] ?? ''); ?></td>
-            <td class="px-3 py-2"><?php echo htmlspecialchars($r['created_at'] ?? ''); ?></td>
-            <td class="px-3 py-2"><?php echo htmlspecialchars($r['processed_at'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs text-red-300"><?php echo htmlspecialchars($r['last_error'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['created_at'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['processed_at'] ?? ''); ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -123,25 +123,25 @@
     <table class="min-w-full border">
       <thead>
         <tr class="bg-gray-100">
-          <th class="px-3 py-2 text-left">ID</th>
-          <th class="px-3 py-2 text-left">Evento</th>
-          <th class="px-3 py-2 text-left">Invoice ID</th>
-          <th class="px-3 py-2 text-left">Status</th>
-          <th class="px-3 py-2 text-left">IP Origem</th>
-          <th class="px-3 py-2 text-left">Tentativas</th>
-          <th class="px-3 py-2 text-left">Erro</th>
-          <th class="px-3 py-2 text-left">Recebido</th>
-          <th class="px-3 py-2 text-left">Processado</th>
-          <th class="px-3 py-2 text-left">Payload</th>
+          <th class="px-2 py-2 text-left text-xs">ID</th>
+          <th class="px-2 py-2 text-left text-xs">Evento</th>
+          <th class="px-2 py-2 text-left text-xs">Invoice ID</th>
+          <th class="px-2 py-2 text-left text-xs">Status</th>
+          <th class="px-2 py-2 text-left text-xs">IP Origem</th>
+          <th class="px-2 py-2 text-left text-xs">Tentativas</th>
+          <th class="px-2 py-2 text-left text-xs">Erro</th>
+          <th class="px-2 py-2 text-left text-xs">Recebido</th>
+          <th class="px-2 py-2 text-left text-xs">Processado</th>
+          <th class="px-2 py-2 text-left text-xs">Payload</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach ($webhooks as $w): ?>
           <tr class="border-t">
-            <td class="px-3 py-2"><?php echo (int)$w['id']; ?></td>
-            <td class="px-3 py-2"><?php echo htmlspecialchars($w['evento_tipo'] ?? ''); ?></td>
-            <td class="px-3 py-2 text-xs"><?php echo htmlspecialchars($w['invoice_id'] ?? ''); ?></td>
-            <td class="px-3 py-2">
+            <td class="px-2 py-2 text-xs"><?php echo (int)$w['id']; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['evento_tipo'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['invoice_id'] ?? ''); ?></td>
+            <td class="px-2 py-2">
               <span class="px-2 py-1 text-xs rounded <?php 
                 if ($w['status'] === 'processado') echo 'bg-green-100 text-green-800';
                 elseif ($w['status'] === 'erro') echo 'bg-red-100 text-red-800';
@@ -149,12 +149,12 @@
                 else echo 'bg-gray-100 text-gray-800';
               ?>"><?php echo htmlspecialchars($w['status']); ?></span>
             </td>
-            <td class="px-3 py-2 text-xs"><?php echo htmlspecialchars($w['ip_origem'] ?? ''); ?></td>
-            <td class="px-3 py-2"><?php echo (int)$w['tentativas']; ?></td>
-            <td class="px-3 py-2 text-xs text-red-600"><?php echo htmlspecialchars(substr($w['erro'] ?? '', 0, 50)); ?></td>
-            <td class="px-3 py-2 text-xs"><?php echo htmlspecialchars($w['created_at'] ?? ''); ?></td>
-            <td class="px-3 py-2 text-xs"><?php echo htmlspecialchars($w['processado_em'] ?? ''); ?></td>
-            <td class="px-3 py-2 text-xs"><details><summary class="cursor-pointer text-royal">Ver</summary><pre class="mt-2 p-2 bg-gray-50 rounded text-xs max-w-[60ch] overflow-auto"><?php echo htmlspecialchars($w['payload'] ?? ''); ?></pre></details></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['ip_origem'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo (int)$w['tentativas']; ?></td>
+            <td class="px-2 py-2 text-xs text-red-600"><?php echo htmlspecialchars(substr($w['erro'] ?? '', 0, 50)); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['created_at'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['processado_em'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><details><summary class="cursor-pointer text-royal">Ver</summary><pre class="mt-2 p-2 bg-gray-50 rounded text-xs max-w-[60ch] overflow-auto"><?php echo htmlspecialchars($w['payload'] ?? ''); ?></pre></details></td>
           </tr>
         <?php endforeach; ?>
         <?php if (empty($webhooks)): ?>
@@ -172,17 +172,17 @@
           <table class="min-w-full border">
             <thead>
               <tr class="bg-gray-100">
-                <th class="px-3 py-2 text-left">Execução</th>
-                <th class="px-3 py-2 text-left">Data</th>
-                <th class="px-3 py-2 text-left">Ações</th>
+                <th class="px-2 py-2 text-left text-xs">Execução</th>
+                <th class="px-2 py-2 text-left text-xs">Data</th>
+                <th class="px-2 py-2 text-left text-xs">Ações</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($runs as $r): ?>
                 <tr class="border-t">
-                  <td class="px-3 py-2"><?php echo htmlspecialchars($r['run_id'] ?? ''); ?></td>
-                  <td class="px-3 py-2"><?php echo htmlspecialchars($r['created_at'] ?? ''); ?></td>
-                  <td class="px-3 py-2"><a class="text-royal" href="/relatorios/filas?tab=logs&run=<?php echo urlencode($r['run_id'] ?? ''); ?>">Ver detalhes</a></td>
+                  <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['run_id'] ?? ''); ?></td>
+                  <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['created_at'] ?? ''); ?></td>
+                  <td class="px-2 py-2 text-xs"><a class="text-royal" href="/relatorios/filas?tab=logs&run=<?php echo urlencode($r['run_id'] ?? ''); ?>">Ver detalhes</a></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -191,23 +191,23 @@
           <table class="min-w-full border">
             <thead>
               <tr class="bg-gray-100">
-                <th class="px-3 py-2 text-left">Queue</th>
-                <th class="px-3 py-2 text-left">Ação</th>
-                <th class="px-3 py-2 text-left">HTTP</th>
-                <th class="px-3 py-2 text-left">Criado</th>
-                <th class="px-3 py-2 text-left">Request</th>
-                <th class="px-3 py-2 text-left">Response</th>
+                <th class="px-2 py-2 text-left text-xs">Queue</th>
+                <th class="px-2 py-2 text-left text-xs">Ação</th>
+                <th class="px-2 py-2 text-left text-xs">HTTP</th>
+                <th class="px-2 py-2 text-left text-xs">Criado</th>
+                <th class="px-2 py-2 text-left text-xs">Request</th>
+                <th class="px-2 py-2 text-left text-xs">Response</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($logs as $l): ?>
                 <tr class="border-t align-top">
-                  <td class="px-3 py-2">#<?php echo (int)($l['queue_id'] ?? 0); ?></td>
-                  <td class="px-3 py-2"><?php echo htmlspecialchars(($l['action'] ?? '') . (($l['note'] ?? '')?(' — '.$l['note']):'')); ?></td>
-                  <td class="px-3 py-2"><?php echo (int)($l['http_code'] ?? 0); ?></td>
-                  <td class="px-3 py-2"><?php echo htmlspecialchars($l['created_at'] ?? ''); ?></td>
-                  <td class="px-3 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['request_json'] ?? ''); ?></pre></td>
-                  <td class="px-3 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['response_json'] ?? ''); ?></pre></td>
+                  <td class="px-2 py-2 text-xs">#<?php echo (int)($l['queue_id'] ?? 0); ?></td>
+                  <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars(($l['action'] ?? '') . (($l['note'] ?? '')?(' — '.$l['note']):'')); ?></td>
+                  <td class="px-2 py-2 text-xs"><?php echo (int)($l['http_code'] ?? 0); ?></td>
+                  <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($l['created_at'] ?? ''); ?></td>
+                  <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['request_json'] ?? ''); ?></pre></td>
+                  <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['response_json'] ?? ''); ?></pre></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -220,23 +220,23 @@
         <table class="min-w-full border">
           <thead>
             <tr class="bg-gray-100">
-              <th class="px-3 py-2 text-left">Queue</th>
-              <th class="px-3 py-2 text-left">Ação</th>
-              <th class="px-3 py-2 text-left">HTTP</th>
-              <th class="px-3 py-2 text-left">Criado</th>
-              <th class="px-3 py-2 text-left">Request</th>
-              <th class="px-3 py-2 text-left">Response</th>
+              <th class="px-2 py-2 text-left text-xs">Queue</th>
+              <th class="px-2 py-2 text-left text-xs">Ação</th>
+              <th class="px-2 py-2 text-left text-xs">HTTP</th>
+              <th class="px-2 py-2 text-left text-xs">Criado</th>
+              <th class="px-2 py-2 text-left text-xs">Request</th>
+              <th class="px-2 py-2 text-left text-xs">Response</th>
             </tr>
           </thead>
           <tbody>
             <?php foreach ($logs as $l): ?>
               <tr class="border-t align-top">
-                <td class="px-3 py-2">#<?php echo (int)($l['queue_id'] ?? 0); ?></td>
-                <td class="px-3 py-2"><?php echo htmlspecialchars(($l['action'] ?? '') . (($l['note'] ?? '')?(' — '.$l['note']):'')); ?></td>
-                <td class="px-3 py-2"><?php echo (int)($l['http_code'] ?? 0); ?></td>
-                <td class="px-3 py-2"><?php echo htmlspecialchars($l['created_at'] ?? ''); ?></td>
-                <td class="px-3 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['request_json'] ?? ''); ?></pre></td>
-                <td class="px-3 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['response_json'] ?? ''); ?></pre></td>
+                <td class="px-2 py-2 text-xs">#<?php echo (int)($l['queue_id'] ?? 0); ?></td>
+                <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars(($l['action'] ?? '') . (($l['note'] ?? '')?(' — '.$l['note']):'')); ?></td>
+                <td class="px-2 py-2 text-xs"><?php echo (int)($l['http_code'] ?? 0); ?></td>
+                <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($l['created_at'] ?? ''); ?></td>
+                <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['request_json'] ?? ''); ?></pre></td>
+                <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['response_json'] ?? ''); ?></pre></td>
               </tr>
             <?php endforeach; ?>
           </tbody>
