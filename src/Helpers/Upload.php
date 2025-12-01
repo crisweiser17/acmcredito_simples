@@ -29,7 +29,33 @@ class Upload {
     $orig = str_replace('+', '_', $orig);
     $name = $uuid . '_' . $orig;
     $path = $base . '/' . $name;
-    if (!move_uploaded_file($file['tmp_name'], $path)) throw new \RuntimeException('Erro ao salvar arquivo');
+    $isImage = in_array($ext, ['jpg','jpeg','png'], true);
+    if ($isImage && (function_exists('imagecreatefromjpeg') || function_exists('imagecreatefrompng'))) {
+      $tmp = $file['tmp_name'] ?? '';
+      if (!is_file($tmp)) throw new \RuntimeException('Arquivo temporário não encontrado');
+      $maxDim = 1600;
+      $img = null;
+      if ($ext === 'jpg' || $ext === 'jpeg') { $img = @imagecreatefromjpeg($tmp); }
+      elseif ($ext === 'png') { $img = @imagecreatefrompng($tmp); }
+      if ($img) {
+        $w = imagesx($img); $h = imagesy($img);
+        $scale = 1.0;
+        if ($w > $maxDim || $h > $maxDim) { $scale = min($maxDim / max(1,$w), $maxDim / max(1,$h)); }
+        $nw = max(1, (int)floor($w * $scale));
+        $nh = max(1, (int)floor($h * $scale));
+        $dst = imagecreatetruecolor($nw, $nh);
+        if ($ext === 'png') { imagealphablending($dst, false); imagesavealpha($dst, true); }
+        imagecopyresampled($dst, $img, 0,0,0,0, $nw,$nh, $w,$h);
+        if ($ext === 'jpg' || $ext === 'jpeg') { @imagejpeg($dst, $path, 80); }
+        else { @imagepng($dst, $path, 6); }
+        imagedestroy($dst); imagedestroy($img);
+        if (!file_exists($path) || filesize($path) < 200) { if (!move_uploaded_file($tmp, $path)) throw new \RuntimeException('Erro ao salvar arquivo'); }
+      } else {
+        if (!move_uploaded_file($tmp, $path)) throw new \RuntimeException('Erro ao salvar arquivo');
+      }
+    } else {
+      if (!move_uploaded_file($file['tmp_name'], $path)) throw new \RuntimeException('Erro ao salvar arquivo');
+    }
     return '/uploads/' . $clientId . '/' . $folder . '/' . $name;
   }
 }
