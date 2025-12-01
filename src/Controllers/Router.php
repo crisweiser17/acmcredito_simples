@@ -24,6 +24,10 @@ class Router {
       return;
     }
     if ($path === '/config') {
+      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) {
+        header('Location: /');
+        return;
+      }
       \App\Controllers\SettingsController::handle();
       return;
     }
@@ -44,6 +48,10 @@ class Router {
       return;
     }
     if ($path === '/admin/install') {
+      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) {
+        header('Location: /');
+        return;
+      }
       \App\Controllers\InstallController::handle();
       return;
     }

@@ -78,6 +78,7 @@ $saved = isset($_GET['saved']);
             <?php endif; ?>
           </div>
         </div>
+        <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
         <div>
           <button type="button" data-target="menu-config" aria-expanded="<?php echo $openCfg?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
             <span class="flex items-center gap-2">
@@ -88,14 +89,11 @@ $saved = isset($_GET['saved']);
           </button>
           <div id="menu-config" class="<?php echo $openCfg?'block':'hidden'; ?>">
             <a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a>
-            <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
-              <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
-            <?php endif; ?>
-            <?php if (isset($_SESSION['user_id'])): ?>
-              <a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a>
-            <?php endif; ?>
+            <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
+            <a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a>
           </div>
         </div>
+        <?php endif; ?>
         <?php if (isset($_SESSION['user_id'])): ?>
           <a href="/logout" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-800">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 17l5-5-5-5v10zM4 4h8v2H4v12h8v2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
