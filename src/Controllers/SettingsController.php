@@ -108,6 +108,11 @@ class SettingsController {
       $pl3n = trim($_POST['plano3_parcelas'] ?? '');
       $pl4v = trim($_POST['plano4_valor'] ?? '');
       $pl4n = trim($_POST['plano4_parcelas'] ?? '');
+      $pl5v = trim($_POST['plano5_valor'] ?? '');
+      $pl5n = trim($_POST['plano5_parcelas'] ?? '');
+      $pl6v = trim($_POST['plano6_valor'] ?? '');
+      $pl6n = trim($_POST['plano6_parcelas'] ?? '');
+      $taxaPadrao = trim($_POST['taxa_juros_padrao_mensal'] ?? '');
       if ($pl1v !== '') { ConfigRepo::set('plano1_valor', $pl1v, 'Plano 1 Valor'); }
       if ($pl1n !== '') { ConfigRepo::set('plano1_parcelas', $pl1n, 'Plano 1 Parcelas'); }
       if ($pl2v !== '') { ConfigRepo::set('plano2_valor', $pl2v, 'Plano 2 Valor'); }
@@ -116,6 +121,11 @@ class SettingsController {
       if ($pl3n !== '') { ConfigRepo::set('plano3_parcelas', $pl3n, 'Plano 3 Parcelas'); }
       if ($pl4v !== '') { ConfigRepo::set('plano4_valor', $pl4v, 'Plano 4 Valor'); }
       if ($pl4n !== '') { ConfigRepo::set('plano4_parcelas', $pl4n, 'Plano 4 Parcelas'); }
+      if ($pl5v !== '') { ConfigRepo::set('plano5_valor', $pl5v, 'Plano 5 Valor'); }
+      if ($pl5n !== '') { ConfigRepo::set('plano5_parcelas', $pl5n, 'Plano 5 Parcelas'); }
+      if ($pl6v !== '') { ConfigRepo::set('plano6_valor', $pl6v, 'Plano 6 Valor'); }
+      if ($pl6n !== '') { ConfigRepo::set('plano6_parcelas', $pl6n, 'Plano 6 Parcelas'); }
+      if ($taxaPadrao !== '') { ConfigRepo::set('taxa_juros_padrao_mensal', $taxaPadrao, 'Taxa de Juros Padrão Mensal (% a.m.)'); }
       header('Location: /config?saved=1');
       exit;
     }

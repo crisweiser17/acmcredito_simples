@@ -98,48 +98,116 @@ $production = readEnvFile('.env.production');
       <?php $pl2v = \App\Helpers\ConfigRepo::get('plano2_valor','1000'); $pl2n = \App\Helpers\ConfigRepo::get('plano2_parcelas','5'); ?>
       <?php $pl3v = \App\Helpers\ConfigRepo::get('plano3_valor','1500'); $pl3n = \App\Helpers\ConfigRepo::get('plano3_parcelas','5'); ?>
       <?php $pl4v = \App\Helpers\ConfigRepo::get('plano4_valor','2000'); $pl4n = \App\Helpers\ConfigRepo::get('plano4_parcelas','6'); ?>
-      <div class="grid md:grid-cols-2 gap-3">
-        <div class="grid grid-cols-2 gap-2 items-end">
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Plano 1 Valor (R$)</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano1_valor" value="<?php echo htmlspecialchars($pl1v); ?>">
+      <?php $pl5v = \App\Helpers\ConfigRepo::get('plano5_valor','2500'); $pl5n = \App\Helpers\ConfigRepo::get('plano5_parcelas','8'); ?>
+      <?php $pl6v = \App\Helpers\ConfigRepo::get('plano6_valor','3000'); $pl6n = \App\Helpers\ConfigRepo::get('plano6_parcelas','10'); ?>
+      <?php $taxaPadrao = \App\Helpers\ConfigRepo::get('taxa_juros_padrao_mensal','24'); ?>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="border rounded p-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2 items-end">
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Plano 1 Valor (R$)</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano1_valor" value="<?php echo htmlspecialchars($pl1v); ?>">
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano1_parcelas" value="<?php echo htmlspecialchars($pl1n); ?>">
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano1_parcelas" value="<?php echo htmlspecialchars($pl1n); ?>">
+          <div class="text-xs text-gray-500">Parcela estimada: <span id="pl1_pmt">—</span></div>
+          <div class="text-xs text-gray-500">Lucro estimado: <span id="pl1_lucro">—</span></div>
+          </div>
+        <div class="border rounded p-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2 items-end">
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Plano 2 Valor (R$)</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano2_valor" value="<?php echo htmlspecialchars($pl2v); ?>">
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano2_parcelas" value="<?php echo htmlspecialchars($pl2n); ?>">
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">Parcela estimada: <span id="pl2_pmt">—</span></div>
+          <div class="text-xs text-gray-500">Lucro estimado: <span id="pl2_lucro">—</span></div>
+          </div>
+        <div class="border rounded p-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2 items-end">
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Plano 3 Valor (R$)</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano3_valor" value="<?php echo htmlspecialchars($pl3v); ?>">
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano3_parcelas" value="<?php echo htmlspecialchars($pl3n); ?>">
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">Parcela estimada: <span id="pl3_pmt">—</span></div>
+          <div class="text-xs text-gray-500">Lucro estimado: <span id="pl3_lucro">—</span></div>
+          </div>
+        <div class="border rounded p-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2 items-end">
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Plano 4 Valor (R$)</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano4_valor" value="<?php echo htmlspecialchars($pl4v); ?>">
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano4_parcelas" value="<?php echo htmlspecialchars($pl4n); ?>">
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">Parcela estimada: <span id="pl4_pmt">—</span></div>
+          <div class="text-xs text-gray-500">Lucro estimado: <span id="pl4_lucro">—</span></div>
+          </div>
+        <div class="border rounded p-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2 items-end">
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Plano 5 Valor (R$)</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano5_valor" value="<?php echo htmlspecialchars($pl5v); ?>">
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano5_parcelas" value="<?php echo htmlspecialchars($pl5n); ?>">
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">Parcela estimada: <span id="pl5_pmt">—</span></div>
+          <div class="text-xs text-gray-500">Lucro estimado: <span id="pl5_lucro">—</span></div>
+          </div>
+        <div class="border rounded p-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2 items-end">
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Plano 6 Valor (R$)</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano6_valor" value="<?php echo htmlspecialchars($pl6v); ?>">
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Parcelas</div>
+              <input class="border rounded px-3 py-2 w-full" name="plano6_parcelas" value="<?php echo htmlspecialchars($pl6n); ?>">
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">Parcela estimada: <span id="pl6_pmt">—</span></div>
+          <div class="text-xs text-gray-500">Lucro estimado: <span id="pl6_lucro">—</span></div>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-2 items-end">
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Plano 2 Valor (R$)</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano2_valor" value="<?php echo htmlspecialchars($pl2v); ?>">
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano2_parcelas" value="<?php echo htmlspecialchars($pl2n); ?>">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2 items-end">
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Plano 3 Valor (R$)</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano3_valor" value="<?php echo htmlspecialchars($pl3v); ?>">
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano3_parcelas" value="<?php echo htmlspecialchars($pl3n); ?>">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2 items-end">
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Plano 4 Valor (R$)</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano4_valor" value="<?php echo htmlspecialchars($pl4v); ?>">
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 mb-1">Parcelas</div>
-            <input class="border rounded px-3 py-2 w-full" name="plano4_parcelas" value="<?php echo htmlspecialchars($pl4n); ?>">
-          </div>
-        </div>
+      <div class="mt-3">
+        <label class="block text-sm font-medium mb-1">Juros padrão (% a.m.)</label>
+        <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="taxa_juros_padrao_mensal" value="<?php echo htmlspecialchars($taxaPadrao); ?>">
       </div>
+      <script>
+      (function(){
+        function getTaxaPadrao(){ var el=document.querySelector('input[name=taxa_juros_padrao_mensal]'); var v=el?el.value:''; v=(v||'').toString().replace(/,/g,'.'); var f=parseFloat(v); return isFinite(f)?f:0; }
+        function formatBR(n){ return 'R$ ' + new Intl.NumberFormat('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n); }
+        function parseMoneyBR(s){ s=(s||'').toString().replace(/[^\d,\.]/g,''); s=s.replace(/\./g,''); s=s.replace(/,/g,'.'); var f=parseFloat(s); return isFinite(f)?f:0; }
+        function calcAndShow(valSel, parcSel, outPmtId, outLucroId){ var vEl=document.querySelector(valSel), nEl=document.querySelector(parcSel), outP=document.getElementById(outPmtId), outL=document.getElementById(outLucroId); var v=vEl?parseMoneyBR(vEl.value):0; var n=nEl?parseInt(nEl.value||'0'):0; if(v>0 && n>0){ var i=getTaxaPadrao()/100; var p = i>0 ? v * ((i*Math.pow(1+i,n))/(Math.pow(1+i,n)-1)) : (v/n); p = Math.round(p*100)/100; var total = p*n; var lucro = Math.max(0, Math.round((total - v)*100)/100); if(outP) outP.textContent = formatBR(p); if(outL) outL.textContent = formatBR(lucro); } else { if(outP) outP.textContent = '—'; if(outL) outL.textContent = '—'; } }
+        function bind(valSel, parcSel, outPmtId, outLucroId){ var vEl=document.querySelector(valSel), nEl=document.querySelector(parcSel); ['input','change','blur'].forEach(function(evt){ if(vEl) vEl.addEventListener(evt, function(){ calcAndShow(valSel, parcSel, outPmtId, outLucroId); }); if(nEl) nEl.addEventListener(evt, function(){ calcAndShow(valSel, parcSel, outPmtId, outLucroId); }); }); calcAndShow(valSel, parcSel, outPmtId, outLucroId); }
+        function recalcAll(){ calcAndShow('input[name=plano1_valor]','input[name=plano1_parcelas]','pl1_pmt','pl1_lucro'); calcAndShow('input[name=plano2_valor]','input[name=plano2_parcelas]','pl2_pmt','pl2_lucro'); calcAndShow('input[name=plano3_valor]','input[name=plano3_parcelas]','pl3_pmt','pl3_lucro'); calcAndShow('input[name=plano4_valor]','input[name=plano4_parcelas]','pl4_pmt','pl4_lucro'); calcAndShow('input[name=plano5_valor]','input[name=plano5_parcelas]','pl5_pmt','pl5_lucro'); calcAndShow('input[name=plano6_valor]','input[name=plano6_parcelas]','pl6_pmt','pl6_lucro'); }
+        bind('input[name=plano1_valor]','input[name=plano1_parcelas]','pl1_pmt','pl1_lucro');
+        bind('input[name=plano2_valor]','input[name=plano2_parcelas]','pl2_pmt','pl2_lucro');
+        bind('input[name=plano3_valor]','input[name=plano3_parcelas]','pl3_pmt','pl3_lucro');
+        bind('input[name=plano4_valor]','input[name=plano4_parcelas]','pl4_pmt','pl4_lucro');
+        bind('input[name=plano5_valor]','input[name=plano5_parcelas]','pl5_pmt','pl5_lucro');
+        bind('input[name=plano6_valor]','input[name=plano6_parcelas]','pl6_pmt','pl6_lucro');
+        var taxaEl = document.querySelector('input[name=taxa_juros_padrao_mensal]'); if (taxaEl){ ['input','change','blur'].forEach(function(evt){ taxaEl.addEventListener(evt, recalcAll); }); }
+      })();
+      </script>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Integração com Boletos - Lytex</div>

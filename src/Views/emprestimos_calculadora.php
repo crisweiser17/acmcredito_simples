@@ -1,4 +1,4 @@
-<?php $taxaDefault = '24'; $pl1v = \App\Helpers\ConfigRepo::get('plano1_valor','500'); $pl1n = \App\Helpers\ConfigRepo::get('plano1_parcelas','3'); $pl2v = \App\Helpers\ConfigRepo::get('plano2_valor','1000'); $pl2n = \App\Helpers\ConfigRepo::get('plano2_parcelas','5'); $pl3v = \App\Helpers\ConfigRepo::get('plano3_valor','1500'); $pl3n = \App\Helpers\ConfigRepo::get('plano3_parcelas','5'); $pl4v = \App\Helpers\ConfigRepo::get('plano4_valor','2000'); $pl4n = \App\Helpers\ConfigRepo::get('plano4_parcelas','6'); ?>
+<?php $taxaDefault = \App\Helpers\ConfigRepo::get('taxa_juros_padrao_mensal','24'); $pl1v = \App\Helpers\ConfigRepo::get('plano1_valor','500'); $pl1n = \App\Helpers\ConfigRepo::get('plano1_parcelas','3'); $pl2v = \App\Helpers\ConfigRepo::get('plano2_valor','1000'); $pl2n = \App\Helpers\ConfigRepo::get('plano2_parcelas','5'); $pl3v = \App\Helpers\ConfigRepo::get('plano3_valor','1500'); $pl3n = \App\Helpers\ConfigRepo::get('plano3_parcelas','5'); $pl4v = \App\Helpers\ConfigRepo::get('plano4_valor','2000'); $pl4n = \App\Helpers\ConfigRepo::get('plano4_parcelas','6'); $pl5v = \App\Helpers\ConfigRepo::get('plano5_valor','2500'); $pl5n = \App\Helpers\ConfigRepo::get('plano5_parcelas','8'); $pl6v = \App\Helpers\ConfigRepo::get('plano6_valor','3000'); $pl6n = \App\Helpers\ConfigRepo::get('plano6_parcelas','10'); ?>
 <div class="space-y-8">
   <h2 class="text-2xl font-semibold">Calculadora de Empréstimos</h2>
   <?php if (!empty($error)): ?>
@@ -62,7 +62,7 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo htmlspecialchars($taxaDefault); ?>" required>
+          <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo htmlspecialchars($taxaDefault); ?>" required>
             <div class="inline-flex items-center gap-1">
               <button type="button" id="btn_taxa_dec" class="px-2 py-1 rounded bg-gray-200" title="-0,5%">-0,5</button>
               <button type="button" id="btn_taxa_inc" class="px-2 py-1 rounded bg-gray-200" title="+0,5%">+0,5</button>
@@ -145,6 +145,8 @@
         <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl2v; ?>" data-parcelas="<?php echo (int)$pl2n; ?>">R$<?php echo number_format((float)$pl2v,0,',','.'); ?> em <?php echo (int)$pl2n; ?>x</button>
         <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl3v; ?>" data-parcelas="<?php echo (int)$pl3n; ?>">R$<?php echo number_format((float)$pl3v,0,',','.'); ?> em <?php echo (int)$pl3n; ?>x</button>
         <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl4v; ?>" data-parcelas="<?php echo (int)$pl4n; ?>">R$<?php echo number_format((float)$pl4v,0,',','.'); ?> em <?php echo (int)$pl4n; ?>x</button>
+        <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl5v; ?>" data-parcelas="<?php echo (int)$pl5n; ?>">R$<?php echo number_format((float)$pl5v,0,',','.'); ?> em <?php echo (int)$pl5n; ?>x</button>
+        <button type="button" class="plan_option w-full px-3 py-2 rounded bg-gray-100 text-left" data-valor="<?php echo (int)$pl6v; ?>" data-parcelas="<?php echo (int)$pl6n; ?>">R$<?php echo number_format((float)$pl6v,0,',','.'); ?> em <?php echo (int)$pl6n; ?>x</button>
       </div>
       <div class="flex justify-end gap-2 mt-3">
         <button type="button" id="btn_planos_cancelar" class="px-3 py-2 rounded bg-gray-200">Cancelar</button>
@@ -361,7 +363,27 @@ if (valorInput) {
 const btnPlanos = document.getElementById('btn_planos');
 const modalPlanos = document.getElementById('modal_planos');
 if (btnPlanos && modalPlanos) {
-  btnPlanos.addEventListener('click', function(){ modalPlanos.classList.remove('hidden'); modalPlanos.classList.add('flex'); });
+  function updatePlanLabels(){
+    const taxa = parsePercentBR((document.getElementById('taxa_juros_mensal')?.value||'').toString());
+    const i = taxa/100;
+    const opts = modalPlanos.querySelectorAll('.plan_option');
+    opts.forEach(function(b){
+      const valor = parseFloat(b.getAttribute('data-valor')||'0');
+      const n = parseInt(b.getAttribute('data-parcelas')||'0');
+      if (!b.getAttribute('data-labelbase')) { b.setAttribute('data-labelbase', (b.textContent||'')); }
+      const base = b.getAttribute('data-labelbase') || '';
+      if (valor>0 && n>0){
+        let pmt = 0;
+        if (i>0){ const pow = Math.pow(1+i, n); pmt = valor * ((i*pow)/(pow-1)); }
+        else { pmt = valor / n; }
+        pmt = Math.round(pmt * 100) / 100;
+        b.textContent = base + ' · parcela ' + formatBR(pmt);
+      } else {
+        b.textContent = base;
+      }
+    });
+  }
+  btnPlanos.addEventListener('click', function(){ updatePlanLabels(); modalPlanos.classList.remove('hidden'); modalPlanos.classList.add('flex'); });
   const opts = modalPlanos.querySelectorAll('.plan_option');
   opts.forEach(function(b){ b.addEventListener('click', function(){
     const valor = parseFloat(b.getAttribute('data-valor')||'0');
@@ -382,6 +404,31 @@ if (taxaInput) {
   taxaInput.addEventListener('blur', ()=>{
     const t = parsePercentBR(taxaInput.value);
     taxaInput.value = t.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  });
+  taxaInput.addEventListener('input', ()=>{
+    const modalPlanos = document.getElementById('modal_planos');
+    if (modalPlanos && !modalPlanos.classList.contains('hidden')) {
+      const evt = new Event('click');
+      const btn = document.getElementById('btn_planos');
+      if (btn) { // refresh labels while open
+        const taxa = parsePercentBR((document.getElementById('taxa_juros_mensal')?.value||'').toString());
+        const i = taxa/100;
+        const opts = modalPlanos.querySelectorAll('.plan_option');
+        opts.forEach(function(b){
+          const valor = parseFloat(b.getAttribute('data-valor')||'0');
+          const n = parseInt(b.getAttribute('data-parcelas')||'0');
+          if (!b.getAttribute('data-labelbase')) { b.setAttribute('data-labelbase', (b.textContent||'')); }
+          const base = b.getAttribute('data-labelbase') || '';
+          if (valor>0 && n>0){
+            let pmt = 0;
+            if (i>0){ const pow = Math.pow(1+i, n); pmt = valor * ((i*pow)/(pow-1)); }
+            else { pmt = valor / n; }
+            pmt = Math.round(pmt * 100) / 100;
+            b.textContent = base + ' · parcela ' + formatBR(pmt);
+          } else { b.textContent = base; }
+        });
+      }
+    }
   });
 }
 const btnDec = document.getElementById('btn_taxa_dec');
