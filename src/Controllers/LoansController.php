@@ -178,6 +178,7 @@ class LoansController {
         try { $pdo->prepare("UPDATE loans SET boletos_metodo='api', boletos_gerados=0, boletos_api_response=NULL, status='aguardando_boletos' WHERE id=:id")->execute(['id'=>$id]); } catch (\Throwable $e4) {}
         try { \App\Services\BillingQueueService::enqueueLoan($id); } catch (\Throwable $e) {}
         Audit::log('fila_boletos_api','loans',$id,null);
+        $_SESSION['toast'] = 'Empréstimo enviado à fila de geração de boletos via API';
         header('Location: /emprestimos/' . $id);
         return;
       }

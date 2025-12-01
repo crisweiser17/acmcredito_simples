@@ -4,6 +4,8 @@ namespace App\Controllers;
 class Router {
   public static function dispatch(): void {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
+    $path = rtrim($path, '/');
+    $path = $path === '' ? '/' : $path;
     if (!self::isPublic($path) && !isset($_SESSION['user_id'])) {
       header('Location: /login');
       return;

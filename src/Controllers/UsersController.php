@@ -38,6 +38,7 @@ class UsersController {
             $stmt = $pdo->prepare('UPDATE users SET password=:p WHERE id=:id');
             $stmt->execute(['p'=>password_hash($senha, PASSWORD_DEFAULT),'id'=>$id]);
             \App\Helpers\Audit::log('update_password','users',$id,null);
+            $_SESSION['toast'] = 'Senha atualizada com sucesso';
           } catch (\Throwable $e) {}
         }
         header('Location: /usuarios');
@@ -57,6 +58,9 @@ class UsersController {
               $stmt = $pdo->prepare('UPDATE users SET username=:u, nome=:n WHERE id=:id');
               $stmt->execute(['u'=>$username,'n'=>$nome,'id'=>$id]);
               \App\Helpers\Audit::log('update','users',$id,$username);
+              $_SESSION['toast'] = 'Usuário atualizado com sucesso';
+            } else {
+              $_SESSION['toast'] = 'Usuário já existe, escolha outro login';
             }
           } catch (\Throwable $e) {}
         }

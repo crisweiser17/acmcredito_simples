@@ -194,10 +194,16 @@
         </div>
       </div>
     <?php else: ?>
+      <?php $aguardandoBoletos = ($l['status'] === 'aguardando_boletos' && $l['boletos_metodo'] === 'api' && empty($l['boletos_gerados'])); ?>
+      <?php if ($aguardandoBoletos): ?>
+        <div class="mb-3 rounded border border-blue-200 bg-blue-50 text-blue-700 px-4 py-3">
+          Empréstimo na fila de geração de boletos via API. Aguarde o processamento.
+        </div>
+      <?php endif; ?>
       <div class="flex flex-wrap gap-2">
         <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>">
           <input type="hidden" name="acao" value="boletos_api">
-          <button class="btn-primary px-4 py-2 rounded <?php echo $gate3Disabled?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo $gate3Disabled?'disabled':''; ?>>Gerar Boletos via API</button>
+          <button class="btn-primary px-4 py-2 rounded <?php echo ($gate3Disabled || $aguardandoBoletos)?'opacity-50 pointer-events-none':''; ?>" type="submit" <?php echo ($gate3Disabled || $aguardandoBoletos)?'disabled':''; ?>>Gerar Boletos via API</button>
         </form>
       </div>
     <?php endif; ?>
