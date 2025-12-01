@@ -24,10 +24,11 @@
         </div>
       </div>
       <div>
+        <?php $preselectedClientId = (int)($_GET['client_id'] ?? 0); ?>
         <select class="w-full border rounded px-3 py-2" name="client_id" required>
           <option value="">Selecione o cliente</option>
           <?php foreach ($clients as $cl): ?>
-            <option value="<?php echo $cl['id']; ?>"><?php echo htmlspecialchars($cl['nome'].' - '.$cl['cpf']); ?></option>
+            <option value="<?php echo $cl['id']; ?>" <?php echo ($preselectedClientId === (int)$cl['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($cl['nome'].' - '.$cl['cpf']); ?></option>
           <?php endforeach; ?>
         </select>
         <div class="text-sm text-gray-600 mt-0.5">Cliente</div>

@@ -144,6 +144,15 @@
       </div>
     </div>
   </div>
+  <?php if ($c['prova_vida_status'] === 'aprovado' && $c['cpf_check_status'] === 'aprovado'): ?>
+  <div class="border-t pt-6 mt-6">
+    <div class="flex items-center justify-center">
+      <a href="/emprestimos/calculadora?client_id=<?php echo (int)$c['id']; ?>" class="px-6 py-3 rounded bg-royal text-white text-lg font-semibold hover:bg-blue-700 transition-colors">
+        Criar Novo Empréstimo
+      </a>
+    </div>
+  </div>
+  <?php endif; ?>
 </div>
 <script>
   let lb;
