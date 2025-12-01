@@ -377,7 +377,8 @@
       Array.from(document.querySelectorAll('[data-open-comprovante]')).forEach(function(a){
         a.addEventListener('click', function(ev){ ev.preventDefault(); var p = a.getAttribute('data-file')||''; if (!p) return;
           var isImg = /\.(jpg|jpeg|png|gif)(\?|$)/i.test(p);
-          cont.innerHTML = isImg ? ('<img src="'+p+'" class="max-w-full max-h-full">') : ('<iframe src="'+p+'" class="w-full h-full"></iframe>');
+          var url = p.indexOf('/arquivo?p=')===0 ? p : ('/arquivo?p='+encodeURIComponent(p));
+          cont.innerHTML = isImg ? ('<img src="'+url+'" class="max-w-full max-h-full">') : ('<iframe src="'+url+'" class="w-full h-full" title="Documento"></iframe>');
           overlay.classList.remove('hidden'); overlay.classList.add('flex');
         });
       });
