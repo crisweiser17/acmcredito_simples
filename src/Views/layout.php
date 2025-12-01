@@ -13,7 +13,7 @@ $saved = isset($_GET['saved']);
     window.tailwind = window.tailwind || {};
     window.tailwind.config = { theme: { extend: { colors: { royal: '#1f4bf2' } } } };
   </script>
-  <script src="https://cdn.tailwindcss.com" defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-gray-900">
   <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; ?>
