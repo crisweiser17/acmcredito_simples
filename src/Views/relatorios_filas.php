@@ -47,7 +47,7 @@
           <th class="px-3 py-2 text-left">Parcela</th>
           <th class="px-3 py-2 text-left">Status</th>
           <th class="px-3 py-2 text-left">Tentativas</th>
-          <th class="px-3 py-2 text-left">Payment</th>
+          <th class="px-2 py-2 text-left text-xs">Payment</th>
           <th class="px-3 py-2 text-left">Processado</th>
           <th class="px-3 py-2 text-left">Erro</th>
           <th class="px-3 py-2 text-left">Criado</th>
@@ -63,7 +63,7 @@
             <td class="px-3 py-2">#<?php echo (int)$r['parcela_id']; ?></td>
             <td class="px-3 py-2"><?php echo htmlspecialchars(($r['status']==='aguardando')?'Aguardando':$r['status']); ?></td>
             <td class="px-3 py-2"><?php echo (int)$r['try_count']; ?></td>
-            <td class="px-3 py-2"><?php echo htmlspecialchars($r['payment_id'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs whitespace-pre-wrap break-words max-w-[20ch]"><?php echo htmlspecialchars($r['payment_id'] ?? ''); ?></td>
             <td class="px-3 py-2">
               <form method="post" action="/relatorios/filas">
                 <input type="hidden" name="acao" value="fila_marcar_processado">
