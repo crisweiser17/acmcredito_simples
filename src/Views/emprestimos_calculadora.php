@@ -175,6 +175,18 @@ function parsePercentBR(s){
   const f = parseFloat(s);
   return isFinite(f) ? f : 0;
 }
+function getBaseDate(){
+  var baseEl = document.getElementById('data_base');
+  var baseT = document.getElementById('data_base_toggle');
+  var base = new Date();
+  if (baseT && baseT.checked && baseEl && baseEl.value) {
+    var pb = baseEl.value.split('-');
+    base = new Date(Number(pb[0]), Number(pb[1]) - 1, Number(pb[2]));
+  }
+  base.setDate(base.getDate()+1);
+  while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+  return base;
+}
 function recalc(){
   let valor = parseMoneyBR(document.getElementById('valor_principal').value);
   if (valor > 5000) { valor = 5000; document.getElementById('valor_principal').value = formatBR(valor); }
@@ -186,15 +198,7 @@ function recalc(){
   let diasPadrao = 0, diasSel = 0;
   let jurosProp = 0;
   if (dv) {
-    let baseEl = document.getElementById('data_base');
-    let baseT = document.getElementById('data_base_toggle');
-    let base = new Date();
-    if (baseT && baseT.checked && baseEl && baseEl.value) {
-      const pb = baseEl.value.split('-');
-      base = new Date(Number(pb[0]), Number(pb[1]) - 1, Number(pb[2]));
-    }
-    base.setDate(base.getDate()+1);
-    while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+    let base = getBaseDate();
     const parts = dv.split('-');
     const dataVenc = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     const yb = base.getFullYear(), mb = base.getMonth(), db = base.getDate();
@@ -268,7 +272,7 @@ function recommendByParcela(){
   if (!pmtTarget || !dv) return;
   if (!taxa) taxa = 24;
   const parts = dv.split('-');
-  let base = new Date(); base.setDate(base.getDate()+1); while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+  let base = getBaseDate();
   const dataVenc = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   let dias = Math.floor((dataVenc - base) / (1000*60*60*24)); if (dias < 0) dias = 0;
   const dfrac = dias/30;
@@ -322,9 +326,7 @@ document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.a
   (function(){ var t=document.getElementById('data_base_toggle'); var b=document.getElementById('data_base_box'); if(t&&b){ function upd(){ if(t.checked){ b.classList.remove('hidden'); } else { b.classList.add('hidden'); } } t.addEventListener('change', function(){ upd(); recalc(); }); upd(); } })();
 // initialize display of pro-rata zero date
 (function(){
-  let base = new Date();
-  base.setDate(base.getDate()+1);
-  while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+  let base = getBaseDate();
   const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
   let nd = new Date(y, m+1, d);
   const target = (m+1)%12;
@@ -332,12 +334,12 @@ document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.a
   const el = document.getElementById('pr_zero_date');
   if (el) el.textContent = nd.toLocaleDateString('pt-BR');
 })();
+  (function(){ var d=document.getElementById('data_base'); if(d){ var f=function(){ recalc(); recommendByParcela(); var base=getBaseDate(); var y=base.getFullYear(), m=base.getMonth(), dd=base.getDate(); var nd=new Date(y, m+1, dd); var target=(m+1)%12; if (nd.getMonth()!==target) { while (nd.getMonth()!==target) { nd.setDate(nd.getDate()-1); } } var el=document.getElementById('pr_zero_date'); if(el) el.textContent = nd.toLocaleDateString('pt-BR'); var dpv=document.getElementById('data_primeiro_vencimento'); if (dpv && !dpv.value) { var base2=getBaseDate(); var y2=base2.getFullYear(), m2=base2.getMonth(), d2=base2.getDate(); var nd2=new Date(y2, m2+1, d2); var target2=(m2+1)%12; if (nd2.getMonth()!==target2) { while (nd2.getMonth()!==target2) { nd2.setDate(nd2.getDate()-1); } } var iso=`${nd2.getFullYear()}-${String(nd2.getMonth()+1).padStart(2,'0')}-${String(nd2.getDate()).padStart(2,'0')}`; dpv.value = iso; } }; d.addEventListener('change', f); d.addEventListener('input', f); } })();
+  (function(){ var t=document.getElementById('data_base_toggle'); if(t){ var f=function(){ var base=getBaseDate(); var y=base.getFullYear(), m=base.getMonth(), dd=base.getDate(); var nd=new Date(y, m+1, dd); var target=(m+1)%12; if (nd.getMonth()!==target) { while (nd.getMonth()!==target) { nd.setDate(nd.getDate()-1); } } var el=document.getElementById('pr_zero_date'); if(el) el.textContent = nd.toLocaleDateString('pt-BR'); }; t.addEventListener('change', f); } })();
 const prBtn = document.getElementById('pr_zero_btn');
 if (prBtn) {
   prBtn.addEventListener('click', function(){
-    let base = new Date();
-    base.setDate(base.getDate()+1);
-    while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+    let base = getBaseDate();
     const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
     let nd = new Date(y, m+1, d);
     const target = (m+1)%12;
@@ -444,9 +446,7 @@ if (btnCopy) {
 }
 const dateEl = document.getElementById('data_primeiro_vencimento');
 if (dateEl && !dateEl.value) {
-  let base = new Date();
-  base.setDate(base.getDate()+1);
-  while (base.getDay()===0 || base.getDay()===6) { base.setDate(base.getDate()+1); }
+  let base = getBaseDate();
   const y = base.getFullYear();
   const m = base.getMonth();
   const d = base.getDate();

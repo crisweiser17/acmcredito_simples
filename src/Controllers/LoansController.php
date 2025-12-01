@@ -343,6 +343,28 @@ class LoansController {
     include __DIR__ . '/../Views/layout.php';
   }
 
+  public static function comprovante(int $id): void {
+    $pdo = Connection::get();
+    $loan = $pdo->prepare('SELECT l.*, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+    $loan->execute(['id'=>$id]);
+    $l = $loan->fetch();
+    if (!$l) { header('Location:/'); return; }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $path = null;
+      if (!empty($_FILES['comprovante']['name'])) {
+        try { $path = \App\Helpers\Upload::save($_FILES['comprovante'], (int)$l['cid'], 'comprovantes'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','loans',$id,$e->getMessage()); }
+      }
+      if ($path) {
+        $pdo->prepare('UPDATE loans SET transferencia_comprovante_path=:p WHERE id=:id')->execute(['p'=>$path,'id'=>$id]);
+        Audit::log('atualizar_comprovante','loans',$id,null);
+        $_SESSION['toast'] = 'Comprovante atualizado com sucesso';
+      }
+      header('Location:/emprestimos/'.$id);
+      return;
+    }
+    header('Location:/emprestimos/'.$id);
+  }
+
   public static function assinar(string $token): void {
     $pdo = Connection::get();
     $stmt = $pdo->prepare('SELECT l.*, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE contrato_token=:t');

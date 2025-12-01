@@ -169,6 +169,17 @@
           <a class="block px-3 py-2 hover:bg-gray-100 <?php echo ($hasOverdue && !$gate2Disabled)?'' : 'opacity-50 pointer-events-none'; ?>" href="<?php echo htmlspecialchars($waCharge); ?>" target="_blank">Cobrança amigável</a>
         </div>
       </div>
+      <div class="mt-3 border-t pt-3">
+        <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>/comprovante" enctype="multipart/form-data" class="flex items-end gap-3">
+          <div class="flex-1">
+            <label class="text-sm text-gray-600" for="comprovante_pos">Adicionar/Atualizar comprovante bancário</label>
+            <input class="w-full" type="file" name="comprovante" id="comprovante_pos" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div>
+            <button class="px-4 py-2 rounded bg-gray-200" type="submit">Salvar comprovante</button>
+          </div>
+        </form>
+      </div>
     <?php endif; ?>
   </div>
   <div class="border rounded p-4">

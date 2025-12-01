@@ -75,6 +75,10 @@ class Router {
       \App\Controllers\LoansController::transferencia((int)$m[1]);
       return;
     }
+    if (preg_match('#^/emprestimos/(\d+)/comprovante$#', $path, $m)) {
+      \App\Controllers\LoansController::comprovante((int)$m[1]);
+      return;
+    }
     if (preg_match('#^/emprestimos/(\d+)/boletos$#', $path, $m)) {
       \App\Controllers\LoansController::boletos((int)$m[1]);
       return;
