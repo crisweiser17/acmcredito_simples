@@ -2,9 +2,15 @@
 <div class="space-y-8">
   <h2 class="text-2xl font-semibold">Validação do Cliente - <a class="text-blue-600 hover:underline" href="/clientes/<?php echo (int)($c['id'] ?? 0); ?>/ver"><?php echo htmlspecialchars((string)($c['nome'] ?? '')); ?></a></h2>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
+    <div class="flex items-start justify-between">
       <div class="text-lg font-semibold">Prova de Vida</div>
-      <span class="px-2 py-1 rounded text-white <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':($c['prova_vida_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['prova_vida_status']); ?></span>
+      <div class="flex flex-col items-end">
+        <span class="px-2 py-1 rounded text-white <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':($c['prova_vida_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['prova_vida_status']); ?></span>
+        <?php if (in_array((string)($c['prova_vida_status'] ?? ''), ['aprovado','reprovado'], true)): ?>
+          <?php $pvAt = $c['prova_vida_data'] ?? null; $pvFmt = $pvAt ? date('d/m/Y H:i', strtotime($pvAt)) : ''; $pvUserId = (int)($c['prova_vida_user_id'] ?? 0); $pvUserNome = ''; if ($pvUserId>0) { try { $pp = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp->execute(['id'=>$pvUserId]); $pvUserNome = (string)($pp->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
+          <div class="text-xs text-gray-600 mt-1"><?php echo htmlspecialchars($pvUserNome ?: ''); ?><?php echo $pvFmt? ' • '.htmlspecialchars($pvFmt) : ''; ?></div>
+        <?php endif; ?>
+      </div>
     </div>
     <div class="grid gap-6 <?php echo !empty($c['doc_cnh_verso']) ? 'md:grid-cols-3' : 'md:grid-cols-2'; ?>">
       <div class="space-y-4">
@@ -79,9 +85,15 @@
   </div>
   <div class="border-t border-gray-200 my-6"></div>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
+    <div class="flex items-start justify-between">
       <div class="text-lg font-semibold">Consulta CPF</div>
-      <span class="px-2 py-1 rounded text-white <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':($c['cpf_check_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['cpf_check_status']); ?></span>
+      <div class="flex flex-col items-end">
+        <span class="px-2 py-1 rounded text-white <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':($c['cpf_check_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['cpf_check_status']); ?></span>
+        <?php if (in_array((string)($c['cpf_check_status'] ?? ''), ['aprovado','reprovado'], true)): ?>
+          <?php $cpAt = $c['cpf_check_data'] ?? null; $cpFmt = $cpAt ? date('d/m/Y H:i', strtotime($cpAt)) : ''; $cpUserId = (int)($c['cpf_check_user_id'] ?? 0); $cpUserNome = ''; if ($cpUserId>0) { try { $pp2 = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp2->execute(['id'=>$cpUserId]); $cpUserNome = (string)($pp2->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
+          <div class="text-xs text-gray-600 mt-1"><?php echo htmlspecialchars($cpUserNome ?: ''); ?><?php echo $cpFmt? ' • '.htmlspecialchars($cpFmt) : ''; ?></div>
+        <?php endif; ?>
+      </div>
     </div>
     <div class="space-y-3">
       <?php $dn = !empty($c['data_nascimento']) ? date('d/m/Y', strtotime($c['data_nascimento'])) : ''; ?>
@@ -176,9 +188,15 @@
   <div class="border-t border-gray-200 my-6"></div>
   <div class="space-y-4">
     <?php $critStatus = trim((string)($c['criterios_status'] ?? 'pendente')); ?>
-    <div class="flex items-center justify-between">
+    <div class="flex items-start justify-between">
       <div class="text-lg font-semibold">Critérios de Renda</div>
-      <span class="px-2 py-1 rounded text-white <?php echo $critStatus==='aprovado'?'bg-green-600':($critStatus==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($critStatus); ?></span>
+      <div class="flex flex-col items-end">
+        <span class="px-2 py-1 rounded text-white <?php echo $critStatus==='aprovado'?'bg-green-600':($critStatus==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($critStatus); ?></span>
+        <?php if (in_array($critStatus, ['aprovado','reprovado'], true)): ?>
+          <?php $crAt = $c['criterios_data'] ?? null; $crFmt = $crAt ? date('d/m/Y H:i', strtotime($crAt)) : ''; $crUserId = (int)($c['criterios_user_id'] ?? 0); $crUserNome = ''; if ($crUserId>0) { try { $pp3 = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp3->execute(['id'=>$crUserId]); $crUserNome = (string)($pp3->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
+          <div class="text-xs text-gray-600 mt-1"><?php echo htmlspecialchars($crUserNome ?: ''); ?><?php echo $crFmt? ' • '.htmlspecialchars($crFmt) : ''; ?></div>
+        <?php endif; ?>
+      </div>
     </div>
     <div class="space-y-3">
       <?php $critPct = (float)(\App\Helpers\ConfigRepo::get('criterios_percentual_parcela_max','20')); ?>
