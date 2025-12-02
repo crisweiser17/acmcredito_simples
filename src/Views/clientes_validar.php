@@ -1,6 +1,6 @@
 <?php $c = $client; ?>
 <div class="space-y-8">
-  <h2 class="text-2xl font-semibold">Validação do Cliente</h2>
+  <h2 class="text-2xl font-semibold">Validação do Cliente - <a class="text-blue-600 hover:underline" href="/clientes/<?php echo (int)($c['id'] ?? 0); ?>/ver"><?php echo htmlspecialchars((string)($c['nome'] ?? '')); ?></a></h2>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <div class="text-lg font-semibold">Prova de Vida</div>
