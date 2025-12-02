@@ -63,16 +63,18 @@
       </div>
     </div>
     
-    <div class="flex gap-2">
-      <form method="post">
-        <input type="hidden" name="action" value="aprovar_prova">
-        <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Prova de Vida</button>
-      </form>
-      <form method="post" class="flex gap-2">
-        <input type="hidden" name="action" value="reprovar_prova">
-        <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
-        <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
-      </form>
+    <div class="border rounded bg-gray-900 p-[25px]">
+      <div class="flex gap-2">
+        <form method="post">
+          <input type="hidden" name="action" value="aprovar_prova">
+          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Prova de Vida</button>
+        </form>
+        <form method="post" class="flex gap-2">
+          <input type="hidden" name="action" value="reprovar_prova">
+          <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+        </form>
+      </div>
     </div>
   </div>
   <div class="space-y-4">
@@ -114,7 +116,7 @@
         <?php $obito = $json['situacaoAnoObito'] ?? ($json['ano_obito'] ?? null); ?>
         <?php $atual = $json['ultima_atualizacao'] ?? null; ?>
         <div class="grid md:grid-cols-2 gap-4 text-sm">
-          <div class="bg-gray-800 rounded p-3 text-gray-100">
+          <div class="bg-gray-100 rounded p-3 text-black">
             <div><span class="text-gray-400">Nome:</span> <?php echo htmlspecialchars($nome ?? '-'); ?></div>
             <div><span class="text-gray-400">Situação:</span> <?php echo htmlspecialchars($sit ?? '-'); ?></div>
             <div><span class="text-gray-400">Data Nascimento:</span> <?php echo htmlspecialchars($nasc ?? '-'); ?></div>
@@ -122,7 +124,7 @@
             <div><span class="text-gray-400">Situação Óbito (Ano):</span> <?php echo htmlspecialchars($obito ?? '-'); ?></div>
             <div><span class="text-gray-400">Última Atualização:</span> <?php echo htmlspecialchars($atual ?? '-'); ?></div>
           </div>
-          <div class="bg-gray-800 rounded p-3 text-gray-100">
+          <div class="bg-gray-100 rounded p-3 text-black">
             <div class="text-gray-300">JSON completo</div>
             <pre class="mt-2 overflow-auto max-h-48"><?php echo htmlspecialchars(json_encode($json, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE)); ?></pre>
           </div>
@@ -139,16 +141,18 @@
         </div>
       <?php endif; ?>
     </div>
-    <div class="flex gap-2">
-      <form method="post">
-        <input type="hidden" name="action" value="aprovar_cpf">
-        <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Consulta CPF</button>
-      </form>
-      <form method="post" class="flex gap-2">
-        <input type="hidden" name="action" value="reprovar_cpf">
-        <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
-        <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
-      </form>
+    <div class="border rounded bg-gray-900 p-[25px]">
+      <div class="flex gap-2">
+        <form method="post">
+          <input type="hidden" name="action" value="aprovar_cpf">
+          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Consulta CPF</button>
+        </form>
+        <form method="post" class="flex gap-2">
+          <input type="hidden" name="action" value="reprovar_cpf">
+          <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+        </form>
+      </div>
     </div>
   </div>
   <div class="space-y-4">
@@ -183,17 +187,82 @@
       </div>
       <?php endif; ?>
     </div>
-    <div class="flex gap-2">
-      <form method="post" class="flex gap-2 items-center">
-        <input type="hidden" name="action" value="aprovar_criterios">
-        <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo" required>
-        <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Criterios de Emprestimo</button>
-      </form>
-      <form method="post">
-        <input type="hidden" name="action" value="reprovar_criterios">
-        <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
-      </form>
+    <div class="border rounded bg-gray-900 p-[25px]">
+      <div class="flex gap-2">
+        <form method="post" class="flex gap-2 items-center">
+          <input type="hidden" name="action" value="aprovar_criterios">
+          <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo" required>
+          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Criterios de Emprestimo</button>
+        </form>
+        <form method="post">
+          <input type="hidden" name="action" value="reprovar_criterios">
+          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+        </form>
+      </div>
     </div>
+  </div>
+  <?php $refs = json_decode($c['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = []; ?>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="text-lg font-semibold">Referências</div>
+      <span class="text-sm text-gray-600"><?php echo count($refs)>0 ? (count($refs).' cadastradas') : 'Nenhuma referência cadastrada'; ?></span>
+    </div>
+    <div class="text-xs text-gray-600">Status: Pendente, Aprovado, Reprovado. Origem: Operador (manual) ou Link público (referência).</div>
+    <?php if (count($refs) > 0): ?>
+      <div class="space-y-2">
+        <?php foreach ($refs as $i => $r): ?>
+          <?php
+            $nomeRef = (string)($r['nome'] ?? '');
+            $rel = (string)($r['relacao'] ?? '');
+            $tel = preg_replace('/\D/','', (string)($r['telefone'] ?? ''));
+            if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; }
+            $token = (string)($r['token'] ?? '');
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
+            $publicLink = $scheme . $host . '/referencia/' . (int)$c['id'] . '/' . (int)$i . '/' . $token;
+            $msg = 'Olá ' . $nomeRef . ', o ' . ($c['nome'] ?? '') . ' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Para responder, acesse: ' . $publicLink . ' . Atenciosamente, ACM Crédito.';
+            $wa = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($msg);
+            $op = is_array($r['operador'] ?? null) ? $r['operador'] : [];
+            $pu = is_array($r['public'] ?? null) ? $r['public'] : [];
+            $opStatus = (string)($op['status'] ?? 'pendente');
+            $puStatus = (string)($pu['status'] ?? 'pendente');
+            $opClass = $opStatus==='aprovado' ? 'bg-green-600 text-white' : ($opStatus==='reprovado' ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-800');
+            $puClass = $puStatus==='aprovado' ? 'bg-green-600 text-white' : ($puStatus==='reprovado' ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-800');
+          ?>
+          <div class="flex items-center gap-3 border rounded p-2">
+            <div class="flex-1">
+              <div class="font-medium"><?php echo htmlspecialchars($nomeRef); ?></div>
+              <div class="text-sm text-gray-600"><?php echo htmlspecialchars($rel); ?><?php echo $rel? ' • ' : ''; ?><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></div>
+              <div class="flex items-center gap-3 mt-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-gray-600">Operador:</span>
+                  <span class="text-xs px-2 py-0.5 rounded <?php echo $opClass; ?>"><?php echo htmlspecialchars($opStatus); ?></span>
+                  <?php if (!empty($op['checked_at'])): ?><span class="text-xs text-gray-500">• <?php echo date('d/m/Y H:i', strtotime($op['checked_at'])); ?></span><?php endif; ?>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-gray-600">Referência:</span>
+                  <span class="text-xs px-2 py-0.5 rounded <?php echo $puClass; ?>"><?php echo htmlspecialchars($puStatus); ?></span>
+                  <?php if (!empty($pu['checked_at'])): ?><span class="text-xs text-gray-500">• <?php echo date('d/m/Y H:i', strtotime($pu['checked_at'])); ?></span><?php endif; ?>
+                </div>
+              </div>
+            </div>
+            <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo empty($tel)?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
+              <i class="fa fa-whatsapp" aria-hidden="true"></i>
+            </a>
+            <form method="post" class="flex items-center gap-2">
+              <input type="hidden" name="action" value="referencia_checar">
+              <input type="hidden" name="idx" value="<?php echo (int)$i; ?>">
+              <select name="status" class="border rounded px-2 py-1">
+                <option value="pendente" <?php echo $opStatus==='pendente'?'selected':''; ?>>Pendente</option>
+                <option value="aprovado" <?php echo $opStatus==='aprovado'?'selected':''; ?>>Aprovado</option>
+                <option value="reprovado" <?php echo $opStatus==='reprovado'?'selected':''; ?>>Reprovado</option>
+              </select>
+              <button class="px-3 py-1 rounded bg-gray-800 text-white" type="submit">Salvar (operador)</button>
+            </form>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </div>
   <div class="border rounded p-4">
     <div class="font-semibold mb-2">Checklist</div>

@@ -131,6 +131,10 @@ class Router {
       \App\Controllers\ClientesController::validar((int)$m[1]);
       return;
     }
+    if (preg_match('#^/referencia/(\d+)/(\d+)/([a-f0-9]{12,64})$#', $path, $m)) {
+      \App\Controllers\ClientesController::referenciaPublica((int)$m[1], (int)$m[2], $m[3]);
+      return;
+    }
     if (preg_match('#^/clientes/(\d+)/ver$#', $path, $m)) {
       \App\Controllers\ClientesController::ver((int)$m[1]);
       return;
@@ -176,6 +180,7 @@ class Router {
     if ($path === '/arquivo' || $path === '/arquivo/view' || $path === '/arquivo/download') return true;
     if (preg_match('#^/uploads/#', $path)) return true;
     if ($path === '/cadastro') return true;
+    if (preg_match('#^/referencia/#', $path)) return true;
     if (preg_match('#^/api/webhook/#', $path)) return true;
     return false;
   }

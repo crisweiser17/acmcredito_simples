@@ -299,6 +299,21 @@ class ClientesController {
     $stmt->execute(['id' => $id]);
     $client = $stmt->fetch();
     if (!$client) { header('Location: /'); return; }
+    $refs = json_decode($client['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = [];
+    $changedRefs = false;
+    for ($i=0; $i<count($refs); $i++) {
+      if (!isset($refs[$i]['public']) || !is_array($refs[$i]['public'])) { $refs[$i]['public'] = ['status'=>'pendente']; $changedRefs = true; }
+      if (!isset($refs[$i]['operador']) || !is_array($refs[$i]['operador'])) { $refs[$i]['operador'] = ['status'=>'pendente']; $changedRefs = true; }
+      if (!isset($refs[$i]['token']) || !preg_match('/^[a-f0-9]{12,64}$/', (string)($refs[$i]['token'] ?? ''))) { $refs[$i]['token'] = bin2hex(random_bytes(6)); $changedRefs = true; }
+    }
+    if ($changedRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs), 'id'=>$id]); $client['referencias'] = json_encode($refs); }
+    $refs = json_decode($client['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = [];
+    $changedRefs = false;
+    for ($i=0; $i<count($refs); $i++) {
+      if (!isset($refs[$i]['status'])) { $refs[$i]['status'] = 'pendente'; $changedRefs = true; }
+      if (!isset($refs[$i]['token']) || !preg_match('/^[a-f0-9]{64}$/', (string)($refs[$i]['token'] ?? ''))) { $refs[$i]['token'] = bin2hex(random_bytes(32)); $changedRefs = true; }
+    }
+    if ($changedRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs), 'id'=>$id]); $client['referencias'] = json_encode($refs); }
     try { $hasCrit = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$hasCrit) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (isset($_POST['action']) && $_POST['action'] === 'aprovar_prova') {
@@ -399,6 +414,22 @@ class ClientesController {
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
+      if (isset($_POST['action']) && $_POST['action'] === 'referencia_checar') {
+        $idx = (int)($_POST['idx'] ?? -1);
+        $status = trim($_POST['status'] ?? 'pendente');
+        $stmtR = $pdo->prepare('SELECT referencias FROM clients WHERE id=:id'); $stmtR->execute(['id'=>$id]); $refJson = $stmtR->fetchColumn(); $arr = json_decode($refJson ?? '[]', true); if (!is_array($arr)) $arr = [];
+        if ($idx >= 0 && $idx < count($arr)) {
+          if (!isset($arr[$idx]['operador']) || !is_array($arr[$idx]['operador'])) { $arr[$idx]['operador'] = []; }
+          $arr[$idx]['operador']['status'] = in_array($status, ['pendente','aprovado','reprovado'], true) ? $status : ($arr[$idx]['operador']['status'] ?? 'pendente');
+          $arr[$idx]['operador']['checked_at'] = date('Y-m-d H:i:s');
+          $arr[$idx]['operador']['checked_by_user_id'] = $_SESSION['user_id'] ?? null;
+          $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($arr), 'id'=>$id]);
+          \App\Helpers\Audit::log('referencia_checada','clients',$id,'idx='.$idx.' status='.$arr[$idx]['operador']['status'].' source=manual');
+          $_SESSION['toast'] = 'Referência checada';
+        }
+        header('Location: /clientes/'.$id.'/validar');
+        exit;
+      }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'salvar_pdf_comprovante') {
       $last = $pdo->prepare('SELECT * FROM cpf_checks WHERE client_id=:id ORDER BY checked_at DESC, id DESC LIMIT 1');
@@ -431,6 +462,29 @@ class ClientesController {
     $title = 'Validar Cliente';
     $content = __DIR__ . '/../Views/clientes_validar.php';
     include __DIR__ . '/../Views/layout.php';
+  }
+  public static function referenciaPublica(int $clientId, int $idx, string $token): void {
+    $pdo = Connection::get();
+    $stmt = $pdo->prepare('SELECT * FROM clients WHERE id=:id'); $stmt->execute(['id'=>$clientId]); $client = $stmt->fetch();
+    if (!$client) { http_response_code(404); echo 'Cliente não encontrado'; return; }
+    $refs = json_decode($client['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = [];
+    if ($idx < 0 || $idx >= count($refs)) { http_response_code(404); echo 'Referência inválida'; return; }
+    $ref = $refs[$idx]; $tok = (string)($ref['token'] ?? ''); if ($tok !== $token) { http_response_code(403); echo 'Token inválido'; return; }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $voto = trim($_POST['voto'] ?? '');
+      if (in_array($voto, ['aprovo','reprovo'], true)) {
+        if (!isset($refs[$idx]['public']) || !is_array($refs[$idx]['public'])) { $refs[$idx]['public'] = []; }
+        $refs[$idx]['public']['status'] = $voto === 'aprovo' ? 'aprovado' : 'reprovado';
+        $refs[$idx]['public']['checked_at'] = date('Y-m-d H:i:s');
+        $refs[$idx]['public']['checked_ip'] = $_SERVER['REMOTE_ADDR'] ?? null;
+        $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs), 'id'=>$clientId]);
+        \App\Helpers\Audit::log('referencia_voto_publico','clients',$clientId,'idx='.$idx.' status='.$refs[$idx]['public']['status']);
+        $msgOk = 'Resposta registrada. Obrigado!';
+        include __DIR__ . '/../Views/referencia_publica.php';
+        return;
+      }
+    }
+    include __DIR__ . '/../Views/referencia_publica.php';
   }
   public static function editar(int $id): void {
     $pdo = Connection::get();
