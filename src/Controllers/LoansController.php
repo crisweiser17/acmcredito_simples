@@ -312,7 +312,7 @@ class LoansController {
 
   public static function transferencia(int $id): void {
     $pdo = Connection::get();
-    $loan = $pdo->prepare('SELECT l.*, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+    $loan = $pdo->prepare('SELECT l.*, c.id as cid, c.nome, c.cpf, c.telefone FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
     $loan->execute(['id'=>$id]);
     $l = $loan->fetch();
     if (!$l) { header('Location:/'); return; }

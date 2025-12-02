@@ -73,8 +73,8 @@
       <div class="mt-2 text-sm flex items-center gap-2">
         <span>Link:</span>
         <a class="text-blue-700 underline" href="<?php echo htmlspecialchars($full); ?>" target="_blank"><?php echo htmlspecialchars($full); ?></a>
-        <button type="button" class="px-2 py-1 rounded bg-gray-200" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($full); ?>')" aria-label="Copiar">
-          📋
+        <button type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-200" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($full); ?>')" aria-label="Copiar">
+          <i class="fa fa-copy" aria-hidden="true"></i>
         </button>
       </div>
     <?php endif; ?>
@@ -122,8 +122,16 @@
     <?php else: ?>
       <div class="grid md:grid-cols-2 gap-3">
         <div>
-          <div class="text-sm text-gray-600">Valor transferido</div>
-          <div>R$ <?php echo number_format((float)($l['transferencia_valor'] ?? $l['valor_principal']),2,',','.'); ?></div>
+          <div class="text-sm text-gray-600">Valor do empréstimo</div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <span>R$ <?php echo number_format((float)($l['transferencia_valor'] ?? $l['valor_principal']),2,',','.'); ?></span>
+            <?php $cpfDigits = preg_replace('/\D+/', '', (string)($l['cpf'] ?? '')); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); } else { $cpfFmt = (string)($l['cpf'] ?? ''); } ?>
+            <span class="text-sm text-gray-600">Chave PIX:</span>
+            <span class="px-2 py-0.5 rounded border bg-gray-50 text-sm"><?php echo htmlspecialchars($cpfFmt); ?></span>
+            <button type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-200" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($cpfDigits); ?>')" aria-label="Copiar chave PIX">
+              <i class="fa fa-copy" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
         <div>
           <div class="text-sm text-gray-600">Data da transferência</div>
