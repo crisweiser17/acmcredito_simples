@@ -84,6 +84,8 @@ use App\Database\Connection;
     elseif ($ini !== '') { $sql .= ' AND DATE(a.created_at) >= :ini'; $params['ini']=$ini; }
     elseif ($fim !== '') { $sql .= ' AND DATE(a.created_at) <= :fim'; $params['fim']=$fim; }
     if ($acao !== '') { $sql .= ' AND a.acao = :acao'; $params['acao']=$acao; }
+    $registroId = (int)($_GET['registro_id'] ?? 0);
+    if ($registroId > 0) { $sql .= ' AND a.registro_id = :rid'; $params['rid']=$registroId; }
     if ($usuarioId > 0) { $sql .= ' AND a.user_id = :uid'; $params['uid']=$usuarioId; }
     $sql .= ' ORDER BY a.created_at DESC, a.id DESC';
     $stmt = $pdo->prepare($sql);
@@ -119,7 +121,12 @@ use App\Database\Connection;
     if ($fim === '' || $fim > $today) { $fim = $today; }
     if ($ini !== '' && $ini > $today) { $ini = $today; }
     if ($ini !== '' && $ini > $fim) { $ini = $fim; }
-    $sql = 'SELECT l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at FROM loans_archive l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $sql = 'SELECT 
+      l.id, c.id AS cid, c.nome, l.valor_principal, l.num_parcelas, l.valor_parcela, l.status, l.created_at,
+      (SELECT u.nome FROM audit_log a LEFT JOIN users u ON u.id=a.user_id WHERE a.acao="archive_loan" AND a.tabela="loans" AND a.registro_id=l.id ORDER BY a.created_at DESC LIMIT 1) AS deleted_by_nome,
+      (SELECT a.user_id FROM audit_log a WHERE a.acao="archive_loan" AND a.tabela="loans" AND a.registro_id=l.id ORDER BY a.created_at DESC LIMIT 1) AS deleted_by_id,
+      (SELECT a.created_at FROM audit_log a WHERE a.acao="archive_loan" AND a.tabela="loans" AND a.registro_id=l.id ORDER BY a.created_at DESC LIMIT 1) AS deleted_at
+      FROM loans_archive l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
     if ($q !== '') { $sql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
     if ($ini !== '' && $fim !== '') { $sql .= ' AND DATE(l.created_at) BETWEEN :ini AND :fim'; $params['ini']=$ini; $params['fim']=$fim; }

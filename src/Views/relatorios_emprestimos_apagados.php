@@ -46,7 +46,7 @@
   </script>
   <div class="border rounded p-4">
     <table class="w-full border-collapse">
-      <thead><tr><th class="border px-2 py-1">Empréstimo</th><th class="border px-2 py-1">Cliente</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Parcelas</th><th class="border px-2 py-1">Valor Parcela</th><th class="border px-2 py-1">Status</th><th class="border px-2 py-1">Criado em</th></tr></thead>
+      <thead><tr><th class="border px-2 py-1">Empréstimo</th><th class="border px-2 py-1">Cliente</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Parcelas</th><th class="border px-2 py-1">Valor Parcela</th><th class="border px-2 py-1">Status</th><th class="border px-2 py-1">Criado em</th><th class="border px-2 py-1">Apagado por</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
           <tr>
@@ -57,6 +57,15 @@
             <td class="border px-2 py-1">R$ <?php echo number_format((float)$r['valor_parcela'],2,',','.'); ?></td>
             <td class="border px-2 py-1"><?php echo htmlspecialchars($r['status']); ?></td>
             <td class="border px-2 py-1"><?php echo $r['created_at']?date('d/m/Y H:i', strtotime($r['created_at'])):''; ?></td>
+            <td class="border px-2 py-1">
+              <div class="flex items-center gap-2">
+                <span><?php echo htmlspecialchars($r['deleted_by_nome'] ?? ''); ?></span>
+                <?php $logLink = '/relatorios/logs?acao=archive_loan&registro_id='.(int)$r['id']; ?>
+                <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100" href="<?php echo $logLink; ?>" aria-label="Ver ação nos logs" target="_blank">
+                  <i class="fa fa-list" aria-hidden="true"></i>
+                </a>
+              </div>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>

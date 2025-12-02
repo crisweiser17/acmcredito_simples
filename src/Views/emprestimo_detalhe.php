@@ -91,6 +91,16 @@
           <input class="w-full border rounded px-3 py-2" value="R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?>" readonly>
         </div>
         <div>
+          <?php $cpfDigits = preg_replace('/\D+/', '', (string)($l['cpf'] ?? '')); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); } else { $cpfFmt = (string)($l['cpf'] ?? ''); } ?>
+          <div class="text-sm text-gray-600">Chave PIX</div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded border bg-gray-50 text-sm"><?php echo htmlspecialchars($cpfFmt); ?></span>
+            <button type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-200" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($cpfDigits); ?>')" aria-label="Copiar chave PIX">
+              <i class="fa fa-copy" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <div>
           <label for="transferencia_data" class="text-sm text-gray-600">Data da transferência</label>
           <input class="w-full border rounded px-3 py-2" type="date" name="transferencia_data" id="transferencia_data" value="<?php echo date('Y-m-d'); ?>" <?php echo $gate2Disabled?'disabled':''; ?>>
         </div>
