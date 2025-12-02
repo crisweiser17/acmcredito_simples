@@ -32,6 +32,29 @@ class ClientesController {
     if ($f < 0) $f = 0.0;
     return round($f, 2);
   }
+  private static function validarENormalizarPix(string $tipo, string $chave, string $cpfNorm): array {
+    $t = strtolower(trim($tipo));
+    $c = trim($chave);
+    if ($t === 'cpf') {
+      $n = preg_replace('/\D/', '', $cpfNorm);
+      return [strlen($n) === 11, $n, strlen($n) === 11 ? null : 'CPF inválido'];
+    }
+    if ($t === 'email') {
+      $ok = filter_var($c, FILTER_VALIDATE_EMAIL) !== false;
+      return [$ok, $ok ? $c : null, $ok ? null : 'Email inválido'];
+    }
+    if ($t === 'telefone') {
+      $n = preg_replace('/\D/', '', $c);
+      $ok = (strlen($n) === 10 || strlen($n) === 11);
+      return [$ok, $ok ? $n : null, $ok ? null : 'Telefone inválido'];
+    }
+    if ($t === 'aleatoria') {
+      $low = strtolower($c);
+      $ok = (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $low) || preg_match('/^[0-9a-f]{32}$/i', $low));
+      return [$ok, $ok ? $low : null, $ok ? null : 'Chave aleatória inválida'];
+    }
+    return [false, null, 'Tipo de chave PIX inválido'];
+  }
   public static function novo(): void {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (empty($_FILES['holerites']['name'][0])) {
@@ -55,6 +78,16 @@ class ClientesController {
         return;
       }
       $pdo = Connection::get();
+      $pixTipo = trim((string)($_POST['pix_tipo'] ?? ''));
+      $pixChaveIn = trim((string)($_POST['pix_chave'] ?? ''));
+      [$pixOk, $pixNorm, $pixErr] = self::validarENormalizarPix($pixTipo, $pixChaveIn, preg_replace('/\D/', '', (string)($_POST['cpf'] ?? '')));
+      if (!$pixOk) {
+        $error = $pixErr ?: 'Chave PIX inválida.';
+        $title = 'Novo Cliente';
+        $content = __DIR__ . '/../Views/clientes_novo.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
       $cpfNorm = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
       $dupRow = null; $dupStmt = $pdo->prepare("SELECT * FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf"); $dupStmt->execute(['cpf'=>$cpfNorm]); $dupRow = $dupStmt->fetch();
       if ($dupRow && (int)($dupRow['is_draft'] ?? 0) === 0) {
@@ -66,7 +99,7 @@ class ClientesController {
       }
       if ($dupRow && (int)($dupRow['is_draft'] ?? 0) === 1) {
         $clientId = (int)$dupRow['id'];
-        $pdo->prepare('UPDATE clients SET is_draft=0, nome=:nome, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, cnh_arquivo_unico=:cnh_arquivo_unico, observacoes=:observacoes WHERE id=:id')
+        $pdo->prepare('UPDATE clients SET is_draft=0, nome=:nome, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, cnh_arquivo_unico=:cnh_arquivo_unico, observacoes=:observacoes, pix_tipo=:pix_tipo, pix_chave=:pix_chave WHERE id=:id')
             ->execute([
               'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
               'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
@@ -84,10 +117,12 @@ class ClientesController {
               'renda_mensal' => self::parseRenda($_POST['renda_mensal'] ?? '0'),
               'cnh_arquivo_unico' => isset($_POST['cnh_arquivo_unico']) ? 1 : 0,
               'observacoes' => trim($_POST['observacoes'] ?? ''),
+              'pix_tipo' => strtolower($pixTipo),
+              'pix_chave' => $pixNorm,
               'id' => $clientId
             ]);
       } else {
-        $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, cadastro_publico) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:cadastro_publico)');
+        $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, pix_tipo, pix_chave, cadastro_publico) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:pix_tipo,:pix_chave,:cadastro_publico)');
         $stmt->execute([
           'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
           'cpf' => $cpfNorm,
@@ -105,7 +140,9 @@ class ClientesController {
           'tempo_trabalho' => trim($_POST['tempo_trabalho'] ?? ''),
           'renda_mensal' => self::parseRenda($_POST['renda_mensal'] ?? '0'), 
           'cnh_arquivo_unico' => isset($_POST['cnh_arquivo_unico']) ? 1 : 0,
-          'observacoes' => trim($_POST['observacoes'] ?? '')
+          'observacoes' => trim($_POST['observacoes'] ?? ''),
+          'pix_tipo' => strtolower($pixTipo),
+          'pix_chave' => $pixNorm
         ]);
         $clientId = (int)$pdo->lastInsertId();
       }
@@ -192,8 +229,18 @@ class ClientesController {
       $tempo = trim($_POST['tempo_trabalho'] ?? '');
       $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
       $observacoes = trim($_POST['observacoes'] ?? '');
+      $pixTipo = trim((string)($_POST['pix_tipo'] ?? ''));
+      $pixChaveIn = trim((string)($_POST['pix_chave'] ?? ''));
+      [$pixOk, $pixNorm, $pixErr] = self::validarENormalizarPix($pixTipo, $pixChaveIn, $cpfNorm);
       if ($nome === '' || $cpfNorm === '' || $data_nascimento === '' || $email === '' || $telefone === '' || $cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '' || $ocupacao === '' || $tempo === '' || $renda <= 0) {
         $error = 'Preencha todos os campos obrigatórios.';
+        $title = 'Cadastro de Cliente';
+        $content = __DIR__ . '/../Views/cadastro_publico.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
+      if (!$pixOk) {
+        $error = $pixErr ?: 'Chave PIX inválida.';
         $title = 'Cadastro de Cliente';
         $content = __DIR__ . '/../Views/cadastro_publico.php';
         include __DIR__ . '/../Views/layout.php';
@@ -222,11 +269,11 @@ class ClientesController {
         include __DIR__ . '/../Views/layout.php';
         return;
       }
-      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
+      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, pix_tipo, pix_chave) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:pix_tipo,:pix_chave)');
       $stmt->execute([
         'nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })($nome), 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
         'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
-        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda, 'cnh_arquivo_unico' => $cnhUnico ? 1 : 0, 'observacoes' => $observacoes, 'cadastro_publico' => 1
+        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda, 'cnh_arquivo_unico' => $cnhUnico ? 1 : 0, 'observacoes' => $observacoes, 'pix_tipo'=>strtolower($pixTipo), 'pix_chave'=>$pixNorm, 'cadastro_publico' => 1
       ]);
       $clientId = (int)$pdo->lastInsertId();
       $refN = $_POST['ref_nome'] ?? [];
@@ -563,7 +610,19 @@ class ClientesController {
         include __DIR__ . '/../Views/layout.php';
         return;
       }
-      $sql = 'UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, observacoes=:observacoes WHERE id=:id';
+      $pixTipo = trim((string)($_POST['pix_tipo'] ?? ''));
+      $pixChaveIn = trim((string)($_POST['pix_chave'] ?? ''));
+      $cpfNorm = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
+      $pixValid = true; $pixNorm = null; $pixErr = null;
+      if ($pixTipo !== '') { [$pixValid, $pixNorm, $pixErr] = self::validarENormalizarPix($pixTipo, $pixChaveIn, $cpfNorm); }
+      if ($pixTipo !== '' && !$pixValid) {
+        $error = $pixErr ?: 'Chave PIX inválida.';
+        $title = 'Editar Cliente';
+        $content = __DIR__ . '/../Views/clientes_editar.php';
+        include __DIR__ . '/../Views/layout.php';
+        return;
+      }
+      $sql = 'UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, observacoes=:observacoes, pix_tipo=:pix_tipo, pix_chave=:pix_chave WHERE id=:id';
       $pdo->prepare($sql)->execute([
         'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
         'cpf' => $cpfNorm,
@@ -581,6 +640,8 @@ class ClientesController {
         'tempo_trabalho' => trim($_POST['tempo_trabalho'] ?? ''),
         'renda_mensal' => self::parseRenda($_POST['renda_mensal'] ?? '0'),
         'observacoes' => trim($_POST['observacoes'] ?? ''),
+        'pix_tipo' => $pixTipo !== '' ? strtolower($pixTipo) : null,
+        'pix_chave' => $pixTipo !== '' ? $pixNorm : null,
         'id' => $id
       ]);
       $indicado = (int)($_POST['indicado_por_id'] ?? 0);
@@ -664,7 +725,7 @@ class ClientesController {
     try { $col = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$col) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     $q = trim($_GET['q'] ?? '');
     $limit = 20;
-    $sql = "SELECT id, nome, cpf, telefone FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado'";
+    $sql = "SELECT id, nome, cpf, telefone FROM clients WHERE (deleted_at IS NULL) AND (is_draft = 0)";
     $params = [];
     if ($q !== '') {
       $params['q'] = '%'.$q.'%';

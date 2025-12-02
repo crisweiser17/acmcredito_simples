@@ -114,7 +114,7 @@ class LoansController {
 
   public static function detalhe(int $id): void {
     $pdo = Connection::get();
-    $stmt = $pdo->prepare('SELECT l.*, c.nome, c.cpf, c.telefone, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+    $stmt = $pdo->prepare('SELECT l.*, c.nome, c.cpf, c.telefone, c.pix_tipo, c.pix_chave, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
     $stmt->execute(['id'=>$id]);
     $l = $stmt->fetch();
     if (!$l) { header('Location: /'); return; }
@@ -317,7 +317,7 @@ class LoansController {
 
   public static function transferencia(int $id): void {
     $pdo = Connection::get();
-    $loan = $pdo->prepare('SELECT l.*, c.id as cid, c.nome, c.cpf, c.telefone FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+    $loan = $pdo->prepare('SELECT l.*, c.id as cid, c.nome, c.cpf, c.telefone, c.pix_tipo, c.pix_chave FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
     $loan->execute(['id'=>$id]);
     $l = $loan->fetch();
     if (!$l) { header('Location:/'); return; }
@@ -411,6 +411,7 @@ class LoansController {
         $html = @file_get_contents($htmlSrc);
         if ($html) {
           $html = preg_replace('#(src|href)="/uploads/#','${1}="file://'.$root.'/uploads/',$html);
+          $html = preg_replace_callback('#(src|href)="/arquivo\?p=([^"\"]+)#', function($m) use ($root){ $p = rawurldecode($m[2]); $p = ltrim($p,'/'); return $m[1].'="file://'.$root.'/'.$p; }, $html);
           $previews = [];
           if (preg_match_all('#<iframe[^>]+src="(file://[^"]+\.pdf)"[^>]*>.*?</iframe>#i', $html, $m)) {
             $previewDir = $root.'/uploads/'.$loan['cid'].'/previews'; if (!is_dir($previewDir)) { @mkdir($previewDir,0755,true); }
@@ -446,6 +447,22 @@ class LoansController {
               $html = preg_replace('#<iframe[^>]*src="'.preg_quote($pdfUrl,'#').'"[^>]*>.*?</iframe>#i', '<img src="'.$pngUrl.'" style="max-width:200px">', $html);
             }
           }
+          $toDataUri = function($path) {
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $mime = 'image/png';
+            if ($ext === 'jpg' || $ext === 'jpeg') { $mime = 'image/jpeg'; }
+            elseif ($ext === 'gif') { $mime = 'image/gif'; }
+            elseif ($ext === 'png') { $mime = 'image/png'; }
+            $data = @file_get_contents($path);
+            if ($data && strlen($data) > 0) { return 'data:'.$mime.';base64,'.base64_encode($data); }
+            return null;
+          };
+          $html = preg_replace_callback('#<img[^>]+src="file://([^"]+)"[^>]*>#i', function($m) use ($toDataUri) {
+            $p = $m[1];
+            $uri = $toDataUri($p);
+            if ($uri) { return preg_replace('#src="file://[^\"]+"#','src="'.$uri.'"',$m[0]); }
+            return $m[0];
+          }, $html);
           $tmp = $dir.'/contrato_tmp.html'; @file_put_contents($tmp, $html);
           $pdf = $dir.'/contrato_assinado.pdf';
           $cmd = escapeshellcmd(trim($bin)).' --enable-local-file-access '.escapeshellarg($tmp).' '.escapeshellarg($pdf);
@@ -657,9 +674,17 @@ class LoansController {
           return $m[0];
         }, $html2);
         $html2 = preg_replace_callback('#<img[^>]+src="/uploads/([^"]+)"[^>]*>#i', function($m) use ($root2, $toDataUri) {
-          $p = $root2.'/uploads/'.$m[1];
+          $rel = rawurldecode($m[1]);
+          $p = $root2.'/uploads/'.$rel;
           $uri = $toDataUri($p);
           if ($uri) { return preg_replace('#src="/uploads/[^"]+"#','src="'.$uri.'"',$m[0]); }
+          return $m[0];
+        }, $html2);
+        $html2 = preg_replace_callback('#<img[^>]+src="uploads/([^"]+)"[^>]*>#i', function($m) use ($root2, $toDataUri) {
+          $rel = rawurldecode($m[1]);
+          $p = $root2.'/uploads/'.$rel;
+          $uri = $toDataUri($p);
+          if ($uri) { return preg_replace('#src="uploads/[^"]+"#','src="'.$uri.'"',$m[0]); }
           return $m[0];
         }, $html2);
         $pdf = $dir.'/contrato_assinado.pdf';

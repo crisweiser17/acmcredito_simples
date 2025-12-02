@@ -16,12 +16,18 @@ $saved = isset($_GET['saved']);
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gray-900">
+<body class="min-h-screen bg-gray-900 m-0">
   <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; ?>
   <?php if ($path === '/cadastro'): ?>
+    <div class="w-full">
+      <?php include __DIR__ . '/templates/header_public.php'; ?>
+    </div>
     <main class="flex-1 p-8 bg-white text-black min-h-screen">
       <?php include $content; ?>
     </main>
+    <div class="w-full">
+      <?php include __DIR__ . '/templates/footer_public.php'; ?>
+    </div>
   <?php elseif ($isLogged): ?>
     <div class="md:hidden flex items-center justify-between bg-gray-900 text-white p-4">
       <button type="button" id="btn_mobile_menu" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-gray-800">

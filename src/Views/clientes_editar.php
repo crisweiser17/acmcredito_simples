@@ -34,6 +34,27 @@
       </div>
     </div>
     <div class="space-y-4">
+      <div class="text-lg font-semibold">Dados Bancários</div>
+      <div class="grid md:grid-cols-2 gap-2">
+        <div>
+          <?php $pt = strtolower(trim((string)($c['pix_tipo'] ?? ''))); ?>
+          <select class="w-full border rounded px-3 py-2" name="pix_tipo" id="pix_tipo">
+            <option value=""></option>
+            <option value="cpf" <?php echo $pt==='cpf'?'selected':''; ?>>Chave CPF</option>
+            <option value="email" <?php echo $pt==='email'?'selected':''; ?>>Chave Email</option>
+            <option value="telefone" <?php echo $pt==='telefone'?'selected':''; ?>>Chave Telefone</option>
+            <option value="aleatoria" <?php echo $pt==='aleatoria'?'selected':''; ?>>Chave Aleatória</option>
+          </select>
+          <div class="text-sm text-gray-600 mt-0.5">Tipo de Chave PIX</div>
+        </div>
+        <div>
+          <?php $pc = (string)($c['pix_chave'] ?? ''); $cpfDigits = preg_replace('/\D+/', '', (string)($c['cpf'] ?? '')); $cpfFmt = (strlen($cpfDigits)===11) ? (substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2)) : $cpfDigits; $pixValue = ($pt==='cpf') ? $cpfFmt : $pc; ?>
+          <input class="w-full border rounded px-3 py-2" name="pix_chave" id="pix_chave" placeholder="Digite a chave PIX" value="<?php echo htmlspecialchars($pixValue); ?>">
+          <div class="text-xs mt-0.5" id="pix_helper"></div>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-4">
       <div class="text-lg font-semibold">Indicado Por</div>
       <div class="md:grid md:grid-cols-2 gap-2">
         <div class="md:col-span-2 relative">
@@ -94,7 +115,7 @@
           <div class="text-sm text-gray-600 mt-0.5">Número <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="complemento" value="<?php echo htmlspecialchars($c['complemento']); ?>">
+          <input class="w-full border rounded px-3 py-2" name="complemento" value="<?php echo htmlspecialchars($c['complemento'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Complemento</div>
         </div>
         <div>
@@ -117,7 +138,7 @@
       <div class="text-lg font-semibold">Dados Profissionais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="ocupacao" value="<?php echo htmlspecialchars($c['ocupacao']); ?>" required>
+          <input class="w-full border rounded px-3 py-2" name="ocupacao" value="<?php echo htmlspecialchars($c['ocupacao'] ?? ''); ?>" required>
           <div class="text-sm text-gray-600 mt-0.5">Ocupação <span class="text-red-600">*</span></div>
         </div>
         <div>
@@ -223,7 +244,7 @@
     <div class="space-y-2">
       <div class="text-lg font-semibold">Notas Internas</div>
       <div>
-        <textarea class="w-full border rounded px-3 py-2" name="observacoes" rows="4"><?php echo htmlspecialchars($c['observacoes']); ?></textarea>
+        <textarea class="w-full border rounded px-3 py-2" name="observacoes" rows="4"><?php echo htmlspecialchars($c['observacoes'] ?? ''); ?></textarea>
         <div class="text-sm text-gray-600 mt-0.5">Notas Internas</div>
       </div>
     </div>
@@ -261,6 +282,43 @@
     window.open(url, '_blank');
     return false;
   }
+  (function(){
+    var tipoEl = document.getElementById('pix_tipo');
+    var chaveEl = document.getElementById('pix_chave');
+    var cpfEl = document.querySelector('[name=cpf]');
+    var helpEl = document.getElementById('pix_helper');
+    function fmtCpfDigits(d){ if(d.length!==11) return d; return d.substring(0,3)+'.'+d.substring(3,6)+'.'+d.substring(6,9)+'-'+d.substring(9,11); }
+    function validate(){
+      var t = (tipoEl && tipoEl.value||'').toLowerCase(); var v = (chaveEl && chaveEl.value||'').trim(); var ok=false; var msg='';
+      if(!t){ helpEl.textContent=''; helpEl.className='text-xs mt-0.5'; return; }
+      if(t==='cpf'){
+        var d = (cpfEl && cpfEl.value||'').replace(/\D/g,''); ok = d.length===11; v = fmtCpfDigits(d); if(chaveEl){ chaveEl.value = v; } msg = ok?'CPF do cliente (bloqueado)':'CPF inválido';
+      } else if(t==='email'){
+        ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); msg = ok?'Email válido':'Email inválido';
+      } else if(t==='telefone'){
+        var n = v.replace(/\D/g,''); ok = (n.length===10 || n.length===11); msg = ok?'Telefone válido (com DDD)':'Telefone inválido';
+      } else if(t==='aleatoria'){
+        ok = (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) || /^[0-9a-f]{32}$/i.test(v)); msg = ok?'Chave aleatória válida':'Chave aleatória inválida';
+      }
+      helpEl.textContent = msg;
+      helpEl.className = 'text-xs mt-0.5 ' + (ok ? 'text-green-700' : 'text-red-700');
+    }
+    function onTipoChange(){
+      var t = (tipoEl && tipoEl.value||'').toLowerCase();
+      if(t==='cpf'){
+        var d = (cpfEl && cpfEl.value||'').replace(/\D/g,''); if(chaveEl){ chaveEl.value = fmtCpfDigits(d); chaveEl.setAttribute('readonly','readonly'); chaveEl.classList.add('bg-gray-100'); }
+      } else {
+        if(chaveEl){ chaveEl.removeAttribute('readonly'); chaveEl.classList.remove('bg-gray-100'); }
+      }
+      validate();
+    }
+    if (tipoEl && chaveEl) {
+      tipoEl.addEventListener('change', onTipoChange);
+      cpfEl && cpfEl.addEventListener('input', function(){ if ((tipoEl.value||'')==='cpf') onTipoChange(); });
+      ['input','blur','change'].forEach(function(ev){ chaveEl.addEventListener(ev, validate); });
+      onTipoChange();
+    }
+  })();
   (function(){
     var input = document.getElementById('indicador_search');
     var results = document.getElementById('indicador_results');

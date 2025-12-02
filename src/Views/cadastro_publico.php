@@ -4,7 +4,7 @@
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="space-y-8">
-    <div class="space-y-4">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div class="md:col-span-2">
@@ -29,7 +29,26 @@
         </div>
       </div>
     </div>
-    <div class="space-y-4">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+      <div class="text-lg font-semibold">Dados Bancários</div>
+      <div class="grid md:grid-cols-2 gap-2">
+        <div>
+          <select class="w-full border rounded px-3 py-2" name="pix_tipo" id="pix_tipo" required>
+            <option value=""></option>
+            <option value="cpf">Chave CPF</option>
+            <option value="email">Chave Email</option>
+            <option value="telefone">Chave Telefone</option>
+            <option value="aleatoria">Chave Aleatória</option>
+          </select>
+          <div class="text-sm text-gray-600 mt-0.5">Tipo de Chave PIX <span class="text-red-600">*</span></div>
+        </div>
+        <div>
+          <input class="w-full border rounded px-3 py-2" name="pix_chave" id="pix_chave" placeholder="Digite a chave PIX" required>
+          <div class="text-xs mt-0.5" id="pix_helper"></div>
+        </div>
+      </div>
+    </div>
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
       <div class="text-lg font-semibold">Endereço</div>
       <div class="flex gap-2 items-start">
         <div class="flex-1">
@@ -67,7 +86,7 @@
         </div>
       </div>
     </div>
-    <div class="space-y-4">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
       <div class="text-lg font-semibold">Referências</div>
       <div class="space-y-2">
         <div class="grid md:grid-cols-2 gap-2">
@@ -103,7 +122,7 @@
         <div class="text-xs text-gray-500">Você pode incluir até 3 referências.</div>
       </div>
     </div>
-    <div class="space-y-4">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
       <div class="text-lg font-semibold">Dados Profissionais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
@@ -127,7 +146,7 @@
         </div>
       </div>
     </div>
-    <div class="space-y-4 border rounded p-4">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
       <div class="text-lg font-semibold">Documentos</div>
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
       <div class="grid md:grid-cols-2 gap-4">
@@ -167,6 +186,9 @@
     <button class="btn-primary px-4 py-2 rounded" type="submit">Enviar Cadastro</button>
   </form>
 </div>
+<style>
+  .section-card input, .section-card select, .section-card textarea { background-color: #ffffff; }
+</style>
 <script src="https://unpkg.com/imask"></script>
 <script>
   IMask(document.getElementById('cpf'), { mask: '000.000.000-00' });
@@ -228,4 +250,40 @@
       document.getElementById('estado').value = d.uf || '';
     } catch (e) {}
   });
+  (function(){
+    var tipoEl = document.getElementById('pix_tipo');
+    var chaveEl = document.getElementById('pix_chave');
+    var cpfEl = document.getElementById('cpf');
+    var helpEl = document.getElementById('pix_helper');
+    function fmtCpfDigits(d){ if(d.length!==11) return d; return d.substring(0,3)+'.'+d.substring(3,6)+'.'+d.substring(6,9)+'-'+d.substring(9,11); }
+    function validate(){
+      var t = (tipoEl.value||'').toLowerCase(); var v = (chaveEl.value||'').trim(); var ok=false; var msg='';
+      if(!t){ helpEl.textContent=''; helpEl.className='text-xs mt-0.5'; return; }
+      if(t==='cpf'){
+        var d = (cpfEl.value||'').replace(/\D/g,''); ok = d.length===11; v = fmtCpfDigits(d); chaveEl.value = v; msg = ok?'CPF do cliente (bloqueado)':'CPF inválido';
+      } else if(t==='email'){
+        ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); msg = ok?'Email válido':'Email inválido';
+      } else if(t==='telefone'){
+        var n = v.replace(/\D/g,''); ok = (n.length===10 || n.length===11); msg = ok?'Telefone válido (com DDD)':'Telefone inválido';
+      } else if(t==='aleatoria'){
+        ok = (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) || /^[0-9a-f]{32}$/i.test(v)); msg = ok?'Chave aleatória válida':'Chave aleatória inválida';
+      }
+      helpEl.textContent = msg;
+      helpEl.className = 'text-xs mt-0.5 ' + (ok ? 'text-green-700' : 'text-red-700');
+    }
+    function onTipoChange(){
+      var t = (tipoEl.value||'').toLowerCase();
+      if(t==='cpf'){
+        var d = (cpfEl.value||'').replace(/\D/g,''); chaveEl.value = fmtCpfDigits(d); chaveEl.setAttribute('readonly','readonly'); chaveEl.classList.add('bg-gray-100');
+      } else {
+        chaveEl.removeAttribute('readonly'); chaveEl.classList.remove('bg-gray-100');
+      }
+      validate();
+    }
+    if (tipoEl && chaveEl) {
+      tipoEl.addEventListener('change', onTipoChange);
+      cpfEl && cpfEl.addEventListener('input', function(){ if ((tipoEl.value||'')==='cpf') onTipoChange(); });
+      ['input','blur','change'].forEach(function(ev){ chaveEl.addEventListener(ev, validate); });
+    }
+  })();
 </script>
