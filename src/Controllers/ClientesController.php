@@ -200,9 +200,10 @@ class ClientesController {
       ]);
       $clientId = (int)$pdo->lastInsertId();
       $refN = $_POST['ref_nome'] ?? [];
+      $refR = $_POST['ref_relacao'] ?? [];
       $refT = $_POST['ref_telefone'] ?? [];
       $refs = [];
-      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; } }
+      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $rel = trim((string)($refR[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'relacao'=>$rel, 'telefone'=>$t]; } }
       try { $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch(); if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]); } } catch (\Throwable $e) {}
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
@@ -491,9 +492,10 @@ class ClientesController {
       ]);
       $indicado = (int)($_POST['indicado_por_id'] ?? 0);
       $refN = $_POST['ref_nome'] ?? [];
+      $refR = $_POST['ref_relacao'] ?? [];
       $refT = $_POST['ref_telefone'] ?? [];
       $refs = [];
-      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; } }
+      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $rel = trim((string)($refR[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'relacao'=>$rel, 'telefone'=>$t]; } }
       try {
         $hasInd = $pdo->query("SHOW COLUMNS FROM clients LIKE 'indicado_por_id'")->fetch();
         $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch();

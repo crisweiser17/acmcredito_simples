@@ -56,9 +56,14 @@
     <?php if (count($refs) > 0): ?>
       <div class="space-y-1">
         <?php foreach ($refs as $r): ?>
-          <div>
+          <?php $tel = preg_replace('/\D/','', (string)($r['telefone'] ?? '')); if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; } $nomeRef = (string)($r['nome'] ?? ''); $msg = 'Olá '.$nomeRef.', o '.($c['nome'] ?? '').' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Atenciosamente, ACM Crédito.'; $wa = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($msg); ?>
+          <div class="flex items-center gap-2">
             <span><?php echo htmlspecialchars($r['nome'] ?? ''); ?></span>
+            <?php if (!empty($r['relacao'])): ?><span class="text-sm text-gray-600"><?php echo htmlspecialchars($r['relacao']); ?></span><?php endif; ?>
             <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></span>
+            <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo empty($tel)?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
+              <i class="fa fa-whatsapp" aria-hidden="true"></i>
+            </a>
           </div>
         <?php endforeach; ?>
       </div>

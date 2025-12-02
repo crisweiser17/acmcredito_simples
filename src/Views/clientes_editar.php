@@ -52,15 +52,22 @@
       <div class="text-lg font-semibold">Referências</div>
       <?php $refs = json_decode($c['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = []; ?>
       <div class="space-y-2">
-        <?php for ($i=0; $i<3; $i++): $rn = htmlspecialchars($refs[$i]['nome'] ?? ''); $rt = htmlspecialchars($refs[$i]['telefone'] ?? ''); ?>
-        <div class="grid md:grid-cols-2 gap-2">
+        <?php for ($i=0; $i<3; $i++): $rn = htmlspecialchars($refs[$i]['nome'] ?? ''); $rr = htmlspecialchars($refs[$i]['relacao'] ?? ''); $rt = htmlspecialchars($refs[$i]['telefone'] ?? ''); ?>
+        <div class="grid md:grid-cols-3 gap-2">
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_nome[]" placeholder="Nome da referência" value="<?php echo $rn; ?>">
             <div class="text-sm text-gray-600 mt-0.5">Nome</div>
           </div>
           <div>
+            <input class="w-full border rounded px-3 py-2" name="ref_relacao[]" placeholder="Relação" maxlength="100" value="<?php echo $rr; ?>">
+            <div class="text-sm text-gray-600 mt-0.5">Relação</div>
+          </div>
+          <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_<?php echo $i+1; ?>" value="<?php echo $rt; ?>">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
+            <div class="mt-1">
+              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(<?php echo (int)$i; ?>);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            </div>
           </div>
         </div>
         <?php endfor; ?>
@@ -234,6 +241,18 @@
     }
   })();
   ['ref_tel_1','ref_tel_2','ref_tel_3'].forEach(function(id){ var el=document.getElementById(id); if(el){ IMask(el,{ mask: '(00) 00000-0000' }); }});
+  function enviarWaRef(idx){
+    var nomeCli = document.getElementsByName('nome')[0]?.value.trim() || '';
+    var nomeRef = document.getElementsByName('ref_nome[]')[idx]?.value.trim() || '';
+    var telRef = document.getElementsByName('ref_telefone[]')[idx]?.value.trim() || '';
+    var digits = (telRef||'').replace(/\D/g,'');
+    if (digits && digits.length>=10 && digits.length<=11 && digits.substring(0,2)!=='55') { digits = '55'+digits; }
+    var msg = 'Olá '+(nomeRef||'')+', o '+(nomeCli||'')+' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Atenciosamente, ACM Crédito.';
+    var url = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+    if (!digits) return false;
+    window.open(url, '_blank');
+    return false;
+  }
   (function(){
     var input = document.getElementById('indicador_search');
     var results = document.getElementById('indicador_results');

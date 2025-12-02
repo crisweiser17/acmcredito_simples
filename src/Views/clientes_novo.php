@@ -85,34 +85,55 @@
     <div class="space-y-4">
       <div class="text-lg font-semibold">Referências</div>
       <div class="space-y-2">
-        <div class="grid md:grid-cols-2 gap-2">
+        <div class="grid md:grid-cols-3 gap-2">
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_nome[]" placeholder="Nome da referência">
             <div class="text-sm text-gray-600 mt-0.5">Nome</div>
+          </div>
+          <div>
+            <input class="w-full border rounded px-3 py-2" name="ref_relacao[]" placeholder="Relação" maxlength="100">
+            <div class="text-sm text-gray-600 mt-0.5">Relação</div>
           </div>
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_1">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
+            <div class="mt-1">
+              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(0);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            </div>
           </div>
         </div>
-        <div class="grid md:grid-cols-2 gap-2">
+        <div class="grid md:grid-cols-3 gap-2">
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_nome[]" placeholder="Nome da referência">
             <div class="text-sm text-gray-600 mt-0.5">Nome</div>
+          </div>
+          <div>
+            <input class="w-full border rounded px-3 py-2" name="ref_relacao[]" placeholder="Relação" maxlength="100">
+            <div class="text-sm text-gray-600 mt-0.5">Relação</div>
           </div>
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_2">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
+            <div class="mt-1">
+              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(1);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            </div>
           </div>
         </div>
-        <div class="grid md:grid-cols-2 gap-2">
+        <div class="grid md:grid-cols-3 gap-2">
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_nome[]" placeholder="Nome da referência">
             <div class="text-sm text-gray-600 mt-0.5">Nome</div>
           </div>
           <div>
+            <input class="w-full border rounded px-3 py-2" name="ref_relacao[]" placeholder="Relação" maxlength="100">
+            <div class="text-sm text-gray-600 mt-0.5">Relação</div>
+          </div>
+          <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_3">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
+            <div class="mt-1">
+              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(2);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            </div>
           </div>
         </div>
         <div class="text-xs text-gray-500">Você pode incluir até 3 referências.</div>
@@ -280,6 +301,18 @@
     });
     document.addEventListener('click', function(e){ if (!results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
   })();
+  function enviarWaRef(idx){
+    var nomeCli = document.getElementById('nome') ? document.getElementById('nome').value.trim() : '';
+    var nomeRef = document.getElementsByName('ref_nome[]')[idx]?.value.trim() || '';
+    var telRef = document.getElementsByName('ref_telefone[]')[idx]?.value.trim() || '';
+    var digits = (telRef||'').replace(/\D/g,'');
+    if (digits && digits.length>=10 && digits.length<=11 && digits.substring(0,2)!=='55') { digits = '55'+digits; }
+    var msg = 'Olá '+(nomeRef||'')+', o '+(nomeCli||'')+' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Atenciosamente, ACM Crédito.';
+    var url = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+    if (!digits) return false;
+    window.open(url, '_blank');
+    return false;
+  }
 </script>
 <?php if (!empty($showSuccessModal) && !empty($createdId)): ?>
 <div id="novo_cli_modal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
