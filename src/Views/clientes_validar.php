@@ -12,6 +12,7 @@
         <?php endif; ?>
       </div>
     </div>
+    <?php $pvDocs = []; $pvIdxF = null; $pvIdxV = null; $pvIdxS = null; if (!empty($c['doc_cnh_frente'])) { $pvDocs[] = (string)$c['doc_cnh_frente']; $pvIdxF = count($pvDocs)-1; } if (!empty($c['doc_cnh_verso'])) { $pvDocs[] = (string)$c['doc_cnh_verso']; $pvIdxV = count($pvDocs)-1; } if (!empty($c['doc_selfie'])) { $pvDocs[] = (string)$c['doc_selfie']; $pvIdxS = count($pvDocs)-1; } ?>
     <div class="grid gap-6 <?php echo !empty($c['doc_cnh_verso']) ? 'md:grid-cols-3' : 'md:grid-cols-2'; ?>">
       <div class="space-y-4">
         <?php if (!empty($c['doc_cnh_frente'])): ?>
@@ -24,10 +25,11 @@
               </div>
               <div class="mt-2">
                 <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlF; ?>">Abrir tela cheia</a>
+                <button type="button" class="ml-2 px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxF ?? 0); ?>)">Abrir</button>
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo $urlF; ?>')" />
+            <img src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxF ?? 0); ?>)" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -42,10 +44,11 @@
             </div>
             <div class="mt-2">
               <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlV; ?>">Abrir tela cheia</a>
+              <button type="button" class="ml-2 px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxV ?? 0); ?>)">Abrir</button>
             </div>
           </div>
         <?php else: ?>
-          <img src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo $urlV; ?>')" />
+          <img src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxV ?? 0); ?>)" />
         <?php endif; ?>
       </div>
       <?php endif; ?>
@@ -60,10 +63,11 @@
               </div>
               <div class="mt-2">
                 <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlS; ?>">Abrir tela cheia</a>
+                <button type="button" class="ml-2 px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxS ?? 0); ?>)">Abrir</button>
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo $urlS; ?>')" />
+            <img src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxS ?? 0); ?>)" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -387,5 +391,24 @@
         'holIdx = (holIdx + 1) % '+holerites.length+'; render(); })()">›</button>\n      </div>';
     }
     window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
+  })();
+  (function(){
+    var pv = [
+      <?php foreach ($pvDocs as $d): $ex = strtolower(pathinfo($d, PATHINFO_EXTENSION)); $u = '/arquivo?p=' . rawurlencode($d); if ($ex === 'pdf') { ?>{type:'pdf',url:'<?php echo $u; ?>'},<?php } else { ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
+    ];
+    if (!pv.length) return;
+    var pvIdx = 0; var lbPv = null;
+    function closePv(){ if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener('keydown', pvKey); } }
+    function prevPv(){ pvIdx = (pvIdx - 1 + pv.length) % pv.length; renderPv(); }
+    function nextPv(){ pvIdx = (pvIdx + 1) % pv.length; renderPv(); }
+    function pvKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); prevPv(); } else if(e.key==='ArrowRight'){ e.preventDefault(); nextPv(); } else if(e.key==='Escape'){ e.preventDefault(); closePv(); } }
+    function renderPv(){ if (!lbPv){ lbPv = document.createElement('div'); lbPv.style.position='fixed'; lbPv.style.inset='0'; lbPv.style.background='rgba(0,0,0,0.85)'; lbPv.style.display='flex'; lbPv.style.alignItems='center'; lbPv.style.justifyContent='center'; lbPv.style.zIndex='9999'; lbPv.addEventListener('click', ()=>{ closePv(); }); document.body.appendChild(lbPv); }
+      var it = pv[pvIdx]; var content = it.type==='pdf' ? '<div style="width:90vw;height:90vh;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+it.url+'" style="width:100%;height:100%;border:0"></iframe></div>' : '<img src="'+it.url+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />';
+      lbPv.innerHTML = '<div style="position:relative;display:flex;align-items:center;justify-content:center">\n        <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener(\\'keydown\\', pvKey); } })()">×</button>\n        <button type="button" aria-label="Anterior" style="position:absolute;left:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'pvIdx = (pvIdx - 1 + '+pv.length+') % '+pv.length+'; renderPv(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'pvIdx = (pvIdx + 1) % '+pv.length+'; renderPv(); })()">›</button>\n      </div>';
+    }
+    window.openProvaVidaGallery = function(idx){ pvIdx = idx||0; renderPv(); document.addEventListener('keydown', pvKey); };
   })();
 </script>
