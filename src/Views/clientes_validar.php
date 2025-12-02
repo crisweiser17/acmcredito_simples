@@ -377,7 +377,7 @@
     var holerites = [
       <?php $holArr = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($holArr)) $holArr = []; foreach ($holArr as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $u = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
     ];
-    if (!holerites.length) return;
+    
     var holIdx = 0;
     function closeLb(){ if(lb){ lb.remove(); lb=null; document.removeEventListener('keydown', holKey); } }
     function prev(){ holIdx = (holIdx - 1 + holerites.length) % holerites.length; render(); }
@@ -390,13 +390,13 @@
         'holIdx = (holIdx - 1 + '+holerites.length+') % '+holerites.length+'; render(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
         'holIdx = (holIdx + 1) % '+holerites.length+'; render(); })()">›</button>\n      </div>';
     }
-    window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
+    window.openHoleriteGallery = function(idx){ if(!holerites.length) return; holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
   })();
   (function(){
     var pv = [
       <?php foreach ($pvDocs as $d): $ex = strtolower(pathinfo($d, PATHINFO_EXTENSION)); $u = '/arquivo?p=' . rawurlencode($d); if ($ex === 'pdf') { ?>{type:'pdf',url:'<?php echo $u; ?>'},<?php } else { ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
     ];
-    if (!pv.length) return;
+    
     var pvIdx = 0; var lbPv = null;
     function closePv(){ if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener('keydown', pvKey); } }
     function prevPv(){ pvIdx = (pvIdx - 1 + pv.length) % pv.length; renderPv(); }
@@ -409,6 +409,6 @@
         'pvIdx = (pvIdx - 1 + '+pv.length+') % '+pv.length+'; renderPv(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
         'pvIdx = (pvIdx + 1) % '+pv.length+'; renderPv(); })()">›</button>\n      </div>';
     }
-    window.openProvaVidaGallery = function(idx){ pvIdx = idx||0; renderPv(); document.addEventListener('keydown', pvKey); };
+    window.openProvaVidaGallery = function(idx){ if(!pv.length) return; pvIdx = idx||0; renderPv(); document.addEventListener('keydown', pvKey); };
   })();
 </script>
