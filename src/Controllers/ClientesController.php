@@ -130,7 +130,7 @@ class ClientesController {
       } catch (\Throwable $e) { /* no-op */ }
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
-        $maxHol = 3;
+        $maxHol = 5;
         $totalHol = count($_FILES['holerites']['name']);
         for ($i=0; $i<$totalHol && $i<$maxHol; $i++) {
           $file = [
@@ -239,7 +239,7 @@ class ClientesController {
       try { $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch(); if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]); } } catch (\Throwable $e) {}
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
-        $maxHol = 3;
+        $maxHol = 5;
         $totalHol = count($_FILES['holerites']['name']);
         for ($i=0; $i<$totalHol && $i<$maxHol; $i++) {
           $file = [
@@ -615,7 +615,7 @@ class ClientesController {
       if (!empty($_FILES['holerites']['name'][0])) {
         $existing = json_decode($client['doc_holerites'] ?? '[]', true);
         if (!is_array($existing)) $existing = [];
-        $maxHol = 3;
+        $maxHol = 5;
         // Mantém no máximo 3 holerites no total (existentes + novos)
         for ($i=0; $i<count($_FILES['holerites']['name']); $i++) {
           if (count($existing) >= $maxHol) { break; }

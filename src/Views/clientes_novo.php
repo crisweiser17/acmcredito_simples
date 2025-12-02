@@ -192,10 +192,10 @@
           </div>
         </div>
         <div class="space-y-2">
-          <div>Holerites (até 3) <span class="text-red-600">*</span></div>
+          <div>Holerites (até 5) <span class="text-red-600">*</span></div>
           <div>
             <input class="w-full" type="file" name="holerites[]" id="inp_holerites" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-            <div class="text-sm text-gray-600 mt-0.5">Máximo de 3 arquivos</div>
+            <div class="text-sm text-gray-600 mt-0.5">Máximo de 5 arquivos</div>
           </div>
         </div>
       </div>
@@ -236,8 +236,8 @@
     var hol = document.getElementById('inp_holerites');
     if (!hol) return;
     hol.addEventListener('change', function(){
-      if (hol.files && hol.files.length > 3) {
-        alert('Você pode enviar no máximo 3 holerites. Selecione novamente.');
+      if (hol.files && hol.files.length > 5) {
+        alert('Você pode enviar no máximo 5 holerites. Selecione novamente.');
         hol.value = '';
       }
     });
