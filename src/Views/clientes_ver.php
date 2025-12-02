@@ -136,7 +136,6 @@
   <div class="space-y-4">
     <div class="text-lg font-semibold">Documentos</div>
     <div class="mb-2">Documento frente/verso: <?php echo ($c['cnh_arquivo_unico'] ? 'Arquivo único' : 'Arquivos separados'); ?></div>
-    <?php $pvDocs = []; $pvIdxF = null; $pvIdxV = null; $pvIdxS = null; if (!empty($c['doc_cnh_frente'])) { $pvDocs[] = (string)$c['doc_cnh_frente']; $pvIdxF = count($pvDocs)-1; } if (!$c['cnh_arquivo_unico'] && !empty($c['doc_cnh_verso'])) { $pvDocs[] = (string)$c['doc_cnh_verso']; $pvIdxV = count($pvDocs)-1; } if (!empty($c['doc_selfie'])) { $pvDocs[] = (string)$c['doc_selfie']; $pvIdxS = count($pvDocs)-1; } ?>
     <div id="doc_row" class="grid gap-6 <?php echo ($c['cnh_arquivo_unico'] ? 'md:grid-cols-2' : 'md:grid-cols-3'); ?>">
       <div class="p-4 border rounded">
         <div class="font-medium mb-2"><span><?php echo ($c['cnh_arquivo_unico'] ? 'Documento Único' : 'Frente'); ?></span></div>
@@ -147,9 +146,8 @@
               <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-full h-full"></iframe>
             </div>
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>">Abrir tela cheia</a>
-            <button type="button" class="ml-2 px-2 py-1 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxF ?? 0); ?>)">Abrir</button>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxF ?? 0); ?>)" />
+            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -163,9 +161,8 @@
               <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-full h-full"></iframe>
             </div>
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>">Abrir tela cheia</a>
-            <button type="button" class="ml-2 px-2 py-1 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxV ?? 0); ?>)">Abrir</button>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxV ?? 0); ?>)" />
+            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>')" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -179,9 +176,8 @@
               <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-full h-full"></iframe>
             </div>
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>">Abrir tela cheia</a>
-            <button type="button" class="ml-2 px-2 py-1 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxS ?? 0); ?>)">Abrir</button>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxS ?? 0); ?>)" />
+            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -248,30 +244,27 @@
     function holKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); prev(); } else if(e.key==='ArrowRight'){ e.preventDefault(); next(); } else if(e.key==='Escape'){ e.preventDefault(); closeLb(); } }
     function render(){ if (!lb){ lb = document.createElement('div'); lb.style.position='fixed'; lb.style.inset='0'; lb.style.background='rgba(0,0,0,0.85)'; lb.style.display='flex'; lb.style.alignItems='center'; lb.style.justifyContent='center'; lb.style.zIndex='9999'; lb.addEventListener('click', ()=>{ closeLb(); }); document.body.appendChild(lb); }
       var it = holerites[holIdx]; var content = it.type==='pdf' ? '<div style="width:90vw;height:90vh;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+it.url+'" style="width:100%;height:100%;border:0"></iframe></div>' : '<img src="'+it.url+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />';
-      lb.innerHTML = '<div style="position:relative;display:flex;align-items:center;justify-content:center">\n        <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'if(lb){ lb.remove(); lb=null; document.removeEventListener(\'keydown\', holKey); } })()">×</button>\n        <button type="button" aria-label="Anterior" style="position:absolute;left:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'holIdx = (holIdx - 1 + '+holerites.length+') % '+holerites.length+'; render(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'holIdx = (holIdx + 1) % '+holerites.length+'; render(); })()">›</button>\n      </div>';
+      lb.innerHTML = '';
+      var wrap = document.createElement('div');
+      wrap.style.position='relative'; wrap.style.display='flex'; wrap.style.alignItems='center'; wrap.style.justifyContent='center';
+      wrap.addEventListener('click', function(e){ e.stopPropagation(); });
+      var contentEl;
+      if (it.type==='pdf'){
+        var box = document.createElement('div'); box.style.width='90vw'; box.style.height='90vh'; box.style.background='#fff'; box.style.borderRadius='8px'; box.style.overflow='hidden';
+        var iframe = document.createElement('iframe'); iframe.src = it.url; iframe.style.width='100%'; iframe.style.height='100%'; iframe.style.border='0'; box.appendChild(iframe);
+        contentEl = box;
+      } else {
+        var img = document.createElement('img'); img.src = it.url; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; contentEl = img;
+      }
+      var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
+      btnClose.addEventListener('click', function(e){ e.stopPropagation(); closeLb(); });
+      var btnPrev = document.createElement('button'); btnPrev.type='button'; btnPrev.setAttribute('aria-label','Anterior'); btnPrev.style.position='absolute'; btnPrev.style.left='-48px'; btnPrev.style.background='#fff'; btnPrev.style.color='#000'; btnPrev.style.border='none'; btnPrev.style.borderRadius='9999px'; btnPrev.style.width='40px'; btnPrev.style.height='40px'; btnPrev.style.cursor='pointer'; btnPrev.appendChild(document.createTextNode('‹'));
+      btnPrev.addEventListener('click', function(e){ e.stopPropagation(); prev(); });
+      var btnNext = document.createElement('button'); btnNext.type='button'; btnNext.setAttribute('aria-label','Próximo'); btnNext.style.position='absolute'; btnNext.style.right='-48px'; btnNext.style.background='#fff'; btnNext.style.color='#000'; btnNext.style.border='none'; btnNext.style.borderRadius='9999px'; btnNext.style.width='40px'; btnNext.style.height='40px'; btnNext.style.cursor='pointer'; btnNext.appendChild(document.createTextNode('›'));
+      btnNext.addEventListener('click', function(e){ e.stopPropagation(); next(); });
+      wrap.appendChild(btnClose); wrap.appendChild(btnPrev); wrap.appendChild(contentEl); wrap.appendChild(btnNext);
+      lb.appendChild(wrap);
     }
-    window.openHoleriteGallery = function(idx){ if(!holerites.length) return; holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
-  })();
-  (function(){
-    var pv = [
-      <?php foreach ($pvDocs as $d): $ex = strtolower(pathinfo($d, PATHINFO_EXTENSION)); $u = implode('/', array_map('rawurlencode', explode('/', $d))); if ($ex === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($d); ?>'},<?php } else { ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
-    ];
-    
-    var pvIdx = 0; var lbPv = null;
-    function closePv(){ if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener('keydown', pvKey); } }
-    function prevPv(){ pvIdx = (pvIdx - 1 + pv.length) % pv.length; renderPv(); }
-    function nextPv(){ pvIdx = (pvIdx + 1) % pv.length; renderPv(); }
-    function pvKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); prevPv(); } else if(e.key==='ArrowRight'){ e.preventDefault(); nextPv(); } else if(e.key==='Escape'){ e.preventDefault(); closePv(); } }
-    function renderPv(){ if (!lbPv){ lbPv = document.createElement('div'); lbPv.style.position='fixed'; lbPv.style.inset='0'; lbPv.style.background='rgba(0,0,0,0.85)'; lbPv.style.display='flex'; lbPv.style.alignItems='center'; lbPv.style.justifyContent='center'; lbPv.style.zIndex='9999'; lbPv.addEventListener('click', ()=>{ closePv(); }); document.body.appendChild(lbPv); }
-      var it = pv[pvIdx]; var content = it.type==='pdf' ? '<div style="width:90vw;height:90vh;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+it.url+'" style="width:100%;height:100%;border:0"></iframe></div>' : '<img src="'+it.url+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />';
-      lbPv.innerHTML = '<div style="position:relative;display:flex;align-items:center;justify-content:center">\n        <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener(\\'keydown\\', pvKey); } })()">×</button>\n        <button type="button" aria-label="Anterior" style="position:absolute;left:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'pvIdx = (pvIdx - 1 + '+pv.length+') % '+pv.length+'; renderPv(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'pvIdx = (pvIdx + 1) % '+pv.length+'; renderPv(); })()">›</button>\n      </div>';
-    }
-    window.openProvaVidaGallery = function(idx){ if(!pv.length) return; pvIdx = idx||0; renderPv(); document.addEventListener('keydown', pvKey); };
+    window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
   })();
 </script>
