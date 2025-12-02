@@ -115,13 +115,27 @@
         <?php $insc = $json['situacaoInscricao'] ?? ($json['data_inscricao'] ?? ($json['inscricao_data'] ?? null)); ?>
         <?php $obito = $json['situacaoAnoObito'] ?? ($json['ano_obito'] ?? null); ?>
         <?php $atual = $json['ultima_atualizacao'] ?? null; ?>
+        <?php $cpfJson = null; if (isset($json['cpf'])) { $cpfJson = is_array($json['cpf']) ? ($json['cpf']['numero'] ?? ($json['cpf']['cpf'] ?? null)) : $json['cpf']; } if ($cpfJson === null) { $cpfJson = $json['dados']['cpf'] ?? ($json['cpf_numero'] ?? null); } ?>
+        <?php $nomeCliCmp = preg_replace('/\s+/',' ', mb_strtoupper(trim((string)($c['nome'] ?? '')))); $nomeJsonCmp = preg_replace('/\s+/',' ', mb_strtoupper(trim((string)($nome ?? '')))); $matchNome = ($nomeCliCmp !== '' && $nomeJsonCmp !== '' && $nomeCliCmp === $nomeJsonCmp); ?>
+        <?php $cpfCliDigits = preg_replace('/\D/','', (string)($c['cpf'] ?? '')); $cpfJsonDigits = preg_replace('/\D/','', (string)($cpfJson ?? '')); $matchCpf = ($cpfCliDigits !== '' && $cpfJsonDigits !== '' && $cpfCliDigits === $cpfJsonDigits); ?>
+        <?php $normCliNasc = !empty($c['data_nascimento']) ? date('Y-m-d', strtotime($c['data_nascimento'])) : null; $normJsonNasc = !empty($nasc) ? date('Y-m-d', strtotime($nasc)) : null; $matchNasc = ($normCliNasc && $normJsonNasc && $normCliNasc === $normJsonNasc); ?>
         <div class="grid md:grid-cols-2 gap-4 text-sm">
           <div class="bg-gray-100 rounded p-3 text-black">
-            <div><span class="text-gray-400">Nome:</span> <?php echo htmlspecialchars($nome ?? '-'); ?></div>
+            <div>
+              <span class="text-gray-400">Nome:</span> <?php echo htmlspecialchars($nome ?? '-'); ?>
+              <?php if (!empty($nome)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchNome ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchNome ? 'ok' : 'divergencia'; ?></span><?php endif; ?>
+            </div>
+            <div>
+              <span class="text-gray-400">CPF:</span> <?php echo htmlspecialchars($cpfJson ?? '-'); ?>
+              <?php if (!empty($cpfJson)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchCpf ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchCpf ? 'ok' : 'divergencia'; ?></span><?php endif; ?>
+            </div>
             <div><span class="text-gray-400">Situação:</span> <?php echo htmlspecialchars($sit ?? '-'); ?></div>
-            <div><span class="text-gray-400">Data Nascimento:</span> <?php echo htmlspecialchars($nasc ?? '-'); ?></div>
+            <div>
+              <span class="text-gray-400">Data Nascimento:</span> <?php echo htmlspecialchars($nasc ?? '-'); ?>
+              <?php if (!empty($nasc)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchNasc ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchNasc ? 'ok' : 'divergencia'; ?></span><?php endif; ?>
+            </div>
             <div><span class="text-gray-400">Data Inscrição:</span> <?php echo htmlspecialchars($insc ?? '-'); ?></div>
-            <div><span class="text-gray-400">Situação Óbito (Ano):</span> <?php echo htmlspecialchars($obito ?? '-'); ?></div>
+            <div class="<?php echo !empty($obito) ? 'text-red-600' : ''; ?>"><span class="text-gray-400">Situação Óbito (Ano):</span> <?php echo htmlspecialchars($obito ?? '-'); ?></div>
             <div><span class="text-gray-400">Última Atualização:</span> <?php echo htmlspecialchars($atual ?? '-'); ?></div>
           </div>
           <div class="bg-gray-100 rounded p-3 text-black">
