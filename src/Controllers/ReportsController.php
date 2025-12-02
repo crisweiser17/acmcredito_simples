@@ -531,7 +531,7 @@ use App\Database\Connection;
       elseif ($periodo === 'mes_atual') { $ini=date('Y-m-01'); $fim=date('Y-m-t'); }
       elseif ($periodo === 'proximo_mes') { $ini=date('Y-m-01', strtotime('+1 month')); $fim=date('Y-m-t', strtotime('+1 month')); }
     }
-    $sql = 'SELECT l.id, l.client_id AS cid, c.nome AS cliente_nome, c.cpf AS cliente_cpf, l.valor_principal, l.status, l.transferencia_comprovante_path, l.transferencia_data FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $sql = 'SELECT l.id, l.client_id AS cid, c.nome AS cliente_nome, c.cpf AS cliente_cpf, c.telefone AS cliente_telefone, l.valor_principal, l.valor_parcela, l.num_parcelas, l.status, l.transferencia_comprovante_path, l.transferencia_data FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
     if ($status !== '' && in_array($status, ['aguardando_transferencia','aguardando_boletos','ativo'], true)) { $sql .= ' AND l.status = :st'; $params['st']=$status; }
     if ($ini !== '' && $fim !== '') { $sql .= ' AND DATE(l.created_at) BETWEEN :ini AND :fim'; $params['ini']=$ini; $params['fim']=$fim; }

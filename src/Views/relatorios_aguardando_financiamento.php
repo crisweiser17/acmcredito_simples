@@ -88,7 +88,28 @@
               <?php endif; ?>
             </td>
             <td class="border px-2 py-1">
-              <a class="px-2 py-1 rounded bg-gray-100" href="/emprestimos/<?php echo (int)$r['id']; ?>">Detalhes</a>
+              <?php
+                $tel = preg_replace('/\D/', '', (string)($r['cliente_telefone'] ?? ''));
+                if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; }
+                $loanCtx = [
+                  'id' => $r['id'],
+                  'nome' => $r['cliente_nome'] ?? '',
+                  'cpf' => $r['cliente_cpf'] ?? '',
+                  'valor_principal' => $r['valor_principal'] ?? 0,
+                  'valor_parcela' => $r['valor_parcela'] ?? 0,
+                  'num_parcelas' => $r['num_parcelas'] ?? 0,
+                ];
+                $confirmText = \App\Services\MessagingService::render('confirmacao', $loanCtx, []);
+                $waConfirm = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($confirmText);
+              ?>
+              <div class="flex items-center gap-2">
+                <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100" href="/emprestimos/<?php echo (int)$r['id']; ?>" aria-label="Ver detalhes">
+                  <i class="fa fa-eye" aria-hidden="true"></i>
+                </a>
+                <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo ($tel==='')?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($waConfirm); ?>" target="_blank" aria-label="Enviar confirmação pelo WhatsApp">
+                  <i class="fa fa-whatsapp" aria-hidden="true"></i>
+                </a>
+              </div>
             </td>
           </tr>
         <?php endforeach; ?>
