@@ -14,6 +14,8 @@
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:6px;text-decoration:none}
     .btn-primary{background:#2563eb;color:#fff}
     .btn-danger{background:#dc2626;color:#fff}
+    .notice{background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:6px;padding:10px;display:flex;align-items:center;gap:8px;margin:10px 0}
+    .footer{color:#6b7280;font-size:13px;text-align:center;margin-top:16px}
   </style>
 </head>
 <body>
@@ -30,6 +32,7 @@
       <?php $nomeCli = (string)($client['nome'] ?? ''); $parts = preg_split('/\s+/', trim($nomeCli)); $display = ''; if ($parts && count($parts)>0){ $first=$parts[0]; $lastInit = count($parts)>1 ? strtoupper(substr($parts[count($parts)-1],0,1)) : ''; $display = $first . ($lastInit? (' ' . $lastInit . '.') : ''); } ?>
       <?php $nomeRef = (string)($ref['nome'] ?? ''); $partsRef = preg_split('/\s+/', trim($nomeRef)); $refFirst = $partsRef && count($partsRef)>0 ? $partsRef[0] : ''; ?>
       <p>Olá <?php echo htmlspecialchars($refFirst); ?>! Você foi indicado como referência por <?php echo htmlspecialchars($display); ?>. Por favor, informe se você conhece e recomenda esta pessoa.</p>
+      <div class="notice"><i class="fa fa-lock"></i><span>Sua resposta é confidencial.</span></div>
       <?php if (!empty($msgOk)): ?>
         <div style="padding:10px;border-radius:6px;background:#dcfce7;color:#166534;margin-bottom:10px;"><?php echo htmlspecialchars($msgOk); ?></div>
       <?php endif; ?>
@@ -41,6 +44,9 @@
         <input type="hidden" name="voto" value="reprovo">
         <button type="submit" class="btn btn-danger"><i class="fa fa-thumbs-down"></i> Eu não recomendo</button>
       </form>
+    </div>
+    <div class="footer">
+      Em caso de dúvidas, entre em contato: <span><i class="fa fa-envelope"></i> <?php echo htmlspecialchars($email); ?></span> • <span><i class="fa fa-phone"></i> <?php echo htmlspecialchars($fone); ?></span>
     </div>
   </div>
 </body>

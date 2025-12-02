@@ -97,8 +97,9 @@
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_1">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
-            <div class="mt-1">
-              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(0);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            <div class="mt-1 flex items-center gap-2">
+              <a href="#" id="btn_wa_ref_0" data-idx="0" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white btn-wa-ref opacity-50 pointer-events-none" onclick="return enviarWaRef(0);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+              <span id="label_link_ref_0" class="hidden text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span>
             </div>
           </div>
         </div>
@@ -114,8 +115,9 @@
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_2">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
-            <div class="mt-1">
-              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(1);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            <div class="mt-1 flex items-center gap-2">
+              <a href="#" id="btn_wa_ref_1" data-idx="1" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white btn-wa-ref opacity-50 pointer-events-none" onclick="return enviarWaRef(1);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+              <span id="label_link_ref_1" class="hidden text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span>
             </div>
           </div>
         </div>
@@ -131,8 +133,9 @@
           <div>
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_3">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
-            <div class="mt-1">
-              <a href="#" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" onclick="return enviarWaRef(2);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+            <div class="mt-1 flex items-center gap-2">
+              <a href="#" id="btn_wa_ref_2" data-idx="2" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white btn-wa-ref opacity-50 pointer-events-none" onclick="return enviarWaRef(2);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
+              <span id="label_link_ref_2" class="hidden text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span>
             </div>
           </div>
         </div>
@@ -301,18 +304,81 @@
     });
     document.addEventListener('click', function(e){ if (!results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
   })();
+  (function(){
+    var nomeEl = document.getElementById('nome');
+    var cpfEl = document.getElementById('cpf');
+    var nascEl = document.getElementById('data_nascimento');
+    function getRefVals(){
+      var nomes = Array.from(document.getElementsByName('ref_nome[]')).map(function(el){ return (el.value||'').trim(); });
+      var rels = Array.from(document.getElementsByName('ref_relacao[]')).map(function(el){ return (el.value||'').trim(); });
+      var tels = Array.from(document.getElementsByName('ref_telefone[]')).map(function(el){ return (el.value||'').trim(); });
+      return { nomes:nomes, rels:rels, tels:tels };
+    }
+    var ajaxTimer = null;
+    function maybeAjaxDraft(){
+      clearTimeout(ajaxTimer);
+      ajaxTimer = setTimeout(function(){
+        var nome = (nomeEl && nomeEl.value||'').trim();
+        var cpf = (cpfEl && cpfEl.value||'').trim();
+        var nasc = (nascEl && nascEl.value||'').trim();
+        var rv = getRefVals();
+        var anyRef = rv.nomes.some(Boolean) || rv.rels.some(Boolean) || rv.tels.some(Boolean);
+        if (!nome || !cpf || !nasc || !anyRef) { return; }
+        var params = new URLSearchParams();
+        params.append('nome', nome);
+        params.append('cpf', cpf);
+        params.append('data_nascimento', nasc);
+        rv.nomes.forEach(function(v){ params.append('ref_nome[]', v); });
+        rv.rels.forEach(function(v){ params.append('ref_relacao[]', v); });
+        rv.tels.forEach(function(v){ params.append('ref_telefone[]', v); });
+        fetch('/api/clientes/draft-links', { method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() })
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if (!d || d.error) return; window.__createdId = d.client_id; window.__refTokens = d.tokens||[]; try{ updateWaButtons(); }catch(e){} })
+          .catch(function(){});
+      }, 500);
+    }
+    ['input','change','blur'].forEach(function(evt){ if (nomeEl) nomeEl.addEventListener(evt, maybeAjaxDraft); if (cpfEl) cpfEl.addEventListener(evt, maybeAjaxDraft); if (nascEl) nascEl.addEventListener(evt, maybeAjaxDraft); });
+    Array.from(document.getElementsByName('ref_nome[]')).forEach(function(el){ ['input','change','blur'].forEach(function(evt){ el.addEventListener(evt, maybeAjaxDraft); }); });
+    Array.from(document.getElementsByName('ref_relacao[]')).forEach(function(el){ ['input','change','blur'].forEach(function(evt){ el.addEventListener(evt, maybeAjaxDraft); }); });
+    Array.from(document.getElementsByName('ref_telefone[]')).forEach(function(el){ ['input','change','blur'].forEach(function(evt){ el.addEventListener(evt, maybeAjaxDraft); }); });
+  })();
   function enviarWaRef(idx){
     var nomeCli = document.getElementById('nome') ? document.getElementById('nome').value.trim() : '';
     var nomeRef = document.getElementsByName('ref_nome[]')[idx]?.value.trim() || '';
     var telRef = document.getElementsByName('ref_telefone[]')[idx]?.value.trim() || '';
     var digits = (telRef||'').replace(/\D/g,'');
     if (digits && digits.length>=10 && digits.length<=11 && digits.substring(0,2)!=='55') { digits = '55'+digits; }
-    var msg = 'Olá '+(nomeRef||'')+', o '+(nomeCli||'')+' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Atenciosamente, ACM Crédito.';
+    var nomeRefUp = (nomeRef||'').toUpperCase();
+    var nomeCliUp = (nomeCli||'').toUpperCase();
+    var rel = document.getElementsByName('ref_relacao[]')[idx]?.value.trim() || '';
+    var relTxt = rel ? (' (relacionamento: '+rel+')') : '';
+    var link = '';
+    if (window.__createdId && window.__refTokens && window.__refTokens[idx]) {
+      var token = window.__refTokens[idx];
+      link = (window.location.origin || (window.location.protocol+'//'+window.location.host)) + '/referencia/' + window.__createdId + '/' + idx + '/' + token;
+    }
+    if (!link) { return false; }
+    var msg = 'Olá ' + nomeRefUp + relTxt + ', ' + nomeCliUp + ' indicou você como referência. É rapidinho: você conhece e recomenda essa pessoa? ' + (link ? ('Acesse: ' + link + '. ') : '') + 'Sua resposta é confidencial. Obrigado! ACM Crédito.';
     var url = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
     if (!digits) return false;
     window.open(url, '_blank');
     return false;
   }
+  (function(){
+    function updateWaButtons(){
+      var btns = document.querySelectorAll('.btn-wa-ref');
+      btns.forEach(function(btn){
+        var idx = parseInt(btn.getAttribute('data-idx')||'-1',10);
+        var hasLink = !!(window.__createdId && window.__refTokens && window.__refTokens[idx]);
+        if (hasLink) { btn.classList.remove('opacity-50','pointer-events-none'); }
+        else { btn.classList.add('opacity-50','pointer-events-none'); }
+        var lab = document.getElementById('label_link_ref_'+idx);
+        if (lab) { if (hasLink) { lab.classList.remove('hidden'); } else { lab.classList.add('hidden'); } }
+      });
+    }
+    updateWaButtons();
+    window.addEventListener('load', updateWaButtons);
+  })();
 </script>
 <?php if (!empty($showSuccessModal) && !empty($createdId)): ?>
 <div id="novo_cli_modal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
@@ -330,6 +396,11 @@
       var m=document.getElementById('novo_cli_modal');
       var c=document.getElementById('novo_cli_modal_close');
       if (c && m) { c.addEventListener('click', function(){ m.parentNode.removeChild(m); }); }
+      window.__createdId = <?php echo (int)$createdId; ?>;
+      try {
+        var refs = <?php echo json_encode(array_map(function($r){ return (string)($r['token'] ?? ''); }, $createdRefs ?? []), JSON_UNESCAPED_UNICODE); ?>;
+        window.__refTokens = refs;
+      } catch(e){ window.__refTokens = []; }
     })();
   </script>
 </div>

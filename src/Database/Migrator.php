@@ -66,18 +66,20 @@ class Migrator {
       if (!$colDb) { $pdo->exec("ALTER TABLE loans ADD COLUMN data_base DATE NULL"); }
     } catch (\Throwable $e) {}
     $cols = $pdo->query("SHOW COLUMNS FROM clients")->fetchAll();
-    $haveIndicador = false; $haveReferencias = false; $haveCriterios = false; $haveCadastroPublico = false;
+    $haveIndicador = false; $haveReferencias = false; $haveCriterios = false; $haveCadastroPublico = false; $haveDraft = false;
     foreach ($cols as $col) {
       $f = ($col['Field'] ?? '');
       if ($f === 'indicado_por_id') { $haveIndicador = true; }
       if ($f === 'referencias') { $haveReferencias = true; }
       if ($f === 'criterios_status') { $haveCriterios = true; }
       if ($f === 'cadastro_publico') { $haveCadastroPublico = true; }
+      if ($f === 'is_draft') { $haveDraft = true; }
     }
     if (!$haveIndicador) { $pdo->exec("ALTER TABLE clients ADD COLUMN indicado_por_id INT NULL, ADD INDEX idx_indicado (indicado_por_id)"); }
     if (!$haveReferencias) { $pdo->exec("ALTER TABLE clients ADD COLUMN referencias JSON NULL"); }
     if (!$haveCriterios) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); }
     if (!$haveCadastroPublico) { $pdo->exec("ALTER TABLE clients ADD COLUMN cadastro_publico BOOLEAN DEFAULT 0"); }
+    if (!$haveDraft) { $pdo->exec("ALTER TABLE clients ADD COLUMN is_draft BOOLEAN DEFAULT 0"); }
     $usersCount = $pdo->query("SELECT COUNT(*) AS c FROM users")->fetch();
     if ((int)($usersCount['c'] ?? 0) === 0) {
       $ins = $pdo->prepare('INSERT INTO users (username, password, nome) VALUES (:u, :p, :n)');

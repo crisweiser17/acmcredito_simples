@@ -77,6 +77,7 @@
       </div>
     </div>
   </div>
+  <div class="border-t border-gray-200 my-6"></div>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <div class="text-lg font-semibold">Consulta CPF</div>
@@ -103,6 +104,9 @@
           <input type="hidden" name="action" value="consultar_cpf_api">
           <button class="btn-primary px-4 py-2 rounded" type="submit">Consultar CPF na Receita Federal</button>
         </form>
+        <?php $lastAtRaw = $cpf_last['checked_at'] ?? null; $lastAtFmt = $lastAtRaw ? date('d/m/Y H:i', strtotime($lastAtRaw)) : null; $isOld = false; if ($lastAtRaw) { $isOld = (time() - strtotime($lastAtRaw)) > (30*24*60*60); } ?>
+        <?php if ($lastAtFmt): ?><span class="text-sm text-gray-600">Última consulta: <?php echo htmlspecialchars($lastAtFmt); ?></span><?php endif; ?>
+        <?php if ($isOld): ?><span class="text-sm text-red-600">Sugestão: realizar nova consulta</span><?php endif; ?>
         <span id="cpf-consulta-status" class="text-sm text-gray-400"></span>
       </div>
     </div>
@@ -118,21 +122,21 @@
         <?php $cpfJson = null; if (isset($json['cpf'])) { $cpfJson = is_array($json['cpf']) ? ($json['cpf']['numero'] ?? ($json['cpf']['cpf'] ?? null)) : $json['cpf']; } if ($cpfJson === null) { $cpfJson = $json['dados']['cpf'] ?? ($json['cpf_numero'] ?? null); } ?>
         <?php $nomeCliCmp = preg_replace('/\s+/',' ', mb_strtoupper(trim((string)($c['nome'] ?? '')))); $nomeJsonCmp = preg_replace('/\s+/',' ', mb_strtoupper(trim((string)($nome ?? '')))); $matchNome = ($nomeCliCmp !== '' && $nomeJsonCmp !== '' && $nomeCliCmp === $nomeJsonCmp); ?>
         <?php $cpfCliDigits = preg_replace('/\D/','', (string)($c['cpf'] ?? '')); $cpfJsonDigits = preg_replace('/\D/','', (string)($cpfJson ?? '')); $matchCpf = ($cpfCliDigits !== '' && $cpfJsonDigits !== '' && $cpfCliDigits === $cpfJsonDigits); ?>
-        <?php $normCliNasc = !empty($c['data_nascimento']) ? date('Y-m-d', strtotime($c['data_nascimento'])) : null; $normJsonNasc = !empty($nasc) ? date('Y-m-d', strtotime($nasc)) : null; $matchNasc = ($normCliNasc && $normJsonNasc && $normCliNasc === $normJsonNasc); ?>
+        <?php $rawCliNasc = (string)($c['data_nascimento'] ?? ''); $rawJsonNasc = (string)($nasc ?? ''); $normCliNasc = null; $normJsonNasc = null; if ($rawCliNasc !== '') { if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $rawCliNasc)) { $dt = DateTime::createFromFormat('d/m/Y', $rawCliNasc); $normCliNasc = $dt ? $dt->format('Y-m-d') : null; } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $rawCliNasc)) { $dt = DateTime::createFromFormat('Y-m-d', $rawCliNasc); $normCliNasc = $dt ? $dt->format('Y-m-d') : null; } else { $t = strtotime($rawCliNasc); $normCliNasc = $t ? date('Y-m-d', $t) : null; } } if ($rawJsonNasc !== '') { if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $rawJsonNasc)) { $dt = DateTime::createFromFormat('d/m/Y', $rawJsonNasc); $normJsonNasc = $dt ? $dt->format('Y-m-d') : null; } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $rawJsonNasc)) { $dt = DateTime::createFromFormat('Y-m-d', $rawJsonNasc); $normJsonNasc = $dt ? $dt->format('Y-m-d') : null; } else { $t = strtotime($rawJsonNasc); $normJsonNasc = $t ? date('Y-m-d', $t) : null; } } $matchNasc = ($normCliNasc && $normJsonNasc && $normCliNasc === $normJsonNasc); ?>
         <div class="grid md:grid-cols-2 gap-4 text-sm">
           <div class="bg-gray-100 rounded p-3 text-black">
             <div>
               <span class="text-gray-400">Nome:</span> <?php echo htmlspecialchars($nome ?? '-'); ?>
-              <?php if (!empty($nome)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchNome ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchNome ? 'ok' : 'divergencia'; ?></span><?php endif; ?>
+              <?php if (!empty($nome)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchNome ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchNome ? 'corresponde ao informado' : 'divergencia'; ?></span><?php endif; ?>
             </div>
             <div>
               <span class="text-gray-400">CPF:</span> <?php echo htmlspecialchars($cpfJson ?? '-'); ?>
-              <?php if (!empty($cpfJson)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchCpf ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchCpf ? 'ok' : 'divergencia'; ?></span><?php endif; ?>
+              <?php if (!empty($cpfJson)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchCpf ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchCpf ? 'corresponde ao informado' : 'divergencia'; ?></span><?php endif; ?>
             </div>
             <div><span class="text-gray-400">Situação:</span> <?php echo htmlspecialchars($sit ?? '-'); ?></div>
             <div>
               <span class="text-gray-400">Data Nascimento:</span> <?php echo htmlspecialchars($nasc ?? '-'); ?>
-              <?php if (!empty($nasc)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchNasc ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchNasc ? 'ok' : 'divergencia'; ?></span><?php endif; ?>
+              <?php if (!empty($nasc)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded <?php echo $matchNasc ? 'bg-green-600 text-white' : 'bg-red-600 text-white'; ?>"><?php echo $matchNasc ? 'corresponde ao informado' : 'divergencia'; ?></span><?php endif; ?>
             </div>
             <div><span class="text-gray-400">Data Inscrição:</span> <?php echo htmlspecialchars($insc ?? '-'); ?></div>
             <div class="<?php echo !empty($obito) ? 'text-red-600' : ''; ?>"><span class="text-gray-400">Situação Óbito (Ano):</span> <?php echo htmlspecialchars($obito ?? '-'); ?></div>
@@ -169,6 +173,7 @@
       </div>
     </div>
   </div>
+  <div class="border-t border-gray-200 my-6"></div>
   <div class="space-y-4">
     <?php $critStatus = trim((string)($c['criterios_status'] ?? 'pendente')); ?>
     <div class="flex items-center justify-between">
@@ -215,11 +220,16 @@
       </div>
     </div>
   </div>
+  <div class="border-t border-gray-200 my-6"></div>
   <?php $refs = json_decode($c['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = []; ?>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <div class="text-lg font-semibold">Referências</div>
-      <span class="text-sm text-gray-600"><?php echo count($refs)>0 ? (count($refs).' cadastradas') : 'Nenhuma referência cadastrada'; ?></span>
+      <?php
+        $cntA=0; $cntR=0; $cntP=0;
+        foreach ($refs as $r) { $pu = is_array($r['public'] ?? null) ? $r['public'] : []; $st = (string)($pu['status'] ?? 'pendente'); if ($st==='aprovado') $cntA++; elseif ($st==='reprovado') $cntR++; else $cntP++; }
+      ?>
+      <span class="text-sm text-gray-600"><?php echo count($refs)>0 ? (count($refs).' cadastradas • '.$cntA.' aprovadas • '.$cntR.' reprovadas • '.$cntP.' pendentes') : 'Nenhuma referência cadastrada'; ?></span>
     </div>
     <div class="text-xs text-gray-600">Status: Pendente, Aprovado, Reprovado. Origem: Operador (manual) ou Link público (referência).</div>
     <?php if (count($refs) > 0): ?>
@@ -234,7 +244,10 @@
             $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
             $publicLink = $scheme . $host . '/referencia/' . (int)$c['id'] . '/' . (int)$i . '/' . $token;
-            $msg = 'Olá ' . $nomeRef . ', o ' . ($c['nome'] ?? '') . ' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Para responder, acesse: ' . $publicLink . ' . Atenciosamente, ACM Crédito.';
+            $nomeRefUp = mb_strtoupper($nomeRef);
+            $cliNomeUp = mb_strtoupper((string)($c['nome'] ?? ''));
+            $relTxt = $rel !== '' ? (' (relacionamento: ' . $rel . ')') : '';
+            $msg = 'Olá ' . $nomeRefUp . $relTxt . ', ' . $cliNomeUp . ' indicou você como referência. É rapidinho: você conhece e recomenda essa pessoa? Acesse: ' . $publicLink . '. Sua resposta é confidencial. Obrigado! ACM Crédito.';
             $wa = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($msg);
             $op = is_array($r['operador'] ?? null) ? $r['operador'] : [];
             $pu = is_array($r['public'] ?? null) ? $r['public'] : [];
@@ -246,16 +259,20 @@
           <div class="flex items-center gap-3 border rounded p-2">
             <div class="flex-1">
               <div class="font-medium"><?php echo htmlspecialchars($nomeRef); ?></div>
-              <div class="text-sm text-gray-600"><?php echo htmlspecialchars($rel); ?><?php echo $rel? ' • ' : ''; ?><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></div>
+              <div class="text-sm text-gray-600"><?php echo htmlspecialchars($rel); ?><?php echo $rel? ' • ' : ''; ?><?php echo htmlspecialchars($r['telefone'] ?? ''); ?><?php if (!empty($token)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span><?php endif; ?></div>
               <div class="flex items-center gap-3 mt-0.5">
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-gray-600">Operador:</span>
+                  <span class="text-xs font-semibold text-gray-800"><?php echo htmlspecialchars($nomeRef); ?></span>
                   <span class="text-xs px-2 py-0.5 rounded <?php echo $opClass; ?>"><?php echo htmlspecialchars($opStatus); ?></span>
+                  <?php if ($opStatus==='pendente'): ?><i class="fa fa-clock text-gray-500" aria-hidden="true"></i><?php endif; ?>
                   <?php if (!empty($op['checked_at'])): ?><span class="text-xs text-gray-500">• <?php echo date('d/m/Y H:i', strtotime($op['checked_at'])); ?></span><?php endif; ?>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-gray-600">Referência:</span>
+                  <span class="text-xs font-semibold text-gray-800"><?php echo htmlspecialchars($nomeRef); ?></span>
                   <span class="text-xs px-2 py-0.5 rounded <?php echo $puClass; ?>"><?php echo htmlspecialchars($puStatus); ?></span>
+                  <?php if ($puStatus==='pendente'): ?><i class="fa fa-clock text-gray-500" aria-hidden="true"></i><?php endif; ?>
                   <?php if (!empty($pu['checked_at'])): ?><span class="text-xs text-gray-500">• <?php echo date('d/m/Y H:i', strtotime($pu['checked_at'])); ?></span><?php endif; ?>
                 </div>
               </div>
@@ -278,19 +295,19 @@
       </div>
     <?php endif; ?>
   </div>
-  <div class="border rounded p-4">
-    <div class="font-semibold mb-2">Checklist</div>
-    <div class="flex gap-4 items-center">
-      <div class="flex items-center gap-2">
-        <span class="inline-block w-3 h-3 rounded-full <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
+  <div class="border rounded p-4 bg-gray-900 text-white">
+    <div class="font-semibold mb-3">Checklist Obrigatorio de Aprovação</div>
+    <div class="flex gap-6 items-center text-base">
+      <div class="flex items-center gap-3">
+        <span class="inline-block w-4 h-4 rounded-full <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
         <span>Prova de Vida</span>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="inline-block w-3 h-3 rounded-full <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
+      <div class="flex items-center gap-3">
+        <span class="inline-block w-4 h-4 rounded-full <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
         <span>Consulta CPF</span>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="inline-block w-3 h-3 rounded-full <?php echo ($critStatus==='aprovado')?'bg-green-600':'bg-gray-400'; ?>"></span>
+      <div class="flex items-center gap-3">
+        <span class="inline-block w-4 h-4 rounded-full <?php echo ($critStatus==='aprovado')?'bg-green-600':'bg-gray-400'; ?>"></span>
         <span>Criterios de Emprestimo</span>
       </div>
     </div>

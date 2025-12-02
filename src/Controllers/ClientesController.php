@@ -56,45 +56,72 @@ class ClientesController {
       }
       $pdo = Connection::get();
       $cpfNorm = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
-      $dup = $pdo->prepare("SELECT COUNT(*) AS c FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf");
-      $dup->execute(['cpf'=>$cpfNorm]);
-      if (((int)($dup->fetch()['c'] ?? 0)) > 0) {
+      $dupRow = null; $dupStmt = $pdo->prepare("SELECT * FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf"); $dupStmt->execute(['cpf'=>$cpfNorm]); $dupRow = $dupStmt->fetch();
+      if ($dupRow && (int)($dupRow['is_draft'] ?? 0) === 0) {
         $error = 'CPF já cadastrado.';
         $title = 'Novo Cliente';
         $content = __DIR__ . '/../Views/clientes_novo.php';
         include __DIR__ . '/../Views/layout.php';
         return;
       }
-      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, cadastro_publico) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:cadastro_publico)');
-      $stmt->execute([
-        'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
-        'cpf' => $cpfNorm,
-        'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
-        'email' => trim($_POST['email'] ?? ''),
-        'telefone' => trim($_POST['telefone'] ?? ''),
-        'cep' => trim($_POST['cep'] ?? ''),
-        'endereco' => trim($_POST['endereco'] ?? ''),
-        'numero' => trim($_POST['numero'] ?? ''),
-        'complemento' => trim($_POST['complemento'] ?? ''),
-        'bairro' => trim($_POST['bairro'] ?? ''),
-        'cidade' => trim($_POST['cidade'] ?? ''),
-        'estado' => trim($_POST['estado'] ?? ''),
-        'ocupacao' => trim($_POST['ocupacao'] ?? ''),
-        'tempo_trabalho' => trim($_POST['tempo_trabalho'] ?? ''),
-        'renda_mensal' => self::parseRenda($_POST['renda_mensal'] ?? '0'), 
-        'cnh_arquivo_unico' => isset($_POST['cnh_arquivo_unico']) ? 1 : 0,
-        'observacoes' => trim($_POST['observacoes'] ?? '')
-      ]);
-      $clientId = (int)$pdo->lastInsertId();
+      if ($dupRow && (int)($dupRow['is_draft'] ?? 0) === 1) {
+        $clientId = (int)$dupRow['id'];
+        $pdo->prepare('UPDATE clients SET is_draft=0, nome=:nome, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, cnh_arquivo_unico=:cnh_arquivo_unico, observacoes=:observacoes WHERE id=:id')
+            ->execute([
+              'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
+              'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
+              'email' => trim($_POST['email'] ?? ''),
+              'telefone' => trim($_POST['telefone'] ?? ''),
+              'cep' => trim($_POST['cep'] ?? ''),
+              'endereco' => trim($_POST['endereco'] ?? ''),
+              'numero' => trim($_POST['numero'] ?? ''),
+              'complemento' => trim($_POST['complemento'] ?? ''),
+              'bairro' => trim($_POST['bairro'] ?? ''),
+              'cidade' => trim($_POST['cidade'] ?? ''),
+              'estado' => trim($_POST['estado'] ?? ''),
+              'ocupacao' => trim($_POST['ocupacao'] ?? ''),
+              'tempo_trabalho' => trim($_POST['tempo_trabalho'] ?? ''),
+              'renda_mensal' => self::parseRenda($_POST['renda_mensal'] ?? '0'),
+              'cnh_arquivo_unico' => isset($_POST['cnh_arquivo_unico']) ? 1 : 0,
+              'observacoes' => trim($_POST['observacoes'] ?? ''),
+              'id' => $clientId
+            ]);
+      } else {
+        $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, cadastro_publico) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:cadastro_publico)');
+        $stmt->execute([
+          'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
+          'cpf' => $cpfNorm,
+          'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
+          'email' => trim($_POST['email'] ?? ''),
+          'telefone' => trim($_POST['telefone'] ?? ''),
+          'cep' => trim($_POST['cep'] ?? ''),
+          'endereco' => trim($_POST['endereco'] ?? ''),
+          'numero' => trim($_POST['numero'] ?? ''),
+          'complemento' => trim($_POST['complemento'] ?? ''),
+          'bairro' => trim($_POST['bairro'] ?? ''),
+          'cidade' => trim($_POST['cidade'] ?? ''),
+          'estado' => trim($_POST['estado'] ?? ''),
+          'ocupacao' => trim($_POST['ocupacao'] ?? ''),
+          'tempo_trabalho' => trim($_POST['tempo_trabalho'] ?? ''),
+          'renda_mensal' => self::parseRenda($_POST['renda_mensal'] ?? '0'), 
+          'cnh_arquivo_unico' => isset($_POST['cnh_arquivo_unico']) ? 1 : 0,
+          'observacoes' => trim($_POST['observacoes'] ?? '')
+        ]);
+        $clientId = (int)$pdo->lastInsertId();
+      }
       $indicado = (int)($_POST['indicado_por_id'] ?? 0);
       $refN = $_POST['ref_nome'] ?? [];
+      $refR = $_POST['ref_relacao'] ?? [];
       $refT = $_POST['ref_telefone'] ?? [];
       $refs = [];
       for ($i=0; $i<3; $i++) {
         $n = trim((string)($refN[$i] ?? ''));
+        $rel = trim((string)($refR[$i] ?? ''));
         $t = trim((string)($refT[$i] ?? ''));
-        if ($n !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'telefone'=>$t]; }
+        $nUp = (function($x){ $x = trim((string)$x); if ($x==='') return $x; return function_exists('mb_strtoupper') ? mb_strtoupper($x,'UTF-8') : strtoupper($x); })($n);
+        if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t]; }
       }
+      for ($i=0; $i<count($refs); $i++) { $tok = (string)($refs[$i]['token'] ?? ''); if (!preg_match('/^[a-f0-9]{64}$/', $tok)) { $refs[$i]['token'] = bin2hex(random_bytes(32)); } }
       try {
         $hasInd = $pdo->query("SHOW COLUMNS FROM clients LIKE 'indicado_por_id'")->fetch();
         $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch();
@@ -133,6 +160,7 @@ class ClientesController {
       }
       Audit::log('create', 'clients', $clientId, 'Cliente criado');
       $createdId = $clientId;
+      $createdRefs = $refs;
       $showSuccessModal = true;
       $title = 'Novo Cliente';
       $content = __DIR__ . '/../Views/clientes_novo.php';
@@ -203,7 +231,9 @@ class ClientesController {
       $refR = $_POST['ref_relacao'] ?? [];
       $refT = $_POST['ref_telefone'] ?? [];
       $refs = [];
-      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $rel = trim((string)($refR[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'relacao'=>$rel, 'telefone'=>$t]; } }
+      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $rel = trim((string)($refR[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); $nUp = (function($x){ $x = trim((string)$x); if ($x==='') return $x; return function_exists('mb_strtoupper') ? mb_strtoupper($x,'UTF-8') : strtoupper($x); })($n); if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t]; } }
+      for ($i=0; $i<count($refs); $i++) { $tok = (string)($refs[$i]['token'] ?? ''); if (!preg_match('/^[a-f0-9]{64}$/', $tok)) { $refs[$i]['token'] = bin2hex(random_bytes(32)); } }
+      for ($i=0; $i<count($refs); $i++) { $tok = (string)($refs[$i]['token'] ?? ''); if (!preg_match('/^[a-f0-9]{64}$/', $tok)) { $refs[$i]['token'] = bin2hex(random_bytes(32)); } }
       try { $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch(); if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]); } } catch (\Throwable $e) {}
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
@@ -302,6 +332,11 @@ class ClientesController {
     $refs = json_decode($client['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = [];
     $changedRefs = false;
     for ($i=0; $i<count($refs); $i++) {
+      if (!empty($refs[$i]['nome'])) {
+        $orig = (string)$refs[$i]['nome'];
+        $upper = function_exists('mb_strtoupper') ? mb_strtoupper($orig,'UTF-8') : strtoupper($orig);
+        if ($upper !== $orig) { $refs[$i]['nome'] = $upper; $changedRefs = true; }
+      }
       if (!isset($refs[$i]['public']) || !is_array($refs[$i]['public'])) { $refs[$i]['public'] = ['status'=>'pendente']; $changedRefs = true; }
       if (!isset($refs[$i]['operador']) || !is_array($refs[$i]['operador'])) { $refs[$i]['operador'] = ['status'=>'pendente']; $changedRefs = true; }
       if (!isset($refs[$i]['token']) || !preg_match('/^[a-f0-9]{12,64}$/', (string)($refs[$i]['token'] ?? ''))) { $refs[$i]['token'] = bin2hex(random_bytes(6)); $changedRefs = true; }
@@ -549,7 +584,7 @@ class ClientesController {
       $refR = $_POST['ref_relacao'] ?? [];
       $refT = $_POST['ref_telefone'] ?? [];
       $refs = [];
-      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $rel = trim((string)($refR[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$n, 'relacao'=>$rel, 'telefone'=>$t]; } }
+      for ($i=0; $i<3; $i++) { $n = trim((string)($refN[$i] ?? '')); $rel = trim((string)($refR[$i] ?? '')); $t = trim((string)($refT[$i] ?? '')); $nUp = (function($x){ $x = trim((string)$x); if ($x==='') return $x; return function_exists('mb_strtoupper') ? mb_strtoupper($x,'UTF-8') : strtoupper($x); })($n); if ($n !== '' || $rel !== '' || $t !== '') { $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t]; } }
       try {
         $hasInd = $pdo->query("SHOW COLUMNS FROM clients LIKE 'indicado_por_id'")->fetch();
         $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch();
@@ -640,5 +675,42 @@ class ClientesController {
     $row = $stmt->fetch();
     header('Content-Type: application/json');
     echo json_encode($row ?: null);
+  }
+  public static function gerarLinksDraft(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo 'Método não permitido'; return; }
+    $pdo = Connection::get();
+    $nome = trim($_POST['nome'] ?? '');
+    $cpf = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
+    $nasc = trim($_POST['data_nascimento'] ?? '');
+    $refN = $_POST['ref_nome'] ?? [];
+    $refR = $_POST['ref_relacao'] ?? [];
+    $refT = $_POST['ref_telefone'] ?? [];
+    if ($nome === '' || $cpf === '' || $nasc === '') { http_response_code(400); echo json_encode(['error'=>'Campos obrigatórios: nome, cpf, data_nascimento']); return; }
+    $exists = $pdo->prepare("SELECT * FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf");
+    $exists->execute(['cpf'=>$cpf]);
+    $cli = $exists->fetch();
+    if ($cli && (int)($cli['is_draft'] ?? 0) === 0) { http_response_code(409); echo json_encode(['error'=>'CPF já cadastrado']); return; }
+    $clientId = (int)($cli['id'] ?? 0);
+    if ($clientId === 0) {
+      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, is_draft, prova_vida_status, cpf_check_status) VALUES (:nome,:cpf,:data_nascimento,1,\'pendente\',\'pendente\')');
+      $stmt->execute(['nome'=> (function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome), 'cpf'=>$cpf, 'data_nascimento'=>$nasc]);
+      $clientId = (int)$pdo->lastInsertId();
+    }
+    $refs = [];
+    for ($i=0; $i<3; $i++) {
+      $n = trim((string)($refN[$i] ?? ''));
+      $rel = trim((string)($refR[$i] ?? ''));
+      $t = trim((string)($refT[$i] ?? ''));
+      if ($n === '' && $rel === '' && $t === '') { $refs[] = ['nome'=>'','relacao'=>'','telefone'=>'','token'=>null]; continue; }
+      $nUp = (function($x){ $x = trim((string)$x); if ($x==='') return $x; return function_exists('mb_strtoupper') ? mb_strtoupper($x,'UTF-8') : strtoupper($x); })($n);
+      $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t, 'token'=>bin2hex(random_bytes(32))];
+    }
+    $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs), 'id'=>$clientId]);
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
+    $links = [];
+    for ($i=0; $i<3; $i++) { $tok = (string)($refs[$i]['token'] ?? ''); $links[$i] = $tok ? ($scheme . $host . '/referencia/' . $clientId . '/' . $i . '/' . $tok) : null; }
+    header('Content-Type: application/json');
+    echo json_encode(['client_id'=>$clientId, 'tokens'=>array_map(function($r){ return $r['token'] ?? null; }, $refs), 'links'=>$links]);
   }
 }

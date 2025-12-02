@@ -123,6 +123,10 @@ class Router {
       \App\Controllers\ClientesController::buscar();
       return;
     }
+    if ($path === '/api/clientes/draft-links') {
+      \App\Controllers\ClientesController::gerarLinksDraft();
+      return;
+    }
     if (preg_match('#^/api/clientes/(\d+)$#', $path, $m)) {
       \App\Controllers\ClientesController::buscarPorId((int)$m[1]);
       return;
