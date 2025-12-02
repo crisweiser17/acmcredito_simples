@@ -65,9 +65,9 @@ class ClientesController {
         include __DIR__ . '/../Views/layout.php';
         return;
       }
-      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
+      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, cadastro_publico) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:cadastro_publico)');
       $stmt->execute([
-        'nome' => (function($n){ $n = trim((string)$n); if (function_exists('mb_convert_case')) { return mb_convert_case($n, MB_CASE_TITLE, 'UTF-8'); } return ucwords(strtolower($n)); })(($_POST['nome'] ?? '')),
+        'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
         'cpf' => $cpfNorm,
         'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
         'email' => trim($_POST['email'] ?? ''),
@@ -194,9 +194,9 @@ class ClientesController {
       }
       $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes)');
       $stmt->execute([
-        'nome'=>(function($n){ $n = trim((string)$n); if (function_exists('mb_convert_case')) { return mb_convert_case($n, MB_CASE_TITLE, 'UTF-8'); } return ucwords(strtolower($n)); })($nome), 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
+        'nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })($nome), 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
         'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
-        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda, 'cnh_arquivo_unico' => $cnhUnico ? 1 : 0, 'observacoes' => $observacoes
+        'ocupacao'=>$ocupacao, 'tempo_trabalho'=>$tempo, 'renda_mensal'=>$renda, 'cnh_arquivo_unico' => $cnhUnico ? 1 : 0, 'observacoes' => $observacoes, 'cadastro_publico' => 1
       ]);
       $clientId = (int)$pdo->lastInsertId();
       $refN = $_POST['ref_nome'] ?? [];
@@ -471,7 +471,7 @@ class ClientesController {
       }
       $sql = 'UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, observacoes=:observacoes WHERE id=:id';
       $pdo->prepare($sql)->execute([
-        'nome' => trim($_POST['nome'] ?? ''),
+        'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })(($_POST['nome'] ?? '')),
         'cpf' => $cpfNorm,
         'data_nascimento' => trim($_POST['data_nascimento'] ?? ''),
         'email' => trim($_POST['email'] ?? ''),

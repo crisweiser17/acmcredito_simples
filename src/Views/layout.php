@@ -22,8 +22,23 @@ $saved = isset($_GET['saved']);
       <?php include $content; ?>
     </main>
   <?php elseif ($isLogged): ?>
+    <div class="md:hidden flex items-center justify-between bg-gray-900 text-white p-4">
+      <button type="button" id="btn_mobile_menu" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-gray-800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+        <span>Menu</span>
+      </button>
+      <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
+      <div class="text-sm font-semibold truncate"><?php echo htmlspecialchars($empresaRazao); ?></div>
+    </div>
+    <div id="mobile_overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden z-40 md:hidden"></div>
     <div class="flex">
-      <aside class="w-64 bg-gray-900 text-white min-h-screen">
+      <aside id="sidebar" class="w-64 bg-gray-900 text-white md:min-h-screen md:relative fixed inset-y-0 left-0 z-50 hidden md:block">
+      <div class="md:hidden flex items-center justify-end p-2 border-b border-gray-800">
+        <button type="button" id="btn_mobile_close" class="inline-flex items-center gap-1 px-3 py-2 rounded bg-gray-800">
+          <i class="fa fa-times" aria-hidden="true"></i>
+          <span>Fechar</span>
+        </button>
+      </div>
       <div class="p-4">
         <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
         <h1 class="text-xl font-bold"><?php echo htmlspecialchars($empresaRazao); ?></h1>
@@ -67,10 +82,11 @@ $saved = isset($_GET['saved']);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
           <div id="menu-relatorios" class="<?php echo strpos($path,'/relatorios')===0?'block':'hidden'; ?>">
+            <a href="/relatorios/aguardando-financiamento" class="block px-6 py-2 hover:bg-gray-800">Aguardando Financiamento</a>
+            <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
             <?php if (isset($_SESSION['user_id'])): ?>
               <a href="/relatorios/financeiro" class="block px-6 py-2 hover:bg-gray-800">Financeiro</a>
             <?php endif; ?>
-            <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
             <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
             <a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a>
             <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
@@ -107,7 +123,7 @@ $saved = isset($_GET['saved']);
         <?php endif; ?>
       </nav>
     </aside>
-    <main class="flex-1 p-8 bg-white text-black">
+      <main class="flex-1 p-8 bg-white text-black">
       <?php if ($saved): ?>
         <div class="mb-4 rounded border border-blue-200 bg-blue-50 text-blue-700 px-4 py-3">Configurações salvas</div>
       <?php endif; ?>
@@ -151,5 +167,17 @@ $saved = isset($_GET['saved']);
       if (chev) { chev.style.transform = expanded?'rotate(0deg)':'rotate(90deg)'; }
     });
   });
+  (function(){
+    var btn = document.getElementById('btn_mobile_menu');
+    var aside = document.getElementById('sidebar');
+    var overlay = document.getElementById('mobile_overlay');
+    var btnClose = document.getElementById('btn_mobile_close');
+    function open(){ if(aside){ aside.classList.remove('hidden'); } if(overlay){ overlay.classList.remove('hidden'); } }
+    function close(){ if(aside){ aside.classList.add('hidden'); } if(overlay){ overlay.classList.add('hidden'); } }
+    if (btn && aside) { btn.addEventListener('click', function(){ var isHidden = aside.classList.contains('hidden'); if (isHidden) { open(); } else { close(); } }); }
+    if (btnClose) { btnClose.addEventListener('click', close); }
+    if (overlay) { overlay.addEventListener('click', close); }
+    window.addEventListener('resize', function(){ if (window.innerWidth >= 768) { if(aside){ aside.classList.remove('hidden'); } if(overlay){ overlay.classList.add('hidden'); } } else { if(aside){ aside.classList.add('hidden'); } } });
+  })();
 </script>
 </html>

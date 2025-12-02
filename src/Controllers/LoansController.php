@@ -148,8 +148,13 @@ class LoansController {
         $novo = trim($_POST['status'] ?? 'aguardando_assinatura');
         $permitidos = ['aguardando_assinatura','cancelado'];
         if (in_array($novo, $permitidos, true)) {
-          $pdo->prepare('UPDATE loans SET status = :s, contrato_token = NULL WHERE id = :id')->execute(['s'=>$novo,'id'=>$id]);
-          Audit::log('update_status','loans',$id,'invalidate_link_and_set_'.$novo);
+          if ($novo === 'cancelado') {
+            $pdo->prepare('UPDATE loans SET status = :s, contrato_token = NULL WHERE id = :id')->execute(['s'=>$novo,'id'=>$id]);
+            Audit::log('update_status','loans',$id,'invalidate_link_and_set_'.$novo);
+          } else {
+            $pdo->prepare('UPDATE loans SET status = :s WHERE id = :id')->execute(['s'=>$novo,'id'=>$id]);
+            Audit::log('update_status','loans',$id,'set_'.$novo);
+          }
           $_SESSION['toast'] = 'Status do empréstimo atualizado';
         }
         header('Location: /emprestimos/' . $id);

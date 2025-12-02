@@ -11,31 +11,28 @@
   </div>
   <div class="space-y-4 border rounded p-4 mt-4">
     <div class="text-lg font-semibold">Termos do Emprestimo</div>
-    <div class="grid grid-cols-2 gap-2">
-      <div>
-        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['valor_principal'] ?? 0),2,',','.'); ?>" readonly>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="rounded border p-3">
+        <div class="text-lg font-semibold">R$ <?php echo number_format((float)($l['valor_principal'] ?? 0),2,',','.'); ?></div>
         <div class="text-sm text-gray-600 mt-1">Valor do empréstimo (R$)</div>
       </div>
-      <div>
-        <input class="border rounded px-3 py-2 w-full" value="<?php echo (int)($l['num_parcelas'] ?? 0); ?>" readonly>
+      <div class="rounded border p-3">
+        <div class="text-lg font-semibold"><?php echo (int)($l['num_parcelas'] ?? 0); ?></div>
         <div class="text-sm text-gray-600 mt-1">Número de parcelas</div>
       </div>
-      <div>
-        <input class="border rounded px-3 py-2 w-full" value="<?php echo (int)($l['dias_primeiro_periodo'] ?? 0); ?>" readonly>
-        <div class="text-sm text-gray-600 mt-1">Dias 1º período</div>
-      </div>
-      <div>
-        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['juros_proporcional_primeiro_mes'] ?? 0),2,',','.'); ?>" readonly>
-        <div class="text-sm text-gray-600 mt-1">Juros proporcional</div>
-      </div>
-      <div>
-        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['valor_parcela'] ?? 0),2,',','.'); ?>" readonly>
+      <div class="rounded border p-3">
+        <div class="text-lg font-semibold">R$ <?php echo number_format((float)($l['valor_parcela'] ?? 0),2,',','.'); ?></div>
         <div class="text-sm text-gray-600 mt-1">Valor da Parcela (R$)</div>
       </div>
-      <div>
-        <input class="border rounded px-3 py-2 w-full" value="R$ <?php echo number_format((float)($l['valor_total'] ?? 0),2,',','.'); ?>" readonly>
+      <div class="rounded border p-3">
+        <div class="text-lg font-semibold">R$ <?php echo number_format((float)($l['valor_total'] ?? 0),2,',','.'); ?></div>
         <div class="text-sm text-gray-600 mt-1">Valor Total (R$)</div>
       </div>
+    </div>
+    <div class="mt-2 text-sm text-gray-700">
+      Número de dias para a primeira parcela: <span class="font-medium"><?php echo (int)($l['dias_primeiro_periodo'] ?? 0); ?></span>
+      &nbsp;•&nbsp;
+      Juros proporcional: <span class="font-medium">R$ <?php echo number_format((float)($l['juros_proporcional_primeiro_mes'] ?? 0),2,',','.'); ?></span>
     </div>
   </div>
   <?php $st = $l['status']; $active = 1; if ($st==='aguardando_transferencia') $active=2; if ($st==='aguardando_boletos' || $st==='concluido') $active=3; $done1 = ($st!=='calculado'); $done2 = ($st==='aguardando_transferencia' || !empty($l['transferencia_em']) || $st==='aguardando_boletos' || $st==='concluido'); $done3 = (!empty($l['boletos_gerados']) || $st==='concluido'); $gate2Disabled = !$done1; $gate3Disabled = !$done2; $gate1Disabled = $done2; $canCancelContrato = (!empty($l['contrato_assinado_em']) && empty($l['transferencia_em'])); ?>
@@ -57,8 +54,11 @@
       </div>
     </div>
   </div>
-  <div class="border rounded p-4">
+  <div class="border rounded p-4 relative">
     <div class="font-semibold mb-2">Etapa 1: Gerar Contrato</div>
+    <?php if ($done1): ?>
+    <span class="absolute right-2 top-2 bg-green-100 text-green-800 text-xs rounded px-2 py-1">Etapa Concluída</span>
+    <?php endif; ?>
     <a class="btn-primary px-4 py-2 rounded inline-block <?php echo $gate1Disabled?'opacity-50 pointer-events-none':''; ?>" href="<?php echo $gate1Disabled?'#':'/emprestimos/'.(int)$l['id'].'/contrato-link'; ?>">Gerar Contrato e Link</a>
     <?php if (!empty($l['contrato_assinado_em']) && !empty($l['contrato_pdf_path'])): ?>
       <a class="ml-2 px-4 py-2 rounded inline-block bg-green-600 text-white" target="_blank" href="/arquivo?p=<?php echo urlencode($l['contrato_pdf_path']); ?>">Ver Contrato</a>
@@ -79,8 +79,11 @@
       </div>
     <?php endif; ?>
   </div>
-  <div class="border rounded p-4">
+  <div class="border rounded p-4 relative">
     <div class="font-semibold mb-2">Etapa 2: Transferência de Fundos</div>
+    <?php if ($done2): ?>
+    <span class="absolute right-2 top-2 bg-green-100 text-green-800 text-xs rounded px-2 py-1">Etapa Concluída</span>
+    <?php endif; ?>
     <?php if ($l['status']==='aguardando_transferencia' && empty($l['transferencia_em'])): ?>
       <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>/transferencia" enctype="multipart/form-data" class="space-y-3">
         <div>
@@ -190,8 +193,11 @@
       </div>
     <?php endif; ?>
   </div>
-  <div class="border rounded p-4">
+  <div class="border rounded p-4 relative">
     <div class="font-semibold mb-2">Etapa 3: Geração de Boletos</div>
+    <?php if ($done3): ?>
+    <span class="absolute right-2 top-2 bg-green-100 text-green-800 text-xs rounded px-2 py-1">Etapa Concluída</span>
+    <?php endif; ?>
     <?php if (!empty($l['boletos_gerados'])): ?>
       <div class="grid md:grid-cols-2 gap-3">
         <div>

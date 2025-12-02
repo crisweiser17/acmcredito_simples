@@ -78,7 +78,7 @@
       <?php foreach ($rows as $l): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$l['id']; ?></td>
-          <td class="border px-2 py-1 break-words"><a class="text-blue-700 underline" href="/clientes/<?php echo (int)$l['cid']; ?>/ver"><?php echo htmlspecialchars($l['nome']); ?></a></td>
+          <td class="border px-2 py-1 break-words"><a class="text-blue-700 underline uppercase" href="/clientes/<?php echo (int)$l['cid']; ?>/ver"><?php echo htmlspecialchars($l['nome']); ?></a></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?></td>
           <td class="border px-2 py-1"><?php echo (int)$l['num_parcelas']; ?></td>
           <td class="border px-2 py-1">R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></td>
@@ -143,7 +143,7 @@
           .then(function(r){ return r.json(); })
           .then(function(j){ var tb = document.getElementById('loan_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(l){ out += '<tr>'+
             '<td class="border px-2 py-1">'+(l.id||'')+'</td>'+
-            '<td class="border px-2 py-1 break-words"><a class="text-blue-700 underline" href="/clientes/'+(l.cid||'')+'/ver">'+(l.nome? String(l.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
+            '<td class="border px-2 py-1 break-words"><a class="text-blue-700 underline uppercase" href="/clientes/'+(l.cid||'')+'/ver">'+(l.nome? String(l.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtMoney(l.valor_principal)+'</td>'+
             '<td class="border px-2 py-1">'+(l.num_parcelas||'')+'</td>'+
             '<td class="border px-2 py-1">'+fmtMoney(l.valor_parcela)+'</td>'+

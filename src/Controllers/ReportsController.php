@@ -486,4 +486,63 @@ use App\Database\Connection;
     $content = __DIR__ . '/../Views/relatorios_filas.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function aguardandoFinanciamento(): void {
+    if (!isset($_SESSION['user_id'])) { header('Location: /login'); return; }
+    $pdo = Connection::get();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $acao = $_POST['acao'] ?? '';
+      if ($acao === 'financiar') {
+        $loanId = (int)($_POST['loan_id'] ?? 0);
+        $data = trim($_POST['transferencia_data'] ?? date('Y-m-d'));
+        $stmtL = $pdo->prepare('SELECT l.*, c.id AS cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+        $stmtL->execute(['id'=>$loanId]);
+        $l = $stmtL->fetch();
+        if ($l) {
+          $path = null;
+          if (!empty($_FILES['comprovante']['name'])) {
+            try { $path = \App\Helpers\Upload::save($_FILES['comprovante'], (int)$l['cid'], 'comprovantes'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','loans',$loanId,$e->getMessage()); }
+          }
+          $pdo->prepare('UPDATE loans SET transferencia_valor=:v, transferencia_data=:d, transferencia_comprovante_path=:p, transferencia_user_id=:u, transferencia_em=NOW(), status=\'aguardando_boletos\' WHERE id=:id')
+              ->execute([
+                'v'=>$l['valor_principal'],
+                'd'=>$data,
+                'p'=>$path,
+                'u'=>$_SESSION['user_id'] ?? null,
+                'id'=>$loanId
+              ]);
+          try { \App\Helpers\Audit::log('transferencia_fundos_relatorio','loans',$loanId,null); } catch (\Throwable $e) {}
+          $_SESSION['toast'] = 'Empréstimo marcado como financiado';
+        }
+        $qs = $_SERVER['QUERY_STRING'] ?? '';
+        header('Location: /relatorios/aguardando-financiamento' . ($qs ? ('?'.$qs) : ''));
+        return;
+      }
+    }
+    $status = trim($_GET['status'] ?? 'aguardando_transferencia');
+    $periodo = trim($_GET['periodo'] ?? '');
+    $ini = trim($_GET['data_ini'] ?? '');
+    $fim = trim($_GET['data_fim'] ?? '');
+    if ($periodo !== '' && $periodo !== 'custom') {
+      $today = date('Y-m-d');
+      if ($periodo === 'hoje') { $ini=$today; $fim=$today; }
+      elseif ($periodo === 'ultimos7') { $ini=date('Y-m-d', strtotime('-6 days')); $fim=$today; }
+      elseif ($periodo === 'ultimos30') { $ini=date('Y-m-d', strtotime('-29 days')); $fim=$today; }
+      elseif ($periodo === 'semana_atual') { $ini=date('Y-m-d', strtotime('monday this week')); $fim=date('Y-m-d', strtotime('sunday this week')); }
+      elseif ($periodo === 'mes_atual') { $ini=date('Y-m-01'); $fim=date('Y-m-t'); }
+      elseif ($periodo === 'proximo_mes') { $ini=date('Y-m-01', strtotime('+1 month')); $fim=date('Y-m-t', strtotime('+1 month')); }
+    }
+    $sql = 'SELECT l.id, l.client_id AS cid, c.nome AS cliente_nome, c.cpf AS cliente_cpf, l.valor_principal, l.status, l.transferencia_comprovante_path, l.transferencia_data FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $params = [];
+    if ($status !== '' && in_array($status, ['aguardando_transferencia','aguardando_boletos','ativo'], true)) { $sql .= ' AND l.status = :st'; $params['st']=$status; }
+    if ($ini !== '' && $fim !== '') { $sql .= ' AND DATE(l.created_at) BETWEEN :ini AND :fim'; $params['ini']=$ini; $params['fim']=$fim; }
+    elseif ($ini !== '') { $sql .= ' AND DATE(l.created_at) >= :ini'; $params['ini']=$ini; }
+    elseif ($fim !== '') { $sql .= ' AND DATE(l.created_at) <= :fim'; $params['fim']=$fim; }
+    $sql .= ' ORDER BY l.created_at DESC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll();
+    $title = 'Aguardando Financiamento';
+    $content = __DIR__ . '/../Views/relatorios_aguardando_financiamento.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
 }

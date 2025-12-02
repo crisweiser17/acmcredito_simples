@@ -163,6 +163,10 @@ class Router {
       \App\Controllers\ReportsController::filas();
       return;
     }
+    if ($path === '/relatorios/aguardando-financiamento') {
+      \App\Controllers\ReportsController::aguardandoFinanciamento();
+      return;
+    }
     if ($path === '/') { \App\Controllers\ClientesController::lista(); return; }
     \App\Controllers\ClientesController::lista();
   }

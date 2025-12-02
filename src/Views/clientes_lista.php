@@ -85,7 +85,7 @@
       <?php foreach ($rows as $c): ?>
         <tr>
           <td class="border px-2 py-1"><?php echo (int)$c['id']; ?></td>
-          <td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline" href="/clientes/<?php echo (int)$c['id']; ?>/ver"><?php echo htmlspecialchars($c['nome']); ?></a></td>
+          <td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline uppercase" href="/clientes/<?php echo (int)$c['id']; ?>/ver"><?php echo htmlspecialchars($c['nome']); ?></a></td>
           <td class="border px-2 py-1"><?php $cpfDigits = preg_replace('/\D+/', '', (string)$c['cpf']); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); echo htmlspecialchars($cpfFmt); } else { echo htmlspecialchars((string)$c['cpf']); } ?></td>
           <td class="border px-2 py-1"><?php $pv = strtolower((string)($c['prova_vida_status'] ?? '')); $pvClass = 'bg-gray-100 text-gray-800'; if ($pv==='aprovado'){ $pvClass='bg-green-100 text-green-800'; } elseif ($pv==='pendente'){ $pvClass='bg-yellow-100 text-yellow-800'; } elseif ($pv==='reprovado'){ $pvClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $pvClass; ?>"><?php echo htmlspecialchars($pv ? ucfirst($pv) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php $cs2 = strtolower((string)($c['cpf_check_status'] ?? '')); $csClass = 'bg-gray-100 text-gray-800'; if ($cs2==='aprovado'){ $csClass='bg-green-100 text-green-800'; } elseif ($cs2==='pendente'){ $csClass='bg-yellow-100 text-yellow-800'; } elseif ($cs2==='reprovado'){ $csClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $csClass; ?>"><?php echo htmlspecialchars($cs2 ? ucfirst($cs2) : '—'); ?></span></td>
@@ -150,7 +150,7 @@
           .then(function(r){ return r.json(); })
           .then(function(j){ var tb = document.getElementById('cli_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(c){ out += '<tr>'+
             '<td class="border px-2 py-1">'+(c.id||'')+'</td>'+
-            '<td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline" href="/clientes/'+(c.id||'')+'/ver">'+(c.nome? String(c.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
+            '<td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline uppercase" href="/clientes/'+(c.id||'')+'/ver">'+(c.nome? String(c.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtCPF(c.cpf||'')+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.prova_vida_status)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.cpf_check_status)+'</td>'+
