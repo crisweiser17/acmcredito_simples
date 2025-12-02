@@ -197,7 +197,7 @@
           </div>
         </div>
         <div class="p-4 border rounded">
-          <div class="font-medium mb-2">Holerites</div>
+          <div class="font-medium mb-2">Holerites (máximo 3)</div>
           <div class="grid md:grid-cols-3 gap-3 mb-3">
             <?php $hol = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($hol)) $hol = []; ?>
             <?php foreach ($hol as $h): ?>
@@ -212,10 +212,10 @@
               <?php endif; ?>
             <?php endforeach; ?>
           </div>
-          <div>Adicionar novos holerites</div>
+          <div>Adicionar novos holerites (até 3)</div>
           <div>
-            <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png">
-            <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
+            <input class="w-full" type="file" name="holerites[]" id="inp_holerites_ed" multiple accept=".pdf,.jpg,.jpeg,.png">
+            <div class="text-sm text-gray-600 mt-0.5">Máximo de 3 arquivos</div>
           </div>
         </div>
       </div>
@@ -326,6 +326,16 @@
     else { verso.style.display=''; labelFrente.textContent = 'Frente *'; }
   });
   (function(){ if (chk.checked){ labelFrente.textContent='Documento Único *'; } else { labelFrente.textContent='Frente *'; } })();
+  (function(){
+    var hol = document.getElementById('inp_holerites_ed');
+    if (!hol) return;
+    hol.addEventListener('change', function(){
+      if (hol.files && hol.files.length > 3) {
+        alert('Você pode enviar no máximo 3 holerites. Selecione novamente.');
+        hol.value = '';
+      }
+    });
+  })();
   let lb;
   function openLightbox(src){
     if (!lb){

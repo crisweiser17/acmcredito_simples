@@ -192,10 +192,10 @@
           </div>
         </div>
         <div class="space-y-2">
-          <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
+          <div>Holerites (até 3) <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-            <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
+            <input class="w-full" type="file" name="holerites[]" id="inp_holerites" multiple accept=".pdf,.jpg,.jpeg,.png" required>
+            <div class="text-sm text-gray-600 mt-0.5">Máximo de 3 arquivos</div>
           </div>
         </div>
       </div>
@@ -231,6 +231,16 @@
         prefix: 'R$ '
       });
     }
+  })();
+  (function(){
+    var hol = document.getElementById('inp_holerites');
+    if (!hol) return;
+    hol.addEventListener('change', function(){
+      if (hol.files && hol.files.length > 3) {
+        alert('Você pode enviar no máximo 3 holerites. Selecione novamente.');
+        hol.value = '';
+      }
+    });
   })();
   document.getElementById('buscarCep').addEventListener('click', async function(){
     const cep = document.getElementById('cep').value.replace(/\D/g,'');

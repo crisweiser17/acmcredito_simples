@@ -130,7 +130,9 @@ class ClientesController {
       } catch (\Throwable $e) { /* no-op */ }
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
-        for ($i=0; $i<count($_FILES['holerites']['name']); $i++) {
+        $maxHol = 3;
+        $totalHol = count($_FILES['holerites']['name']);
+        for ($i=0; $i<$totalHol && $i<$maxHol; $i++) {
           $file = [
             'name' => $_FILES['holerites']['name'][$i],
             'type' => $_FILES['holerites']['type'][$i],
@@ -237,7 +239,9 @@ class ClientesController {
       try { $hasRefs = $pdo->query("SHOW COLUMNS FROM clients LIKE 'referencias'")->fetch(); if ($hasRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]); } } catch (\Throwable $e) {}
       $holerites = [];
       if (!empty($_FILES['holerites']['name'][0])) {
-        for ($i=0; $i<count($_FILES['holerites']['name']); $i++) {
+        $maxHol = 3;
+        $totalHol = count($_FILES['holerites']['name']);
+        for ($i=0; $i<$totalHol && $i<$maxHol; $i++) {
           $file = [
             'name' => $_FILES['holerites']['name'][$i],
             'type' => $_FILES['holerites']['type'][$i],
@@ -611,7 +615,10 @@ class ClientesController {
       if (!empty($_FILES['holerites']['name'][0])) {
         $existing = json_decode($client['doc_holerites'] ?? '[]', true);
         if (!is_array($existing)) $existing = [];
+        $maxHol = 3;
+        // Mantém no máximo 3 holerites no total (existentes + novos)
         for ($i=0; $i<count($_FILES['holerites']['name']); $i++) {
+          if (count($existing) >= $maxHol) { break; }
           $file = [
             'name' => $_FILES['holerites']['name'][$i],
             'type' => $_FILES['holerites']['type'][$i],
@@ -621,6 +628,8 @@ class ClientesController {
           ];
           try { $existing[] = Upload::save($file, $id, 'holerites'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$id,$e->getMessage()); }
         }
+        // Garante o limite no armazenamento
+        $existing = array_slice($existing, 0, $maxHol);
         $pdo->prepare('UPDATE clients SET doc_holerites = :j WHERE id = :id')->execute(['j'=>json_encode($existing),'id'=>$id]);
       }
       \App\Helpers\Audit::log('update','clients',$id,'Cliente atualizado');
