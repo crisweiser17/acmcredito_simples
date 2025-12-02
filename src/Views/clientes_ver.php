@@ -190,7 +190,7 @@
           <?php if ($exth === 'pdf'): ?>
             <div class="p-2 border rounded flex items-center justify-between">
               <span>PDF</span>
-              <a class="px-2 py-1 rounded bg-blue-100 text-blue-700" target="_blank" href="/arquivo/view?p=<?php echo rawurlencode($h); ?>">Abrir</a>
+              <button type="button" class="px-2 py-1 rounded bg-blue-100 text-blue-700" onclick="openDocLightbox('/arquivo/view?p=<?php echo rawurlencode($h); ?>')">Abrir</button>
             </div>
           <?php else: ?>
             <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>" class="w-24 h-24 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>')" />
@@ -220,5 +220,14 @@
       document.body.appendChild(lb);
     }
     lb.innerHTML = '<img src="'+src+'" style="max-width:90%;max-height:90%;border-radius:8px" />';
+  }
+  function openDocLightbox(url){
+    if (!lb){
+      lb = document.createElement('div');
+      lb.style.position='fixed'; lb.style.inset='0'; lb.style.background='rgba(0,0,0,0.8)'; lb.style.display='flex'; lb.style.alignItems='center'; lb.style.justifyContent='center'; lb.style.zIndex='9999';
+      lb.addEventListener('click', ()=>{ lb.remove(); lb=null; });
+      document.body.appendChild(lb);
+    }
+    lb.innerHTML = '<div style="width:90%;height:90%;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+url+'" style="width:100%;height:100%;border:0"></iframe></div>';
   }
 </script>
