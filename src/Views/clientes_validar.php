@@ -206,7 +206,14 @@
       <div class="grid md:grid-cols-3 gap-3 items-end">
         <div>
           <label class="text-sm text-gray-600">Renda Mensal</label>
-          <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($rendaFmt); ?>" readonly>
+          <div class="relative">
+            <input class="border rounded px-3 py-2 w-full pr-12" value="<?php echo htmlspecialchars($rendaFmt); ?>" readonly>
+            <?php $hol = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($hol)) $hol = []; if (count($hol)>0): ?>
+              <button type="button" aria-label="Abrir holerites" onclick="openHoleriteGallery(0);" class="text-gray-700" style="position:absolute; right:8px; top:50%; transform: translateY(-50%); z-index:10">
+                <i class="fa-solid fa-money-check fa-2x"></i>
+              </button>
+            <?php endif; ?>
+          </div>
         </div>
         <div>
           <label class="text-sm text-gray-600">Parcela Máxima (<?php echo htmlspecialchars((string)$critPct); ?>%)</label>
@@ -362,4 +369,23 @@
       });
     }
   });
+  (function(){
+    var holerites = [
+      <?php $holArr = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($holArr)) $holArr = []; foreach ($holArr as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $u = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
+    ];
+    if (!holerites.length) return;
+    var holIdx = 0;
+    function closeLb(){ if(lb){ lb.remove(); lb=null; document.removeEventListener('keydown', holKey); } }
+    function prev(){ holIdx = (holIdx - 1 + holerites.length) % holerites.length; render(); }
+    function next(){ holIdx = (holIdx + 1) % holerites.length; render(); }
+    function holKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); prev(); } else if(e.key==='ArrowRight'){ e.preventDefault(); next(); } else if(e.key==='Escape'){ e.preventDefault(); closeLb(); } }
+    function render(){ if (!lb){ lb = document.createElement('div'); lb.style.position='fixed'; lb.style.inset='0'; lb.style.background='rgba(0,0,0,0.85)'; lb.style.display='flex'; lb.style.alignItems='center'; lb.style.justifyContent='center'; lb.style.zIndex='9999'; lb.addEventListener('click', ()=>{ closeLb(); }); document.body.appendChild(lb); }
+      var it = holerites[holIdx]; var content = it.type==='pdf' ? '<div style="width:90vw;height:90vh;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+it.url+'" style="width:100%;height:100%;border:0"></iframe></div>' : '<img src="'+it.url+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />';
+      lb.innerHTML = '<div style="position:relative;display:flex;align-items:center;justify-content:center">\n        <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'if(lb){ lb.remove(); lb=null; document.removeEventListener(\'keydown\', holKey); } })()">×</button>\n        <button type="button" aria-label="Anterior" style="position:absolute;left:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'holIdx = (holIdx - 1 + '+holerites.length+') % '+holerites.length+'; render(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'holIdx = (holIdx + 1) % '+holerites.length+'; render(); })()">›</button>\n      </div>';
+    }
+    window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
+  })();
 </script>

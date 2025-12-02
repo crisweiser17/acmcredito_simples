@@ -7,8 +7,9 @@ $saved = isset($_GET['saved']);
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo $title; ?></title>
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
-  <link rel="preconnect" href="https://maxcdn.bootstrapcdn.com">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/v4-shims.min.css">
   <script>
     window.tailwind = window.tailwind || {};
     window.tailwind.config = { theme: { extend: { colors: { royal: '#1f4bf2' } } } };
