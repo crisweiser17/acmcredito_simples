@@ -45,6 +45,7 @@
           <th class="px-2 py-2 text-left text-xs">Cliente</th>
           <th class="px-2 py-2 text-left text-xs">Loan</th>
           <th class="px-2 py-2 text-left text-xs">Parcela</th>
+          <th class="px-2 py-2 text-left text-xs">Vencimento</th>
           <th class="px-2 py-2 text-left text-xs">Status</th>
           <th class="px-2 py-2 text-left text-xs">Tentativas</th>
           <th class="px-2 py-2 text-left text-xs">Payment</th>
@@ -61,6 +62,7 @@
             <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['cliente_nome'] ?? ''); ?></td>
             <td class="px-2 py-2 text-xs">#<?php echo (int)$r['loan_id']; ?></td>
             <td class="px-2 py-2 text-xs">#<?php echo (int)$r['parcela_id']; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo !empty($r['parcela_vencimento']) ? date('d/m/Y', strtotime($r['parcela_vencimento'])) : ''; ?></td>
             <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars(($r['status']==='aguardando')?'Aguardando':$r['status']); ?></td>
             <td class="px-2 py-2 text-xs"><?php echo (int)$r['try_count']; ?></td>
             <td class="px-2 py-2 text-xs whitespace-pre-wrap break-words max-w-[20ch]"><?php echo htmlspecialchars($r['payment_id'] ?? ''); ?></td>

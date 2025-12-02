@@ -467,7 +467,7 @@ use App\Database\Connection;
     }
     try { $pdo->exec("CREATE TABLE IF NOT EXISTS billing_queue (id INT PRIMARY KEY AUTO_INCREMENT, parcela_id INT NOT NULL, loan_id INT NOT NULL, client_id INT NOT NULL, status ENUM('aguardando','processando','sucesso','erro') NOT NULL DEFAULT 'aguardando', try_count INT NOT NULL DEFAULT 0, last_error TEXT NULL, api_response JSON NULL, payment_id VARCHAR(100) NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, processed_at DATETIME NULL, UNIQUE KEY uniq_parcela (parcela_id), INDEX idx_status (status), INDEX idx_loan (loan_id))"); } catch (\Throwable $e) {}
     $status = trim($_GET['status'] ?? '');
-    $sql = 'SELECT q.*, c.nome AS cliente_nome FROM billing_queue q JOIN loans l ON l.id=q.loan_id JOIN clients c ON c.id=l.client_id WHERE 1=1';
+    $sql = 'SELECT q.*, c.nome AS cliente_nome, p.data_vencimento AS parcela_vencimento FROM billing_queue q JOIN loans l ON l.id=q.loan_id JOIN clients c ON c.id=l.client_id JOIN loan_parcelas p ON p.id=q.parcela_id WHERE 1=1';
     $params = [];
     if ($status !== '' && in_array($status, ['aguardando','processando','sucesso','erro'], true)) { $sql .= ' AND q.status = :st'; $params['st']=$status; }
     $sql .= ' ORDER BY q.created_at DESC, q.id DESC';
