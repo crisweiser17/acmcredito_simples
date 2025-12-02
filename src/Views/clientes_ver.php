@@ -5,6 +5,7 @@
   <span class="inline-block bg-yellow-100 text-yellow-800 text-xs rounded px-2 py-1 mb-2">Cadastro Público</span>
   <?php endif; ?>
   <div class="flex gap-3">
+    <a class="px-4 py-2 rounded bg-red-600 text-white" href="/clientes/<?php echo (int)$c['id']; ?>/validar">Validar</a>
     <a class="btn-primary px-4 py-2 rounded" href="/clientes/<?php echo (int)$c['id']; ?>/editar">Editar</a>
     <?php if (!empty($temEmprestimos)): ?>
       <a class="btn-primary px-4 py-2 rounded" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>">Ver empréstimos</a>
@@ -185,15 +186,15 @@
       <div class="font-medium">Holerites</div>
       <div class="grid md:grid-cols-5 gap-3">
         <?php $hol = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($hol)) $hol = []; ?>
-        <?php foreach ($hol as $h): ?>
+        <?php foreach ($hol as $j => $h): ?>
           <?php $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); ?>
           <?php if ($exth === 'pdf'): ?>
             <div class="p-2 border rounded flex items-center justify-between">
               <span>PDF</span>
-              <button type="button" class="px-2 py-1 rounded bg-blue-100 text-blue-700" onclick="openDocLightbox('/arquivo/view?p=<?php echo rawurlencode($h); ?>')">Abrir</button>
+              <button type="button" class="px-2 py-1 rounded bg-blue-100 text-blue-700" onclick="openHoleriteGallery(<?php echo (int)$j; ?>)">Abrir</button>
             </div>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>" class="w-24 h-24 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>')" />
+            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>" class="w-24 h-24 object-cover border rounded cursor-zoom-in" onclick="openHoleriteGallery(<?php echo (int)$j; ?>)" />
           <?php endif; ?>
         <?php endforeach; ?>
       </div>
@@ -219,7 +220,7 @@
       lb.addEventListener('click', ()=>{ lb.remove(); lb=null; });
       document.body.appendChild(lb);
     }
-    lb.innerHTML = '<img src="'+src+'" style="max-width:90%;max-height:90%;border-radius:8px" />';
+    lb.innerHTML = '<div style="position:relative">\n      <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ if(lb){ lb.remove(); lb=null; } })()">×</button>\n      <img src="'+src+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />\n    </div>';
   }
   function openDocLightbox(url){
     if (!lb){
@@ -228,6 +229,26 @@
       lb.addEventListener('click', ()=>{ lb.remove(); lb=null; });
       document.body.appendChild(lb);
     }
-    lb.innerHTML = '<div style="width:90%;height:90%;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+url+'" style="width:100%;height:100%;border:0"></iframe></div>';
+    lb.innerHTML = '<div style="position:relative;width:90%;height:90%;background:#fff;border-radius:8px;overflow:hidden">\n      <button type="button" aria-label="Fechar" style="position:absolute;top:8px;right:8px;background:#000;color:#fff;border:none;border-radius:4px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>\n      <iframe src="'+url+'" style="width:100%;height:100%;border:0"></iframe>\n    </div>';
+    var btn = lb.querySelector('button[aria-label="Fechar"]');
+    if (btn) { btn.addEventListener('click', function(e){ e.stopPropagation(); if(lb){ lb.remove(); lb=null; } }); }
   }
+  (function(){
+    var holerites = [
+      <?php foreach ($hol as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $url = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $url; ?>'},<?php } endforeach; ?>
+    ];
+    var holIdx = 0;
+    function closeLb(){ if(lb){ lb.remove(); lb=null; document.removeEventListener('keydown', holKey); } }
+    function prev(){ holIdx = (holIdx - 1 + holerites.length) % holerites.length; render(); }
+    function next(){ holIdx = (holIdx + 1) % holerites.length; render(); }
+    function holKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); prev(); } else if(e.key==='ArrowRight'){ e.preventDefault(); next(); } else if(e.key==='Escape'){ e.preventDefault(); closeLb(); } }
+    function render(){ if (!lb){ lb = document.createElement('div'); lb.style.position='fixed'; lb.style.inset='0'; lb.style.background='rgba(0,0,0,0.85)'; lb.style.display='flex'; lb.style.alignItems='center'; lb.style.justifyContent='center'; lb.style.zIndex='9999'; lb.addEventListener('click', ()=>{ closeLb(); }); document.body.appendChild(lb); }
+      var it = holerites[holIdx]; var content = it.type==='pdf' ? '<div style="width:90vw;height:90vh;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+it.url+'" style="width:100%;height:100%;border:0"></iframe></div>' : '<img src="'+it.url+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />';
+      lb.innerHTML = '<div style="position:relative;display:flex;align-items:center;justify-content:center">\n        <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'if(lb){ lb.remove(); lb=null; document.removeEventListener(\'keydown\', holKey); } })()">×</button>\n        <button type="button" aria-label="Anterior" style="position:absolute;left:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'holIdx = (holIdx - 1 + '+holerites.length+') % '+holerites.length+'; render(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
+        'holIdx = (holIdx + 1) % '+holerites.length+'; render(); })()">›</button>\n      </div>';
+    }
+    window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
+  })();
 </script>
