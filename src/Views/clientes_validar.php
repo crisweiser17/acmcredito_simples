@@ -12,7 +12,6 @@
         <?php endif; ?>
       </div>
     </div>
-    <?php $pvDocs = []; $pvIdxF = null; $pvIdxV = null; $pvIdxS = null; if (!empty($c['doc_cnh_frente'])) { $pvDocs[] = (string)$c['doc_cnh_frente']; $pvIdxF = count($pvDocs)-1; } if (!empty($c['doc_cnh_verso'])) { $pvDocs[] = (string)$c['doc_cnh_verso']; $pvIdxV = count($pvDocs)-1; } if (!empty($c['doc_selfie'])) { $pvDocs[] = (string)$c['doc_selfie']; $pvIdxS = count($pvDocs)-1; } ?>
     <div class="grid gap-6 <?php echo !empty($c['doc_cnh_verso']) ? 'md:grid-cols-3' : 'md:grid-cols-2'; ?>">
       <div class="space-y-4">
         <?php if (!empty($c['doc_cnh_frente'])): ?>
@@ -23,13 +22,13 @@
               <div class="h-56 border rounded overflow-hidden">
                 <iframe src="<?php echo $urlF; ?>" class="w-full h-full" title="Documento Frente"></iframe>
               </div>
-              <div class="mt-2">
+              <div class="mt-2 flex gap-2">
                 <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlF; ?>">Abrir tela cheia</a>
-                <button type="button" class="ml-2 px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxF ?? 0); ?>)">Abrir</button>
+                <button type="button" class="px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openPVGallery(window.pvMap && typeof window.pvMap.frente==='number'? window.pvMap.frente : 0)">Abrir</button>
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxF ?? 0); ?>)" />
+            <img src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openPVGallery(window.pvMap && typeof window.pvMap.frente==='number'? window.pvMap.frente : 0)" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -42,13 +41,13 @@
             <div class="h-56 border rounded overflow-hidden">
               <iframe src="<?php echo $urlV; ?>" class="w-full h-full" title="Documento Verso"></iframe>
             </div>
-            <div class="mt-2">
+            <div class="mt-2 flex gap-2">
               <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlV; ?>">Abrir tela cheia</a>
-              <button type="button" class="ml-2 px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxV ?? 0); ?>)">Abrir</button>
+              <button type="button" class="px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openPVGallery(window.pvMap && typeof window.pvMap.verso==='number'? window.pvMap.verso : 0)">Abrir</button>
             </div>
           </div>
         <?php else: ?>
-          <img src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxV ?? 0); ?>)" />
+          <img src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openPVGallery(window.pvMap && typeof window.pvMap.verso==='number'? window.pvMap.verso : 0)" />
         <?php endif; ?>
       </div>
       <?php endif; ?>
@@ -61,13 +60,13 @@
               <div class="h-56 border rounded overflow-hidden">
                 <iframe src="<?php echo $urlS; ?>" class="w-full h-full" title="Selfie"></iframe>
               </div>
-              <div class="mt-2">
+              <div class="mt-2 flex gap-2">
                 <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo $urlS; ?>">Abrir tela cheia</a>
-                <button type="button" class="ml-2 px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxS ?? 0); ?>)">Abrir</button>
+                <button type="button" class="px-3 py-2 rounded bg-blue-100 text-blue-700" onclick="openPVGallery(window.pvMap && typeof window.pvMap.selfie==='number'? window.pvMap.selfie : 0)">Abrir</button>
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openProvaVidaGallery(<?php echo (int)($pvIdxS ?? 0); ?>)" />
+            <img src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openPVGallery(window.pvMap && typeof window.pvMap.selfie==='number'? window.pvMap.selfie : 0)" />
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -374,10 +373,62 @@
     }
   });
   (function(){
+    var pvDocs = [];
+    var pvMap = {};
+    <?php if (!empty($c['doc_cnh_frente'])): ?>
+      <?php $extF = strtolower(pathinfo($c['doc_cnh_frente'], PATHINFO_EXTENSION)); $urlF = '/arquivo?p=' . rawurlencode($c['doc_cnh_frente']); ?>
+      pvMap.frente = pvDocs.length; pvDocs.push({type:'<?php echo $extF==='pdf'?'pdf':'image'; ?>', url:'<?php echo $urlF; ?>'});
+    <?php endif; ?>
+    <?php if (!empty($c['doc_cnh_verso'])): ?>
+      <?php $extVv = strtolower(pathinfo($c['doc_cnh_verso'], PATHINFO_EXTENSION)); $urlVv = '/arquivo?p=' . rawurlencode($c['doc_cnh_verso']); ?>
+      pvMap.verso = pvDocs.length; pvDocs.push({type:'<?php echo $extVv==='pdf'?'pdf':'image'; ?>', url:'<?php echo $urlVv; ?>'});
+    <?php endif; ?>
+    <?php if (!empty($c['doc_selfie'])): ?>
+      <?php $extSf = strtolower(pathinfo($c['doc_selfie'], PATHINFO_EXTENSION)); $urlSf = '/arquivo?p=' . rawurlencode($c['doc_selfie']); ?>
+      pvMap.selfie = pvDocs.length; pvDocs.push({type:'<?php echo $extSf==='pdf'?'pdf':'image'; ?>', url:'<?php echo $urlSf; ?>'});
+    <?php endif; ?>
+    if (!pvDocs.length) { window.pvMap = pvMap; return; }
+    var pvLb = null; var pvIdx = 0;
+    function pvClose(){ if(pvLb){ pvLb.remove(); pvLb=null; document.removeEventListener('keydown', pvKey); } }
+    function pvPrev(){ pvIdx = (pvIdx - 1 + pvDocs.length) % pvDocs.length; pvRender(); }
+    function pvNext(){ pvIdx = (pvIdx + 1) % pvDocs.length; pvRender(); }
+    function pvKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); pvPrev(); } else if(e.key==='ArrowRight'){ e.preventDefault(); pvNext(); } else if(e.key==='Escape'){ e.preventDefault(); pvClose(); } }
+    function pvRender(){
+      if (!pvLb){
+        pvLb = document.createElement('div');
+        pvLb.style.position='fixed'; pvLb.style.inset='0'; pvLb.style.background='rgba(0,0,0,0.85)'; pvLb.style.display='flex'; pvLb.style.alignItems='center'; pvLb.style.justifyContent='center'; pvLb.style.zIndex='9999';
+        pvLb.addEventListener('click', function(){ pvClose(); });
+        document.body.appendChild(pvLb);
+      }
+      while (pvLb.firstChild) { pvLb.removeChild(pvLb.firstChild); }
+      var wrap = document.createElement('div');
+      wrap.style.position='relative'; wrap.style.display='flex'; wrap.style.alignItems='center'; wrap.style.justifyContent='center';
+      wrap.addEventListener('click', function(e){ e.stopPropagation(); });
+      var it = pvDocs[pvIdx]; var contentEl;
+      if (it.type==='pdf') {
+        var box = document.createElement('div'); box.style.width='90vw'; box.style.height='90vh'; box.style.background='#fff'; box.style.borderRadius='8px'; box.style.overflow='hidden';
+        var iframe = document.createElement('iframe'); iframe.src = it.url; iframe.style.width='100%'; iframe.style.height='100%'; iframe.style.border='0'; box.appendChild(iframe);
+        contentEl = box;
+      } else {
+        var img = document.createElement('img'); img.src = it.url; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; contentEl = img;
+      }
+      var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
+      btnClose.addEventListener('click', function(e){ e.stopPropagation(); pvClose(); });
+      var btnPrev = document.createElement('button'); btnPrev.type='button'; btnPrev.setAttribute('aria-label','Anterior'); btnPrev.style.position='absolute'; btnPrev.style.left='-48px'; btnPrev.style.background='#fff'; btnPrev.style.color='#000'; btnPrev.style.border='none'; btnPrev.style.borderRadius='9999px'; btnPrev.style.width='40px'; btnPrev.style.height='40px'; btnPrev.style.cursor='pointer'; btnPrev.appendChild(document.createTextNode('‹'));
+      btnPrev.addEventListener('click', function(e){ e.stopPropagation(); pvPrev(); });
+      var btnNext = document.createElement('button'); btnNext.type='button'; btnNext.setAttribute('aria-label','Próximo'); btnNext.style.position='absolute'; btnNext.style.right='-48px'; btnNext.style.background='#fff'; btnNext.style.color='#000'; btnNext.style.border='none'; btnNext.style.borderRadius='9999px'; btnNext.style.width='40px'; btnNext.style.height='40px'; btnNext.style.cursor='pointer'; btnNext.appendChild(document.createTextNode('›'));
+      btnNext.addEventListener('click', function(e){ e.stopPropagation(); pvNext(); });
+      wrap.appendChild(btnClose); wrap.appendChild(btnPrev); wrap.appendChild(contentEl); wrap.appendChild(btnNext);
+      pvLb.appendChild(wrap);
+    }
+    window.openPVGallery = function(idx){ pvIdx = (typeof idx==='number' && idx>=0)? idx : 0; pvRender(); document.addEventListener('keydown', pvKey); };
+    window.pvMap = pvMap;
+  })();
+  (function(){
     var holerites = [
       <?php $holArr = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($holArr)) $holArr = []; foreach ($holArr as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $u = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
     ];
-    
+    if (!holerites.length) return;
     var holIdx = 0;
     function closeLb(){ if(lb){ lb.remove(); lb=null; document.removeEventListener('keydown', holKey); } }
     function prev(){ holIdx = (holIdx - 1 + holerites.length) % holerites.length; render(); }
@@ -390,25 +441,6 @@
         'holIdx = (holIdx - 1 + '+holerites.length+') % '+holerites.length+'; render(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
         'holIdx = (holIdx + 1) % '+holerites.length+'; render(); })()">›</button>\n      </div>';
     }
-    window.openHoleriteGallery = function(idx){ if(!holerites.length) return; holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
-  })();
-  (function(){
-    var pv = [
-      <?php foreach ($pvDocs as $d): $ex = strtolower(pathinfo($d, PATHINFO_EXTENSION)); $u = '/arquivo?p=' . rawurlencode($d); if ($ex === 'pdf') { ?>{type:'pdf',url:'<?php echo $u; ?>'},<?php } else { ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>
-    ];
-    
-    var pvIdx = 0; var lbPv = null;
-    function closePv(){ if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener('keydown', pvKey); } }
-    function prevPv(){ pvIdx = (pvIdx - 1 + pv.length) % pv.length; renderPv(); }
-    function nextPv(){ pvIdx = (pvIdx + 1) % pv.length; renderPv(); }
-    function pvKey(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); prevPv(); } else if(e.key==='ArrowRight'){ e.preventDefault(); nextPv(); } else if(e.key==='Escape'){ e.preventDefault(); closePv(); } }
-    function renderPv(){ if (!lbPv){ lbPv = document.createElement('div'); lbPv.style.position='fixed'; lbPv.style.inset='0'; lbPv.style.background='rgba(0,0,0,0.85)'; lbPv.style.display='flex'; lbPv.style.alignItems='center'; lbPv.style.justifyContent='center'; lbPv.style.zIndex='9999'; lbPv.addEventListener('click', ()=>{ closePv(); }); document.body.appendChild(lbPv); }
-      var it = pv[pvIdx]; var content = it.type==='pdf' ? '<div style="width:90vw;height:90vh;background:#fff;border-radius:8px;overflow:hidden"><iframe src="'+it.url+'" style="width:100%;height:100%;border:0"></iframe></div>' : '<img src="'+it.url+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />';
-      lbPv.innerHTML = '<div style="position:relative;display:flex;align-items:center;justify-content:center">\n        <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'if(lbPv){ lbPv.remove(); lbPv=null; document.removeEventListener(\\'keydown\\', pvKey); } })()">×</button>\n        <button type="button" aria-label="Anterior" style="position:absolute;left:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'pvIdx = (pvIdx - 1 + '+pv.length+') % '+pv.length+'; renderPv(); })()">‹</button>\n        '+content+'\n        <button type="button" aria-label="Próximo" style="position:absolute;right:-48px;background:#fff;color:#000;border:none;border-radius:9999px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ '+
-        'pvIdx = (pvIdx + 1) % '+pv.length+'; renderPv(); })()">›</button>\n      </div>';
-    }
-    window.openProvaVidaGallery = function(idx){ if(!pv.length) return; pvIdx = idx||0; renderPv(); document.addEventListener('keydown', pvKey); };
+    window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
   })();
 </script>
