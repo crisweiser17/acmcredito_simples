@@ -55,13 +55,14 @@
     <?php $refs = json_decode($c['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = []; ?>
     <?php if (count($refs) > 0): ?>
       <div class="space-y-1">
-        <?php foreach ($refs as $r): ?>
-          <?php $tel = preg_replace('/\D/','', (string)($r['telefone'] ?? '')); if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; } $nomeRef = (string)($r['nome'] ?? ''); $msg = 'Olá '.$nomeRef.', o '.($c['nome'] ?? '').' colocou você como referência em nosso cadastro. Somos uma financeira e gostaríamos de confirmar se você conhece essa pessoa e se a recomendaria. Atenciosamente, ACM Crédito.'; $wa = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($msg); ?>
+        <?php foreach ($refs as $i => $r): ?>
+          <?php $tel = preg_replace('/\D/','', (string)($r['telefone'] ?? '')); if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; } $nomeRef = (string)($r['nome'] ?? ''); $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000'; $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://'; $token = (string)($r['token'] ?? ''); $link = $token !== '' ? ($scheme . $host . '/referencia/' . (int)$c['id'] . '/' . (int)$i . '/' . $token) : ''; $rel = trim((string)($r['relacao'] ?? '')); $relTxt = $rel !== '' ? (' (relacionamento: ' . $rel . ')') : ''; $nomeRefUp = function_exists('mb_strtoupper') ? mb_strtoupper($nomeRef,'UTF-8') : strtoupper($nomeRef); $cliNomeUp = function_exists('mb_strtoupper') ? mb_strtoupper((string)($c['nome'] ?? ''),'UTF-8') : strtoupper((string)($c['nome'] ?? '')); $msg = 'Olá ' . $nomeRefUp . $relTxt . ', ' . $cliNomeUp . ' indicou você como referência. É rapidinho: você conhece e recomenda essa pessoa? Acesse: ' . $link . '. Sua resposta é confidencial. Obrigado! ACM Crédito.'; $wa = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($msg); ?>
           <div class="flex items-center gap-2">
             <span><?php echo htmlspecialchars($r['nome'] ?? ''); ?></span>
             <?php if (!empty($r['relacao'])): ?><span class="text-sm text-gray-600"><?php echo htmlspecialchars($r['relacao']); ?></span><?php endif; ?>
             <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></span>
-            <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo empty($tel)?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
+            <?php if (!empty($link)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span><?php endif; ?>
+            <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo (empty($tel) || empty($link))?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
               <i class="fa fa-whatsapp" aria-hidden="true"></i>
             </a>
           </div>
