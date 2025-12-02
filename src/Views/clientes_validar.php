@@ -177,7 +177,7 @@
   <div class="space-y-4">
     <?php $critStatus = trim((string)($c['criterios_status'] ?? 'pendente')); ?>
     <div class="flex items-center justify-between">
-      <div class="text-lg font-semibold">Criterios de Emprestimo</div>
+      <div class="text-lg font-semibold">Critérios de Renda</div>
       <span class="px-2 py-1 rounded text-white <?php echo $critStatus==='aprovado'?'bg-green-600':($critStatus==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($critStatus); ?></span>
     </div>
     <div class="space-y-3">
@@ -211,7 +211,7 @@
         <form method="post" class="flex gap-2 items-center">
           <input type="hidden" name="action" value="aprovar_criterios">
           <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo" required>
-          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Criterios de Emprestimo</button>
+          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Critérios de Renda</button>
         </form>
         <form method="post">
           <input type="hidden" name="action" value="reprovar_criterios">
@@ -308,7 +308,7 @@
       </div>
       <div class="flex items-center gap-3">
         <span class="inline-block w-4 h-4 rounded-full <?php echo ($critStatus==='aprovado')?'bg-green-600':'bg-gray-400'; ?>"></span>
-        <span>Criterios de Emprestimo</span>
+        <span>Critérios de Renda</span>
       </div>
     </div>
   </div>

@@ -75,7 +75,7 @@
         <th class="border px-2 py-1">CPF</th>
         <th class="border px-2 py-1">Prova de Vida</th>
         <th class="border px-2 py-1">Consulta CPF</th>
-        <th class="border px-2 py-1">Critérios de Emprestimo</th>
+        <th class="border px-2 py-1">Critérios de Renda</th>
         <th class="border px-2 py-1">Elegivel</th>
         <th class="border px-2 py-1">Criado em</th>
         <th class="border px-2 py-1">Ações</th>
