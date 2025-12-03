@@ -137,15 +137,20 @@
       <div class="text-xs text-gray-500">Valor: R$ <?php echo number_format((float)($data['vencidasValor'] ?? 0),2,',','.'); ?></div>
     </div>
   </div>
-  <div class="text-lg font-semibold mt-8 mb-2">Juros</div>
+  <div class="text-lg font-semibold mt-8 mb-1">Juros & Lucros</div>
+  <div class="text-xs text-gray-500 mb-2">Observação: inadimplência considerada com atraso superior a 60 dias.</div>
   <div class="grid md:grid-cols-2 gap-4 mt-6">
     <div class="border rounded p-4">
       <div class="text-sm text-gray-500"><span class="tip" data-tip="Juros embutidos reconhecidos por competência (pendente + vencido).">Juros (competência)</span> <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full"></span><?php endif; ?></div>
       <div class="text-2xl font-semibold">R$ <?php echo number_format((float)($data['jurosCompetencia'] ?? 0),2,',','.'); ?></div>
+      <div class="mt-2 text-xs text-gray-600"><span style="color:#ef4444">Inad. juros:</span> R$ <?php echo number_format((float)($data['inadJuros'] ?? 0),2,',','.'); ?></div>
+      <div class="text-sm font-semibold mt-1"><span style="color:#16a34a">Lucro (competência):</span> R$ <?php echo number_format((float)($data['lucroCompetenciaLiquido'] ?? 0),2,',','.'); ?></div>
     </div>
     <div class="border rounded p-4">
       <div class="text-sm text-gray-500"><span class="tip" data-tip="Juros embutidos recebidos por caixa (parcelas pagas).">Juros (caixa)</span> <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full"></span><?php endif; ?></div>
       <div class="text-2xl font-semibold">R$ <?php echo number_format((float)($data['jurosCaixa'] ?? 0),2,',','.'); ?></div>
+      <div class="mt-2 text-xs text-gray-600"><span style="color:#ef4444">Inad. juros:</span> R$ 0,00</div>
+      <div class="text-sm font-semibold mt-1"><span style="color:#16a34a">Lucro (caixa):</span> R$ <?php echo number_format((float)($data['lucroCaixaLiquido'] ?? 0),2,',','.'); ?></div>
     </div>
   </div>
   <div class="text-lg font-semibold mt-6 mb-2">Aging de atraso</div>
@@ -168,14 +173,26 @@
     </div>
   </div>
   <div class="border rounded p-4 mt-6">
-    <div class="text-lg font-semibold mb-2">Projeção mensal (pendente futuro)</div>
+    <div class="text-lg font-semibold mb-2">Projeção mensal de 6 meses</div>
+    <?php $splitTbl = $data['projMensalSplit'] ?? []; $inadPctTbl = (float)($data['inadPercent'] ?? 0); $inadFracTbl = $inadPctTbl>0 ? ($inadPctTbl/100.0) : 0.0; ?>
     <table class="w-full border-collapse">
-      <thead><tr><th class="border px-2 py-1">Mês</th><th class="border px-2 py-1">Valor</th></tr></thead>
+      <thead>
+        <tr>
+          <th class="border px-2 py-1">Mês</th>
+          <th class="border px-2 py-1">Principal</th>
+          <th class="border px-2 py-1">Juros</th>
+          <th class="border px-2 py-1">Inadimplência</th>
+          <th class="border px-2 py-1">Lucro</th>
+        </tr>
+      </thead>
       <tbody>
-        <?php foreach (($data['projMensal'] ?? []) as $ym => $val): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; ?>
+        <?php foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); ?>
           <tr>
             <td class="border px-2 py-1"><?php echo htmlspecialchars($label); ?></td>
-            <td class="border px-2 py-1">R$ <?php echo number_format((float)$val,2,',','.'); ?></td>
+            <td class="border px-2 py-1">R$ <?php echo number_format($principal,2,',','.'); ?></td>
+            <td class="border px-2 py-1">R$ <?php echo number_format($juros,2,',','.'); ?></td>
+            <td class="border px-2 py-1">R$ <?php echo number_format($inad,2,',','.'); ?></td>
+            <td class="border px-2 py-1">R$ <?php echo number_format($lucro,2,',','.'); ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -184,15 +201,28 @@
   <?php $pm = $data['projMensal'] ?? []; $maxVal = 0; foreach ($pm as $v) { if ($v > $maxVal) $maxVal = $v; } ?>
   <?php if (!empty($pm) && $maxVal > 0): ?>
   <div class="border rounded p-4 mt-4">
-    <div class="text-lg font-semibold mb-2">Gráfico de barras (próximos 6 meses)</div>
+    <div class="text-lg font-semibold mb-2">Projeção de 6 meses</div>
+    <?php $split = $data['projMensalSplit'] ?? []; $inadPct = (float)($data['inadPercent'] ?? 0); $inadFrac = $inadPct>0 ? ($inadPct/100.0) : 0.0; $maxTotal = 0.0; foreach ($split as $ym=>$vals){ $t = (float)(($vals['principal'] ?? 0) + ($vals['juros'] ?? 0)); if ($t > $maxTotal) $maxTotal = $t; } ?>
     <div class="flex items-end gap-3 h-48" style="height: 12rem;">
-      <?php foreach ($pm as $ym => $val): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $pct = $maxVal>0 ? round(($val/$maxVal)*100,2) : 0; ?>
-        <div class="flex flex-col items-center justify-end gap-1" style="width: 12%; height: 100%;">
-          <div class="tip" data-tip="R$ <?php echo number_format((float)$val,2,',','.'); ?>" style="background-color: #1f4bf2; width: 100%; height: <?php echo $pct; ?>%; <?php echo ($pct>0 && $pct<4)?'min-height: 4px;':''; ?> border-radius: 2px;"></div>
+      <?php foreach ($split as $ym => $vals): $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFrac; $principalNet = $principal * (1.0 - $inadFrac); $jurosNet = $juros * (1.0 - $inadFrac); $pctBar = $maxTotal>0 ? round(($total/$maxTotal)*100,2) : 0; $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; ?>
+        <div class="flex flex-col items-center justify-end gap-1" style="width: 14%; height: 100%;">
+          <div class="w-full" style="height: <?php echo $pctBar; ?>%; <?php echo ($pctBar>0 && $pctBar<4)?'min-height: 4px;':''; ?>">
+            <div class="w-full" style="background-color:#1f4bf2; height: <?php echo ($total>0)?round(($principalNet/$total)*100,2):0; ?>%"></div>
+            <div class="w-full" style="background-color:#16a34a; height: <?php echo ($total>0)?round(($jurosNet/$total)*100,2):0; ?>%"></div>
+            <div class="w-full" style="background-color:#ef4444; height: <?php echo ($total>0)?round(($inad/$total)*100,2):0; ?>%"></div>
+          </div>
           <div class="text-xs text-gray-600"><?php echo htmlspecialchars($label); ?></div>
-          <div class="text-[11px] text-gray-500">R$ <?php echo number_format((float)$val,2,',','.'); ?></div>
+          <div class="text-[11px] text-gray-500">Tot: R$ <?php echo number_format($total,2,',','.'); ?></div>
+          <div class="text-[11px] text-gray-500"><span style="color:#1f4bf2">●</span> R$ <?php echo number_format($principalNet,2,',','.'); ?></div>
+          <div class="text-[11px] text-gray-500"><span style="color:#16a34a">●</span> R$ <?php echo number_format($jurosNet,2,',','.'); ?></div>
+          <div class="text-[11px] text-gray-500"><span style="color:#ef4444">●</span> R$ <?php echo number_format($inad,2,',','.'); ?></div>
         </div>
       <?php endforeach; ?>
+    </div>
+    <div class="mt-2 flex items-center gap-4 text-xs text-gray-600">
+      <div class="flex items-center gap-2"><span class="inline-block w-3 h-3" style="background-color:#1f4bf2"></span><span>Principal (azul)</span></div>
+      <div class="flex items-center gap-2"><span class="inline-block w-3 h-3" style="background-color:#16a34a"></span><span>Juros (verde)</span></div>
+      <div class="flex items-center gap-2"><span class="inline-block w-3 h-3" style="background-color:#ef4444"></span><span>Inadimplência (vermelho)</span></div>
     </div>
   </div>
   <?php endif; ?>

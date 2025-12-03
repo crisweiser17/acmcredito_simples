@@ -82,7 +82,8 @@
             </td>
             <td class="border px-2 py-1">
               <?php if (!empty($r['transferencia_comprovante_path'])): ?>
-                <a class="text-blue-700 underline" href="/arquivo/view?p=<?php echo rawurlencode($r['transferencia_comprovante_path']); ?>" target="_blank">Abrir</a>
+                <?php $ext = strtolower(pathinfo((string)$r['transferencia_comprovante_path'], PATHINFO_EXTENSION)); ?>
+                <a href="/arquivo?p=<?php echo rawurlencode($r['transferencia_comprovante_path']); ?>" class="text-blue-700 underline lb-open" data-ext="<?php echo htmlspecialchars($ext ?: ''); ?>">Abrir</a>
               <?php else: ?>
                 —
               <?php endif; ?>
@@ -117,3 +118,51 @@
     </table>
   </div>
 </div>
+<div id="lb_overlay" class="fixed inset-0 bg-black bg-opacity-70 hidden z-50"></div>
+<div id="lb_modal" class="fixed inset-0 hidden z-50 flex items-center justify-center">
+  <div class="bg-white rounded shadow-lg w-11/12 max-w-3xl h-[80vh] flex flex-col">
+    <div class="flex items-center justify-between px-4 py-2 border-b">
+      <div class="font-semibold text-sm">Comprovante</div>
+      <button type="button" id="lb_close" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100">
+        <i class="fa fa-times" aria-hidden="true"></i>
+        <span>Fechar</span>
+      </button>
+    </div>
+    <div class="flex-1 overflow-auto">
+      <img id="lb_img" alt="Comprovante" class="w-full h-full object-contain hidden" />
+      <iframe id="lb_iframe" title="Comprovante" class="w-full h-full hidden" frameborder="0"></iframe>
+    </div>
+  </div>
+  
+</div>
+<script>
+  (function(){
+    var overlay = document.getElementById('lb_overlay');
+    var modal = document.getElementById('lb_modal');
+    var btnClose = document.getElementById('lb_close');
+    var img = document.getElementById('lb_img');
+    var ifr = document.getElementById('lb_iframe');
+    function open(url, ext){
+      if (!overlay || !modal || !img || !ifr) return;
+      var isPdf = (ext||'').toLowerCase() === 'pdf';
+      img.classList.add('hidden'); ifr.classList.add('hidden');
+      if (isPdf) { ifr.src = url; ifr.classList.remove('hidden'); }
+      else { img.src = url; img.classList.remove('hidden'); }
+      overlay.classList.remove('hidden');
+      modal.classList.remove('hidden');
+    }
+    function close(){
+      if (!overlay || !modal || !img || !ifr) return;
+      overlay.classList.add('hidden');
+      modal.classList.add('hidden');
+      img.src = ''; ifr.src = '';
+      img.classList.add('hidden'); ifr.classList.add('hidden');
+    }
+    Array.from(document.querySelectorAll('a.lb-open')).forEach(function(a){
+      a.addEventListener('click', function(ev){ ev.preventDefault(); var url = a.getAttribute('href'); var ext = a.getAttribute('data-ext')||''; open(url, ext); });
+    });
+    if (btnClose) { btnClose.addEventListener('click', close); }
+    if (overlay) { overlay.addEventListener('click', close); }
+    window.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
+  })();
+</script>

@@ -244,10 +244,29 @@ use App\Database\Connection;
         'd90p' => round((float)($rowA['d90p'] ?? 0), 2)
       ];
     } catch (\Throwable $e) {}
+    $inadJuros = 0.0;
+    try {
+      $stmtIJ = $pdo->query("SELECT COALESCE(SUM(CASE WHEN p.status='vencido' AND DATEDIFF(CURDATE(), p.data_vencimento) > 60 THEN p.juros_embutido ELSE 0 END),0) AS j_inad FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE l.status IN ('aguardando_transferencia','aguardando_boletos','ativo')");
+      $rowIJ = $stmtIJ ? $stmtIJ->fetch() : [];
+      $inadJuros = (float)($rowIJ['j_inad'] ?? 0);
+    } catch (\Throwable $e) {}
+    $lucroCompetenciaLiquido = max(0.0, (float)$jurosCompetencia - (float)$inadJuros);
+    $lucroCaixaLiquido = max(0.0, (float)$jurosCaixa);
     $projMensal = [];
     try {
       $stmtProj = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, SUM(p.valor) AS total FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND p.data_vencimento > CURDATE() GROUP BY ym ORDER BY ym ASC LIMIT 6");
       foreach (($stmtProj ? $stmtProj->fetchAll() : []) as $r) { $projMensal[$r['ym']] = round((float)$r['total'], 2); }
+    } catch (\Throwable $e) {}
+    $projMensalSplit = [];
+    try {
+      $stmtSplit = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, COALESCE(SUM(p.valor - p.juros_embutido),0) AS principal, COALESCE(SUM(p.juros_embutido),0) AS juros FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND p.data_vencimento > CURDATE() GROUP BY ym ORDER BY ym ASC LIMIT 6");
+      foreach (($stmtSplit ? $stmtSplit->fetchAll() : []) as $r) {
+        $ym = (string)($r['ym'] ?? '');
+        $projMensalSplit[$ym] = [
+          'principal' => round((float)($r['principal'] ?? 0), 2),
+          'juros' => round((float)($r['juros'] ?? 0), 2)
+        ];
+      }
     } catch (\Throwable $e) {}
     $mesesDisponiveis = [];
     try {
@@ -278,6 +297,10 @@ use App\Database\Connection;
       'jurosCaixa' => round($jurosCaixa, 2),
       'aging' => $aging,
       'projMensal' => $projMensal,
+      'projMensalSplit' => $projMensalSplit,
+      'inadJuros' => round($inadJuros, 2),
+      'lucroCompetenciaLiquido' => round($lucroCompetenciaLiquido, 2),
+      'lucroCaixaLiquido' => round($lucroCaixaLiquido, 2),
       'tipo' => $tipo,
       'ini' => $ini,
       'fim' => $fim,
