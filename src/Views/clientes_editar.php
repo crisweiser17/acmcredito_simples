@@ -87,8 +87,7 @@
             <input class="w-full border rounded px-3 py-2" name="ref_telefone[]" placeholder="Telefone" id="ref_tel_<?php echo $i+1; ?>" value="<?php echo $rt; ?>">
             <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
             <div class="mt-1 flex items-center gap-2">
-              <a href="#" id="btn_wa_ref_<?php echo (int)$i; ?>" data-link="<?php echo htmlspecialchars($link); ?>" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo (empty($link)?'opacity-50 pointer-events-none':''); ?>" onclick="return enviarWaRef(<?php echo (int)$i; ?>);"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>Enviar</span></a>
-              <?php if (!empty($link)): ?><span class="text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span><?php endif; ?>
+              
             </div>
           </div>
         </div>
@@ -263,25 +262,6 @@
     }
   })();
   ['ref_tel_1','ref_tel_2','ref_tel_3'].forEach(function(id){ var el=document.getElementById(id); if(el){ IMask(el,{ mask: '(00) 00000-0000' }); }});
-  function enviarWaRef(idx){
-    var nomeCli = document.getElementsByName('nome')[0]?.value.trim() || '';
-    var nomeRef = document.getElementsByName('ref_nome[]')[idx]?.value.trim() || '';
-    var rel = document.getElementsByName('ref_relacao[]')[idx]?.value.trim() || '';
-    var telRef = document.getElementsByName('ref_telefone[]')[idx]?.value.trim() || '';
-    var digits = (telRef||'').replace(/\D/g,'');
-    if (digits && digits.length>=10 && digits.length<=11 && digits.substring(0,2)!=='55') { digits = '55'+digits; }
-    var btn = document.getElementById('btn_wa_ref_'+idx);
-    var link = btn ? (btn.getAttribute('data-link')||'') : '';
-    if (!link) { return false; }
-    var nomeRefUp = (nomeRef||'').toUpperCase();
-    var nomeCliUp = (nomeCli||'').toUpperCase();
-    var relTxt = rel ? (' (relacionamento: '+rel+')') : '';
-    var msg = 'Olá '+nomeRefUp+relTxt+', '+nomeCliUp+' indicou você como referência. É rapidinho: você conhece e recomenda essa pessoa? Acesse: '+link+'. Sua resposta é confidencial. Obrigado! ACM Crédito.';
-    var url = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
-    if (!digits) return false;
-    window.open(url, '_blank');
-    return false;
-  }
   (function(){
     var tipoEl = document.getElementById('pix_tipo');
     var chaveEl = document.getElementById('pix_chave');
