@@ -173,7 +173,7 @@
     </div>
   </div>
   <div class="border rounded p-4 mt-6">
-    <div class="text-lg font-semibold mb-2">Projeção mensal de 7 meses</div>
+    <div class="text-lg font-semibold mb-2">Projeção de 7 meses (mes atual + 6)</div>
     <?php $splitTbl = $data['projMensalSplit'] ?? []; $inadPctTbl = (float)($data['inadPercent'] ?? 0); $inadFracTbl = $inadPctTbl>0 ? ($inadPctTbl/100.0) : 0.0; ?>
     <table class="w-full border-collapse">
       <thead>
@@ -201,7 +201,7 @@
   <?php $split = $data['projMensalSplit'] ?? []; $maxTotal = 0.0; foreach ($split as $ym=>$vals){ $t = (float)(($vals['principal'] ?? 0) + ($vals['juros'] ?? 0)); if ($t > $maxTotal) $maxTotal = $t; } ?>
   <?php if (!empty($split) && $maxTotal > 0): ?>
   <div class="border rounded p-4 mt-4">
-    <div class="text-lg font-semibold mb-2">Projeção de 7 meses</div>
+    
     <?php $inadPct = (float)($data['inadPercent'] ?? 0); $inadFrac = $inadPct>0 ? ($inadPct/100.0) : 0.0; ?>
     <div class="flex items-end gap-3 h-48" style="height: 12rem;">
       <?php foreach ($split as $ym => $vals): $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFrac; $principalNet = $principal * (1.0 - $inadFrac); $jurosNet = $juros * (1.0 - $inadFrac); $pctBar = $maxTotal>0 ? round(($total/$maxTotal)*100,2) : 0; $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; ?>

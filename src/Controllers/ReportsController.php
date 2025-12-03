@@ -187,6 +187,23 @@ use App\Database\Connection;
       $emprestado = (float)($rowL['s1'] ?? 0);
       $lucroPrevisto = (float)($rowL['s2'] ?? 0);
     } catch (\Throwable $e) {}
+    // Garantir 7 meses (mês atual + 6 próximos), mesmo que algum mês não tenha dados
+    try {
+      $seqMonths = [];
+      $start = new \DateTimeImmutable(date('Y-m-01'));
+      for ($i = 0; $i < 7; $i++) {
+        $ym = $start->modify("+{$i} months")->format('Y-m');
+        $seqMonths[] = $ym;
+        if (!isset($projMensalSplit[$ym])) { $projMensalSplit[$ym] = ['principal' => 0.0, 'juros' => 0.0]; }
+        if (!isset($projMensal[$ym])) { $projMensal[$ym] = 0.0; }
+      }
+      $orderedSplit = [];
+      foreach ($seqMonths as $m) { $orderedSplit[$m] = $projMensalSplit[$m]; }
+      $projMensalSplit = $orderedSplit;
+      $orderedTot = [];
+      foreach ($seqMonths as $m) { $orderedTot[$m] = $projMensal[$m]; }
+      $projMensal = $orderedTot;
+    } catch (\Throwable $e) {}
     try {
       $sqlC = 'SELECT COUNT(*) AS c FROM clients';
       $pC = [];
