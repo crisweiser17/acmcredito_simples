@@ -254,12 +254,12 @@ use App\Database\Connection;
     $lucroCaixaLiquido = max(0.0, (float)$jurosCaixa);
     $projMensal = [];
     try {
-      $stmtProj = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, SUM(p.valor) AS total FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND p.data_vencimento > CURDATE() GROUP BY ym ORDER BY ym ASC LIMIT 6");
+      $stmtProj = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, SUM(p.valor) AS total FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND DATE(p.data_vencimento) >= DATE_FORMAT(CURDATE(), '%Y-%m-01') GROUP BY ym ORDER BY ym ASC LIMIT 7");
       foreach (($stmtProj ? $stmtProj->fetchAll() : []) as $r) { $projMensal[$r['ym']] = round((float)$r['total'], 2); }
     } catch (\Throwable $e) {}
     $projMensalSplit = [];
     try {
-      $stmtSplit = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, COALESCE(SUM(p.valor - p.juros_embutido),0) AS principal, COALESCE(SUM(p.juros_embutido),0) AS juros FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND p.data_vencimento > CURDATE() GROUP BY ym ORDER BY ym ASC LIMIT 6");
+      $stmtSplit = $pdo->query("SELECT DATE_FORMAT(p.data_vencimento, '%Y-%m') AS ym, COALESCE(SUM(p.valor - p.juros_embutido),0) AS principal, COALESCE(SUM(p.juros_embutido),0) AS juros FROM loan_parcelas p JOIN loans l ON l.id=p.loan_id WHERE p.status='pendente' AND l.status IN ('aguardando_transferencia','aguardando_boletos','ativo') AND DATE(p.data_vencimento) >= DATE_FORMAT(CURDATE(), '%Y-%m-01') GROUP BY ym ORDER BY ym ASC LIMIT 7");
       foreach (($stmtSplit ? $stmtSplit->fetchAll() : []) as $r) {
         $ym = (string)($r['ym'] ?? '');
         $projMensalSplit[$ym] = [
