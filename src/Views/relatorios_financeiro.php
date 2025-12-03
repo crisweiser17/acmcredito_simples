@@ -186,7 +186,7 @@
         </tr>
       </thead>
       <tbody>
-        <?php foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); ?>
+        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; ?>
           <tr>
             <td class="border px-2 py-1"><?php echo htmlspecialchars($label); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($principal,2,',','.'); ?></td>
@@ -195,6 +195,13 @@
             <td class="border px-2 py-1">R$ <?php echo number_format($lucro,2,',','.'); ?></td>
           </tr>
         <?php endforeach; ?>
+        <tr>
+          <td class="border px-2 py-1 font-semibold">Total</td>
+          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totPrincipal,2,',','.'); ?></td>
+          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totJuros,2,',','.'); ?></td>
+          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totInad,2,',','.'); ?></td>
+          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totLucro,2,',','.'); ?></td>
+        </tr>
       </tbody>
     </table>
   </div>
