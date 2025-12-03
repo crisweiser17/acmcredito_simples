@@ -291,6 +291,19 @@ use App\Database\Connection;
       foreach (($stmtYM ? $stmtYM->fetchAll() : []) as $r) { $mesesDisponiveis[] = $r['ym']; }
     } catch (\Throwable $e) {}
     $ymDefault = $mesesDisponiveis[0] ?? date('Y-m');
+    $avgMonthlyRateApprox = 0.0;
+    try {
+      $stmtRate = $pdo->query("SELECT valor_principal, total_juros, num_parcelas FROM loans WHERE status IN ('aguardando_transferencia','aguardando_boletos','ativo')");
+      $sumMonthlyInterest = 0.0; $sumPrincipalAll = 0.0;
+      foreach (($stmtRate ? $stmtRate->fetchAll() : []) as $lr) {
+        $vp = (float)($lr['valor_principal'] ?? 0);
+        $tj = (float)($lr['total_juros'] ?? 0);
+        $np = (int)($lr['num_parcelas'] ?? 0); if ($np <= 0) { $np = 1; }
+        $sumMonthlyInterest += ($tj / (float)$np);
+        $sumPrincipalAll += $vp;
+      }
+      $avgMonthlyRateApprox = ($sumPrincipalAll > 0.0) ? ($sumMonthlyInterest / $sumPrincipalAll) : 0.0;
+    } catch (\Throwable $e) { $avgMonthlyRateApprox = 0.0; }
     $rows = [
       'clientsCount' => $clientsCount,
       'loansCount' => $loansCount,
@@ -324,6 +337,7 @@ use App\Database\Connection;
       'periodo' => $periodo,
       'mesesDisponiveis' => $mesesDisponiveis,
       'ymDefault' => $ymDefault
+      , 'avgMonthlyRateApprox' => $avgMonthlyRateApprox
     ];
     $title = 'Relatório Financeiro';
     $content = __DIR__ . '/../Views/relatorios_financeiro.php';

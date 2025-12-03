@@ -210,6 +210,14 @@
         <?php if ($metaLucro>0): ?>
           <div class="mt-1 text-xs text-gray-600">Capital necessário estimado: R$ <?php echo number_format($capNec,2,',','.'); ?></div>
         <?php endif; ?>
+        <?php 
+          $avgMonthlyRateApprox = (float)($data['avgMonthlyRateApprox'] ?? 0.0);
+          $capInvestido = ($avgMonthlyRateApprox>0 && $metaLucro>0) ? ($metaLucro / $avgMonthlyRateApprox) : 0.0;
+        ?>
+        <div class="mt-3 text-xs text-gray-600">Taxa mensal aproximada da carteira: <?php echo number_format($avgMonthlyRateApprox*100.0,2,',','.'); ?>%</div>
+        <?php if ($metaLucro>0): ?>
+          <div class="mt-1 text-xs text-gray-600">Capital total investido estimado: R$ <?php echo number_format($capInvestido,2,',','.'); ?></div>
+        <?php endif; ?>
       </div>
       <div class="ml-auto flex gap-2">
         <button class="px-4 py-2 rounded btn-primary" type="submit">Atualizar Projeções</button>
