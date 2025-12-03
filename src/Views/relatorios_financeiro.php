@@ -202,17 +202,19 @@
           <th class="border px-2 py-1">Inadimplência</th>
           <th class="border px-2 py-1">Lucro</th>
           <th class="border px-2 py-1">Meta</th>
+          <th class="border px-2 py-1">% da Meta</th>
         </tr>
       </thead>
       <tbody>
-        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; $totDelta=0.0; $mesCount=0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $delta = $lucro - $metaLucro; $pctDist = ($metaLucro>0) ? (abs($delta)/$metaLucro)*100.0 : 0.0; $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; $totDelta += $delta; $mesCount++; ?>
+        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; $totDelta=0.0; $mesCount=0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $delta = $lucro - $metaLucro; $pctMeta = ($metaLucro>0) ? ($lucro/$metaLucro)*100.0 : 0.0; $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; $totDelta += $delta; $mesCount++; ?>
           <tr>
             <td class="border px-2 py-1"><?php echo htmlspecialchars($label); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($principal,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($juros,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($inad,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($lucro,2,',','.'); ?></td>
-            <td class="border px-2 py-1">R$ <?php echo number_format($delta,2,',','.'); ?> • <?php echo number_format($pctDist,2,',','.'); ?>%</td>
+            <td class="border px-2 py-1">R$ <?php echo number_format($delta,2,',','.'); ?></td>
+            <td class="border px-2 py-1"><?php echo number_format($pctMeta,2,',','.'); ?>%</td>
           </tr>
         <?php endforeach; ?>
         <tr>
@@ -221,8 +223,9 @@
           <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totJuros,2,',','.'); ?></td>
           <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totInad,2,',','.'); ?></td>
           <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totLucro,2,',','.'); ?></td>
-          <?php $totPctDist = ($metaLucro>0 && $mesCount>0) ? (abs($totDelta)/($metaLucro*$mesCount))*100.0 : 0.0; ?>
-          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totDelta,2,',','.'); ?> • <?php echo number_format($totPctDist,2,',','.'); ?>%</td>
+          <?php $totPctMeta = ($metaLucro>0 && $mesCount>0) ? (($totLucro)/($metaLucro*$mesCount))*100.0 : 0.0; ?>
+          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totDelta,2,',','.'); ?></td>
+          <td class="border px-2 py-1 font-semibold"><?php echo number_format($totPctMeta,2,',','.'); ?>%</td>
         </tr>
       </tbody>
     </table>
