@@ -195,6 +195,21 @@
       <div class="w-64">
         <div class="text-xs text-gray-500 mb-1">Meta de lucro mensal (R$)</div>
         <input class="w-full border rounded px-3 py-2" type="number" step="0.01" min="0" name="meta_lucro" value="<?php echo $metaLucro>0?htmlspecialchars(number_format($metaLucro,2,'.','')):''; ?>" placeholder="20000" />
+        <?php 
+          $sumPrinRate = 0.0; $sumLucroRate = 0.0; 
+          foreach ($splitTbl as $ymR => $valsR) { 
+            $pR = (float)($valsR['principal'] ?? 0); 
+            $jR = (float)($valsR['juros'] ?? 0); 
+            $lR = max(0.0, $jR * (1.0 - $inadFracTbl)); 
+            $sumPrinRate += $pR; $sumLucroRate += $lR; 
+          }
+          $avgRate = ($sumPrinRate>0) ? ($sumLucroRate/$sumPrinRate) : 0.0; 
+          $capNec = ($avgRate>0 && $metaLucro>0) ? ($metaLucro/$avgRate) : 0.0; 
+        ?>
+        <div class="mt-2 text-xs text-gray-600">Taxa média de lucro sobre principal: <?php echo number_format($avgRate*100.0,2,',','.'); ?>%</div>
+        <?php if ($metaLucro>0): ?>
+          <div class="mt-1 text-xs text-gray-600">Capital necessário estimado: R$ <?php echo number_format($capNec,2,',','.'); ?></div>
+        <?php endif; ?>
       </div>
       <div class="ml-auto flex gap-2">
         <button class="px-4 py-2 rounded btn-primary" type="submit">Atualizar Projeções</button>
