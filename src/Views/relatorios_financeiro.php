@@ -174,7 +174,25 @@
   </div>
   <div class="border rounded p-4 mt-6">
     <div class="text-lg font-semibold mb-2">Projeção de 7 meses (mes atual + 6)</div>
-    <?php $splitTbl = $data['projMensalSplit'] ?? []; $inadPctTbl = (float)($data['inadPercent'] ?? 0); $inadFracTbl = $inadPctTbl>0 ? ($inadPctTbl/100.0) : 0.0; ?>
+    <?php 
+      $splitTbl = $data['projMensalSplit'] ?? []; 
+      $inadPctTbl = (float)($data['inadPercent'] ?? 0); 
+      $inadFracTbl = $inadPctTbl>0 ? ($inadPctTbl/100.0) : 0.0; 
+      $metaLucro = isset($_GET['meta_lucro']) ? (float)str_replace([',','.'], ['.',''], preg_replace('/[^0-9,\.]/','', (string)$_GET['meta_lucro'])) : 0.0; 
+    ?>
+    <form method="get" class="flex flex-wrap items-end gap-3 mb-3">
+      <input type="hidden" name="tipo_data" value="<?php echo htmlspecialchars($tipo); ?>">
+      <input type="hidden" name="periodo" value="<?php echo htmlspecialchars($periodo); ?>">
+      <input type="hidden" name="data_ini" value="<?php echo htmlspecialchars($data['ini'] ?? ''); ?>">
+      <input type="hidden" name="data_fim" value="<?php echo htmlspecialchars($data['fim'] ?? ''); ?>">
+      <div class="w-64">
+        <div class="text-xs text-gray-500 mb-1">Meta de lucro mensal (R$)</div>
+        <input class="w-full border rounded px-3 py-2" type="number" step="0.01" min="0" name="meta_lucro" value="<?php echo $metaLucro>0?htmlspecialchars(number_format($metaLucro,2,'.','')):''; ?>" placeholder="20000" />
+      </div>
+      <div class="ml-auto flex gap-2">
+        <button class="px-4 py-2 rounded btn-primary" type="submit">Atualizar Projeções</button>
+      </div>
+    </form>
     <table class="w-full border-collapse">
       <thead>
         <tr>
@@ -183,16 +201,18 @@
           <th class="border px-2 py-1">Juros</th>
           <th class="border px-2 py-1">Inadimplência</th>
           <th class="border px-2 py-1">Lucro</th>
+          <th class="border px-2 py-1">Meta</th>
         </tr>
       </thead>
       <tbody>
-        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; ?>
+        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; $totDelta=0.0; $mesCount=0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $delta = $lucro - $metaLucro; $pctDist = ($metaLucro>0) ? (abs($delta)/$metaLucro)*100.0 : 0.0; $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; $totDelta += $delta; $mesCount++; ?>
           <tr>
             <td class="border px-2 py-1"><?php echo htmlspecialchars($label); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($principal,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($juros,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($inad,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($lucro,2,',','.'); ?></td>
+            <td class="border px-2 py-1">R$ <?php echo number_format($delta,2,',','.'); ?> • <?php echo number_format($pctDist,2,',','.'); ?>%</td>
           </tr>
         <?php endforeach; ?>
         <tr>
@@ -201,6 +221,8 @@
           <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totJuros,2,',','.'); ?></td>
           <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totInad,2,',','.'); ?></td>
           <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totLucro,2,',','.'); ?></td>
+          <?php $totPctDist = ($metaLucro>0 && $mesCount>0) ? (abs($totDelta)/($metaLucro*$mesCount))*100.0 : 0.0; ?>
+          <td class="border px-2 py-1 font-semibold">R$ <?php echo number_format($totDelta,2,',','.'); ?> • <?php echo number_format($totPctDist,2,',','.'); ?>%</td>
         </tr>
       </tbody>
     </table>
