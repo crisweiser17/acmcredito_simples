@@ -179,6 +179,13 @@
       $inadPctTbl = (float)($data['inadPercent'] ?? 0); 
       $inadFracTbl = $inadPctTbl>0 ? ($inadPctTbl/100.0) : 0.0; 
       $metaLucro = isset($_GET['meta_lucro']) ? (float)str_replace([',','.'], ['.',''], preg_replace('/[^0-9,\.]/','', (string)$_GET['meta_lucro'])) : 0.0; 
+      $startYm = date('Y-m');
+      $seqMonths = [];
+      $startDate = new \DateTimeImmutable(date('Y-m-01'));
+      for ($i = 0; $i < 7; $i++) { $seqMonths[] = $startDate->modify("+{$i} months")->format('Y-m'); }
+      $orderedSplitTbl = [];
+      foreach ($seqMonths as $m) { $orderedSplitTbl[$m] = isset($splitTbl[$m]) ? $splitTbl[$m] : ['principal'=>0.0,'juros'=>0.0]; }
+      $splitTbl = $orderedSplitTbl;
     ?>
     <form method="get" class="flex flex-wrap items-end gap-3 mb-3">
       <input type="hidden" name="tipo_data" value="<?php echo htmlspecialchars($tipo); ?>">
@@ -206,8 +213,8 @@
         </tr>
       </thead>
       <tbody>
-        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; $totDelta=0.0; $mesCount=0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $delta = $lucro - $metaLucro; $pctMeta = ($metaLucro>0) ? ($lucro/$metaLucro)*100.0 : 0.0; $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; $totDelta += $delta; $mesCount++; ?>
-          <tr>
+        <?php $totPrincipal=0.0; $totJuros=0.0; $totInad=0.0; $totLucro=0.0; $totDelta=0.0; $mesCount=0; foreach ($splitTbl as $ym => $vals): $parts = explode('-', $ym); $label = (count($parts)===2) ? (sprintf('%02d/%d', (int)$parts[1], (int)$parts[0])) : $ym; $principal = (float)($vals['principal'] ?? 0); $juros = (float)($vals['juros'] ?? 0); $total = $principal + $juros; $inad = $total * $inadFracTbl; $lucro = max(0.0, $juros * (1.0 - $inadFracTbl)); $delta = $lucro - $metaLucro; $pctMeta = ($metaLucro>0) ? ($lucro/$metaLucro)*100.0 : 0.0; $totPrincipal += $principal; $totJuros += $juros; $totInad += $inad; $totLucro += $lucro; $totDelta += $delta; $mesCount++; $isCurr = ($ym === $startYm); ?>
+          <tr class="<?php echo $isCurr ? 'bg-gray-100' : ''; ?>">
             <td class="border px-2 py-1"><?php echo htmlspecialchars($label); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($principal,2,',','.'); ?></td>
             <td class="border px-2 py-1">R$ <?php echo number_format($juros,2,',','.'); ?></td>
@@ -230,7 +237,7 @@
       </tbody>
     </table>
   </div>
-  <?php $split = $data['projMensalSplit'] ?? []; $maxTotal = 0.0; foreach ($split as $ym=>$vals){ $t = (float)(($vals['principal'] ?? 0) + ($vals['juros'] ?? 0)); if ($t > $maxTotal) $maxTotal = $t; } ?>
+  <?php $split = $data['projMensalSplit'] ?? []; $startYm2 = date('Y-m'); $seq2 = []; $sd2 = new \DateTimeImmutable(date('Y-m-01')); for ($i=0;$i<7;$i++){ $seq2[] = $sd2->modify("+{$i} months")->format('Y-m'); } $ordered2 = []; foreach ($seq2 as $m){ $ordered2[$m] = isset($split[$m]) ? $split[$m] : ['principal'=>0.0,'juros'=>0.0]; } $split = $ordered2; $maxTotal = 0.0; foreach ($split as $ym=>$vals){ $t = (float)(($vals['principal'] ?? 0) + ($vals['juros'] ?? 0)); if ($t > $maxTotal) $maxTotal = $t; } ?>
   <?php if (!empty($split) && $maxTotal > 0): ?>
   <div class="border rounded p-4 mt-4">
     
