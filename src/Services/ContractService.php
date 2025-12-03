@@ -60,6 +60,8 @@ class ContractService {
       '{{CLIENTE_CPF}}' => $data['cpf'] ?? '',
       '{{CLIENTE_NASCIMENTO}}' => date('d/m/Y', strtotime($data['data_nascimento'])),
       '{{CLIENTE_ENDERECO}}' => ($data['endereco'] ?? '').', '.($data['numero'] ?? '').', '.($data['cidade'] ?? '').'/'.($data['estado'] ?? ''),
+      '{{CLIENTE_PIX_CHAVE}}' => (string)($data['pix_chave'] ?? ''),
+      '{{CLIENTE_PIX_TIPO}}' => strtolower((string)($data['pix_tipo'] ?? '')),
       '{{VALOR_PRINCIPAL}}' => number_format((float)$data['valor_principal'],2,',','.'),
       '{{NUM_PARCELAS}}' => (string)$data['num_parcelas'],
       '{{VALOR_PARCELA}}' => number_format((float)$data['valor_parcela'],2,',','.'),

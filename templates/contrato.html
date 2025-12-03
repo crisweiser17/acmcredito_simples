@@ -28,7 +28,7 @@
     <div class="section">
         <h2>1. PARTES</h2>
         <p><strong>CREDOR:</strong> {{EMPRESA_NOME}}, CNPJ {{EMPRESA_CNPJ}}, com sede em {{EMPRESA_ENDERECO}}.</p>
-        <p><strong>DEVEDOR:</strong> {{CLIENTE_NOME}}, CPF {{CLIENTE_CPF}}, nascido(a) em {{CLIENTE_NASCIMENTO}}, residente em {{CLIENTE_ENDERECO}}.</p>
+        <p><strong>CLIENTE:</strong> {{CLIENTE_NOME}}, CPF {{CLIENTE_CPF}}, nascido(a) em {{CLIENTE_NASCIMENTO}}, residente em {{CLIENTE_ENDERECO}}, doravante denominado CLIENTE.</p>
     </div>
     <div class="section">
         <h2>Documentos de Identidade e Selfie</h2>
@@ -36,8 +36,9 @@
     </div>
     <div class="section">
         <h2>2. DO OBJETO</h2>
-        <p>O CREDOR concede ao DEVEDOR um empréstimo no valor de <strong>R$ {{VALOR_PRINCIPAL}}</strong>, a ser pago em <strong>{{NUM_PARCELAS}} parcelas</strong> mensais de <strong>R$ {{VALOR_PARCELA}}</strong>.</p>
-        <p>O pagamento do crédito será realizado na conta do DEVEDOR via PIX utilizando o CPF {{CLIENTE_CPF}}.</p>
+        <p>O CREDOR concede ao CLIENTE um empréstimo no valor de <strong>R$ {{VALOR_PRINCIPAL}}</strong>, a ser pago em <strong>{{NUM_PARCELAS}} parcelas</strong> mensais de <strong>R$ {{VALOR_PARCELA}}</strong>.</p>
+        <p>O pagamento do crédito será realizado na conta do CLIENTE via PIX utilizando a chave {{CLIENTE_PIX_CHAVE}}.</p>
+        <p>O CLIENTE reconhece e aceita as condições financeiras deste contrato e o valor mutuado, obrigando-se ao pagamento conforme o cronograma.</p>
     </div>
     <div class="section">
         <h2>3. DAS CONDIÇÕES FINANCEIRAS</h2>
@@ -82,21 +83,21 @@
   
   <h3>6.1. DO PAGAMENTO</h3>
   <p><strong>6.1.1.</strong> Os pagamentos deverão ser realizados nas datas de vencimento especificadas no cronograma, através de boleto bancário, PIX ou transferência bancária para conta indicada pelo CREDOR.</p>
-  <p><strong>6.1.2.</strong> O DEVEDOR poderá antecipar o pagamento de qualquer parcela ou liquidar antecipadamente o saldo devedor, com redução proporcional dos juros, mediante solicitação prévia ao CREDOR.</p>
+  <p><strong>6.1.2.</strong> O CLIENTE poderá antecipar o pagamento de qualquer parcela ou liquidar antecipadamente o saldo devedor, com redução proporcional dos juros, mediante solicitação prévia ao CREDOR.</p>
   <p><strong>6.1.3.</strong> Não será considerado quitado o débito enquanto não ocorrer o efetivo recebimento pelo CREDOR.</p>
   
   <h3>6.2. DA MORA E INADIMPLÊNCIA</h3>
-  <p><strong>6.2.1.</strong> Considera-se em mora o DEVEDOR que não efetuar o pagamento na data de vencimento estabelecida.</p>
+  <p><strong>6.2.1.</strong> Considera-se em mora o CLIENTE que não efetuar o pagamento na data de vencimento estabelecida.</p>
   <p><strong>6.2.2.</strong> O não pagamento de qualquer parcela na data estabelecida acarretará o vencimento antecipado de todas as parcelas vincendas, ficando o saldo devedor sujeito aos acréscimos moratórios previstos na cláusula 5.</p>
   <p><strong>6.2.3.</strong> Em caso de inadimplência, o CREDOR poderá inscrever o débito em órgãos de proteção ao crédito (SPC, Serasa, etc.) e protestar o título em cartório.</p>
-  <p><strong>6.2.4.</strong> O DEVEDOR autoriza o CREDOR a negativar seu nome junto aos órgãos de proteção ao crédito em caso de inadimplência superior a 30 (trinta) dias.</p>
+  <p><strong>6.2.4.</strong> O CLIENTE autoriza o CREDOR a negativar seu nome junto aos órgãos de proteção ao crédito em caso de inadimplência superior a 30 (trinta) dias.</p>
   
   <h3>6.3. DA UTILIZAÇÃO DOS RECURSOS</h3>
-  <p><strong>6.3.1.</strong> O DEVEDOR declara que os recursos serão utilizados exclusivamente para fins lícitos e para sua necessidade pessoal.</p>
+  <p><strong>6.3.1.</strong> O CLIENTE declara que os recursos serão utilizados exclusivamente para fins lícitos e para sua necessidade pessoal.</p>
   <p><strong>6.3.2.</strong> É vedada a utilização dos recursos para atividades ilícitas, lavagem de dinheiro ou financiamento ao terrorismo.</p>
   
-  <h3>6.4. DAS DECLARAÇÕES DO DEVEDOR</h3>
-  <p><strong>6.4.1.</strong> O DEVEDOR declara, sob as penas da lei:</p>
+  <h3>6.4. DAS DECLARAÇÕES DO CLIENTE</h3>
+  <p><strong>6.4.1.</strong> O CLIENTE declara, sob as penas da lei:</p>
   <ul>
     <li><strong>a)</strong> Que todas as informações prestadas são verdadeiras;</li>
     <li><strong>b)</strong> Que possui capacidade civil plena para contratar;</li>
@@ -108,18 +109,18 @@
   </ul>
   
   <h3>6.5. DA COMUNICAÇÃO ENTRE AS PARTES</h3>
-  <p><strong>6.5.1.</strong> Todas as comunicações referentes a este contrato serão realizadas através do e-mail, telefone ou endereço fornecidos pelo DEVEDOR.</p>
-  <p><strong>6.5.2.</strong> O DEVEDOR obriga-se a comunicar ao CREDOR qualquer alteração de endereço, telefone ou e-mail no prazo de 5 (cinco) dias úteis.</p>
-  <p><strong>6.5.3.</strong> O DEVEDOR autoriza o recebimento de mensagens por WhatsApp, SMS, e-mail e outros meios eletrônicos para comunicados sobre o contrato.</p>
+  <p><strong>6.5.1.</strong> Todas as comunicações referentes a este contrato serão realizadas através do e-mail, telefone ou endereço fornecidos pelo CLIENTE.</p>
+  <p><strong>6.5.2.</strong> O CLIENTE obriga-se a comunicar ao CREDOR qualquer alteração de endereço, telefone ou e-mail no prazo de 5 (cinco) dias úteis.</p>
+  <p><strong>6.5.3.</strong> O CLIENTE autoriza o recebimento de mensagens por WhatsApp, SMS, e-mail e outros meios eletrônicos para comunicados sobre o contrato.</p>
   
   <h3>6.6. DA CESSÃO DE CRÉDITO</h3>
-  <p><strong>6.6.1.</strong> O CREDOR poderá ceder, total ou parcialmente, os direitos creditórios deste contrato a terceiros, independente de anuência prévia do DEVEDOR, que desde já concorda com tal possibilidade.</p>
-  <p><strong>6.6.2.</strong> Em caso de cessão, o DEVEDOR será comunicado sobre a nova titularidade do crédito.</p>
+  <p><strong>6.6.1.</strong> O CREDOR poderá ceder, total ou parcialmente, os direitos creditórios deste contrato a terceiros, independente de anuência prévia do CLIENTE, que desde já concorda com tal possibilidade.</p>
+  <p><strong>6.6.2.</strong> Em caso de cessão, o CLIENTE será comunicado sobre a nova titularidade do crédito.</p>
   
   <h3>6.7. DO USO DE DADOS PESSOAIS</h3>
-  <p><strong>6.7.1.</strong> O DEVEDOR autoriza o CREDOR a utilizar seus dados pessoais para fins de análise de crédito, cobrança e cumprimento de obrigações legais, nos termos da Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018).</p>
+  <p><strong>6.7.1.</strong> O CLIENTE autoriza o CREDOR a utilizar seus dados pessoais para fins de análise de crédito, cobrança e cumprimento de obrigações legais, nos termos da Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018).</p>
   <p><strong>6.7.2.</strong> Os dados pessoais coletados serão armazenados de forma segura e utilizados exclusivamente para as finalidades relacionadas a este contrato.</p>
-  <p><strong>6.7.3.</strong> O DEVEDOR poderá solicitar acesso, correção ou exclusão de seus dados pessoais, nos termos da legislação vigente.</p>
+  <p><strong>6.7.3.</strong> O CLIENTE poderá solicitar acesso, correção ou exclusão de seus dados pessoais, nos termos da legislação vigente.</p>
   
   <h3>6.8. DA RESCISÃO</h3>
   <p><strong>6.8.1.</strong> Este contrato será rescindido automaticamente após a quitação integral do débito.</p>
@@ -127,7 +128,7 @@
   <ul>
     <li><strong>a)</strong> Comprovação de fraude ou falsidade nas informações prestadas;</li>
     <li><strong>b)</strong> Utilização dos recursos para fins ilícitos;</li>
-    <li><strong>c)</strong> Decretação de falência ou insolvência civil do DEVEDOR.</li>
+    <li><strong>c)</strong> Decretação de falência ou insolvência civil do CLIENTE.</li>
   </ul>
   
   <h3>6.9. DO FORO</h3>
@@ -137,7 +138,7 @@
   <p><strong>6.10.1.</strong> Este contrato é celebrado em caráter irrevogável e irretratável, obrigando as partes e seus sucessores.</p>
   <p><strong>6.10.2.</strong> A tolerância de uma parte para com a outra quanto ao descumprimento de qualquer obrigação não implica em novação, perdão ou renúncia de direitos.</p>
   <p><strong>6.10.3.</strong> Este contrato é regido pelas leis brasileiras, especialmente pela Lei Complementar 167/2019 que dispõe sobre as Empresas Simples de Crédito.</p>
-  <p><strong>6.10.4.</strong> O DEVEDOR declara ter recebido, lido e compreendido integralmente os termos deste contrato antes de assiná-lo.</p>
+  <p><strong>6.10.4.</strong> O CLIENTE declara ter recebido, lido e compreendido integralmente os termos deste contrato antes de assiná-lo.</p>
 </div>
     </div>
     <div class="assinatura">
@@ -147,9 +148,9 @@
         <p>_________________________________________</p>
         <p>{{EMPRESA_NOME}}<br>CREDOR<br><small>Contato: {{EMPRESA_EMAIL}} · {{EMPRESA_TELEFONE}}</small></p>
         <br><br>
-        <p><span class="signature" id="assin_devedor"></span></p>
+        <p><span class="signature" id="assin_cliente"></span><span id="assin_devedor" style="display:none"></span></p>
         <p>_________________________________________</p>
-        <p>DEVEDOR - {{CLIENTE_NOME}}, CPF {{CLIENTE_CPF}}</p>
+        <p>CLIENTE - {{CLIENTE_NOME}}, CPF {{CLIENTE_CPF}}</p>
     </div>
 </body>
 </html>

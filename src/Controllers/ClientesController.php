@@ -360,7 +360,7 @@ class ClientesController {
     $countStmt->execute($params);
     $total = (int)($countStmt->fetch()['total'] ?? 0);
 
-    $rowsStmt = $pdo->prepare('SELECT id, nome, cpf, prova_vida_status, cpf_check_status, criterios_status, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count ' . $baseSql . ' ORDER BY created_at DESC LIMIT ' . (int)$perSel . ' OFFSET ' . (int)$offset);
+    $rowsStmt = $pdo->prepare('SELECT id, nome, cpf, prova_vida_status, cpf_check_status, criterios_status, referencias, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count ' . $baseSql . ' ORDER BY created_at DESC LIMIT ' . (int)$perSel . ' OFFSET ' . (int)$offset);
     $rowsStmt->execute($params);
     $rows = $rowsStmt->fetchAll();
     $pagesTotal = $perSel > 0 ? max(1, (int)ceil($total / $perSel)) : 1;

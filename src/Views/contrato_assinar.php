@@ -23,7 +23,7 @@ $loan = $loan ?? $stmt->fetch();
       var agree = document.getElementById('agree');
       var nomeErr = document.getElementById('nome_error');
       var agreeErr = document.getElementById('agree_error');
-      var sig = document.getElementById('assin_devedor');
+      var sig = document.getElementById('assin_cliente');
       function validate(){
         var ok = true;
         if (!nome.value.trim()) { nomeErr.classList.remove('hidden'); ok = false; } else { nomeErr.classList.add('hidden'); }
