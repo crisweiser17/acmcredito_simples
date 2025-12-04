@@ -171,11 +171,15 @@
       <div class="text-lg font-semibold">Documentos</div>
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
       <div class="grid md:grid-cols-2 gap-4">
-        <div class="space-y-2">
+        <div class="space-y-2" id="cnh_frente_cell">
           <div id="lbl_frente">CNH/RG Frente <span class="text-red-600">*</span></div>
-          <div>
+          <div id="cnh_frente_box_frente">
             <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
+          </div>
+          <div id="cnh_frente_box_unico" class="hidden">
+            <input class="w-full" type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png">
+            <div class="text-sm text-gray-600 mt-0.5">Documento Único</div>
           </div>
         </div>
         <div class="space-y-2" id="cnh_verso_cell">
@@ -196,11 +200,11 @@
           <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
           <div>
             <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png">
-            <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
+            <div class="text-sm text-gray-600 mt-0.5">Envie os 3 mais recentes</div>
           </div>
         </div>
       </div>
-      <input type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+      
       <div class="flex items-center justify-end gap-2">
         <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step4_save">Salvar</button>
         <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step4_finish">Finalizar</button>
@@ -238,23 +242,28 @@
   })();
   const chk = document.getElementById('cnh_unico_toggle');
   const versoCell = document.getElementById('cnh_verso_cell');
+  const frenteCell = document.getElementById('cnh_frente_cell');
+  const frenteBoxFrente = document.getElementById('cnh_frente_box_frente');
+  const frenteBoxUnico = document.getElementById('cnh_frente_box_unico');
   const lblFrente = document.getElementById('lbl_frente');
   const inpFrente = document.getElementById('inp_cnh_frente');
   const inpVerso = document.getElementById('inp_cnh_verso');
   const inpUnico = document.getElementById('inp_cnh_unico');
-  if (chk && versoCell && lblFrente && inpFrente && inpVerso && inpUnico) {
+  if (chk && versoCell && frenteCell && frenteBoxFrente && frenteBoxUnico && lblFrente && inpFrente && inpVerso && inpUnico) {
     function toggleUnico(){
       if (chk.checked) {
         versoCell.classList.add('hidden');
         lblFrente.textContent = 'Documento Único *';
-        inpUnico.classList.remove('hidden');
+        frenteBoxFrente.classList.add('hidden');
+        frenteBoxUnico.classList.remove('hidden');
         inpUnico.required = false;
         inpFrente.required = false;
         inpVerso.required = false;
       } else {
         versoCell.classList.remove('hidden');
         lblFrente.textContent = 'CNH/RG Frente *';
-        inpUnico.classList.add('hidden');
+        frenteBoxFrente.classList.remove('hidden');
+        frenteBoxUnico.classList.add('hidden');
         inpUnico.required = false;
         inpFrente.required = false;
         inpVerso.required = false;
@@ -352,10 +361,17 @@
       var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
       var d = await r.json(); if (d && d.ok){ showStep('4', true); } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
+    function showUploading(msg){ var m = document.getElementById('upload_modal'); var t = document.getElementById('upload_modal_text'); if(m && t){ t.textContent = msg||'enviando dados, aguarde um instante..'; m.classList.remove('hidden'); } }
+    function hideUploading(){ var m = document.getElementById('upload_modal'); if(m){ m.classList.add('hidden'); } }
     async function saveStep4Finish(){
       var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value);
-      var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json();
-      if (d && d.ok && d.completed && d.redirect){ try { localStorage.removeItem('acm_client_id'); } catch (e) {} window.location.href = d.redirect; } else if (d && d.ok){ var errs = (d.upload_errors||[]); if (errs.length>0){ alert('Alguns arquivos não foram aceitos:\n- '+errs.join('\n- ')); } else { alert('Dados salvos. Você pode finalizar quando tudo estiver completo.'); } } else { alert((d&&d.error)||'Erro ao salvar'); }
+      showUploading('enviando dados, aguarde um instante..');
+      try {
+        var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json();
+        if (d && d.ok && d.completed && d.redirect){ hideUploading(); try { localStorage.removeItem('acm_client_id'); } catch (e) {} window.location.href = d.redirect; }
+        else if (d && d.ok){ var errs = (d.upload_errors||[]); if (errs.length>0){ hideUploading(); alert('Alguns arquivos não foram aceitos:\n- '+errs.join('\n- ')); } else { var t = document.getElementById('upload_modal_text'); if (t){ t.textContent = 'Dados enviados com sucesso'; } setTimeout(hideUploading, 1200); } }
+        else { hideUploading(); alert((d&&d.error)||'Erro ao salvar'); }
+      } catch(e){ hideUploading(); alert('Erro ao enviar'); }
     }
     document.getElementById('btn_step1_next') && document.getElementById('btn_step1_next').addEventListener('click', saveStep1);
     document.getElementById('btn_step2_prev') && document.getElementById('btn_step2_prev').addEventListener('click', function(){ showStep('1', true); });
@@ -377,3 +393,8 @@
     })();
   })();
 </script>
+<div id="upload_modal" class="fixed inset-0 bg-black/40 flex items-center justify-center hidden">
+  <div class="bg-white rounded shadow px-6 py-4 text-center">
+    <div id="upload_modal_text" class="text-sm">enviando dados, aguarde um instante..</div>
+  </div>
+</div>
