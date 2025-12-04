@@ -48,12 +48,15 @@
       if (sel && ini && fim){ upd(); sel.addEventListener('change', upd); }
     })();
     (function(){
-      var btnL = document.getElementById('tab_loans_btn');
-      var btnC = document.getElementById('tab_clients_btn');
-      var boxL = document.getElementById('tab_loans');
-      var boxC = document.getElementById('tab_clients');
-      function show(which){ var loans = which==='loans'; boxL.classList.toggle('hidden', !loans); boxC.classList.toggle('hidden', loans); btnL.className = loans ? 'px-3 py-2 rounded border bg-blue-600 text-white' : 'px-3 py-2 rounded border bg-white text-gray-700'; btnC.className = loans ? 'px-3 py-2 rounded border bg-white text-gray-700' : 'px-3 py-2 rounded border bg-blue-600 text-white'; }
-      if (btnL && btnC && boxL && boxC){ btnL.addEventListener('click', function(){ show('loans'); }); btnC.addEventListener('click', function(){ show('clients'); }); show('loans'); }
+      function initTabs(){
+        var btnL = document.getElementById('tab_loans_btn');
+        var btnC = document.getElementById('tab_clients_btn');
+        var boxL = document.getElementById('tab_loans');
+        var boxC = document.getElementById('tab_clients');
+        function show(which){ var loans = which==='loans'; boxL.classList.toggle('hidden', !loans); boxC.classList.toggle('hidden', loans); btnL.className = loans ? 'px-3 py-2 rounded border bg-blue-600 text-white' : 'px-3 py-2 rounded border bg-white text-gray-700'; btnC.className = loans ? 'px-3 py-2 rounded border bg-white text-gray-700' : 'px-3 py-2 rounded border bg-blue-600 text-white'; }
+        if (btnL && btnC && boxL && boxC){ btnL.addEventListener('click', function(){ show('loans'); }); btnC.addEventListener('click', function(){ show('clients'); }); show('loans'); }
+      }
+      if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initTabs); } else { initTabs(); }
     })();
   </script>
   <div id="tab_loans" class="border rounded p-4">
