@@ -111,6 +111,10 @@ class Router {
       \App\Controllers\ClientesController::cadastroPublico();
       return;
     }
+    if ($path === '/cadastro/sucesso') {
+      \App\Controllers\ClientesController::cadastroPublicoSucesso();
+      return;
+    }
     if ($path === '/clientes/novo') {
       \App\Controllers\ClientesController::novo();
       return;
@@ -123,8 +127,16 @@ class Router {
       \App\Controllers\ClientesController::buscar();
       return;
     }
+    if ($path === '/api/cadastro/salvar') {
+      \App\Controllers\ClientesController::salvarPublicoParcial();
+      return;
+    }
     if ($path === '/api/clientes/draft-links') {
       \App\Controllers\ClientesController::gerarLinksDraft();
+      return;
+    }
+    if ($path === '/api/clientes/partial-save') {
+      \App\Controllers\ClientesController::salvarParcialInterno();
       return;
     }
     if (preg_match('#^/api/clientes/(\d+)$#', $path, $m)) {
@@ -184,6 +196,8 @@ class Router {
     if ($path === '/arquivo' || $path === '/arquivo/view' || $path === '/arquivo/download') return true;
     if (preg_match('#^/uploads/#', $path)) return true;
     if ($path === '/cadastro') return true;
+    if ($path === '/cadastro/sucesso') return true;
+    if ($path === '/api/cadastro/salvar') return true;
     if (preg_match('#^/referencia/#', $path)) return true;
     if (preg_match('#^/api/webhook/#', $path)) return true;
     return false;

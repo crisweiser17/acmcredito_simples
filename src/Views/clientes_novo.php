@@ -3,7 +3,8 @@
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
-  <form method="post" enctype="multipart/form-data" class="space-y-8">
+  <form method="post" enctype="multipart/form-data" class="space-y-8" id="form_interno">
+    <input type="hidden" name="client_id" id="client_id">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -28,6 +29,7 @@
           <div class="text-sm text-gray-600 mt-0.5">Telefone <span class="text-red-600">*</span></div>
         </div>
       </div>
+      <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_dados">Salvar bloco</button></div>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Bancários</div>
@@ -47,6 +49,7 @@
           <div class="text-xs mt-0.5" id="pix_helper"></div>
         </div>
       </div>
+      <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_dados_b">Salvar bloco</button></div>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Indicado Por</div>
@@ -100,6 +103,7 @@
           <div class="text-sm text-gray-600 mt-0.5">UF <span class="text-red-600">*</span></div>
         </div>
       </div>
+      <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_endereco">Salvar bloco</button></div>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Referências</div>
@@ -151,6 +155,7 @@
         </div>
         <div class="text-xs text-gray-500">Você pode incluir até 3 referências.</div>
       </div>
+      <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_referencias">Salvar bloco</button></div>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Profissionais</div>
@@ -175,6 +180,7 @@
           <div class="text-sm text-gray-600 mt-0.5">Renda Mensal <span class="text-red-600">*</span></div>
         </div>
       </div>
+      <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_profissionais">Salvar bloco</button></div>
     </div>
     <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Documentos</div>
@@ -210,6 +216,7 @@
         </div>
       </div>
       <input type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+      <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_documentos">Salvar documentos</button></div>
     </div>
     <div class="space-y-2">
       <div class="text-lg font-semibold">Notas Internas</div>
@@ -241,6 +248,52 @@
         prefix: 'R$ '
       });
     }
+  })();
+  (function(){
+    var form = document.getElementById('form_interno');
+    var cidEl = document.getElementById('client_id');
+    async function saveDados(){
+      var fd = new FormData();
+      fd.append('block','dados');
+      fd.append('nome', document.getElementById('nome').value.trim());
+      fd.append('cpf', document.getElementById('cpf').value.trim());
+      fd.append('data_nascimento', document.getElementById('data_nascimento').value.trim());
+      fd.append('email', document.getElementById('email').value.trim());
+      fd.append('telefone', document.getElementById('telefone').value.trim());
+      fd.append('pix_tipo', document.getElementById('pix_tipo').value.trim());
+      fd.append('pix_chave', document.getElementById('pix_chave').value.trim());
+      if (cidEl.value) fd.append('client_id', cidEl.value);
+      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ cidEl.value = d.client_id; alert('Bloco salvo'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveEndereco(){
+      var fd = new FormData(); fd.append('block','endereco'); fd.append('client_id', cidEl.value);
+      ['cep','endereco','numero','complemento','bairro','cidade','estado'].forEach(function(k){ fd.append(k, document.getElementById(k).value.trim()); });
+      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert('Bloco salvo'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveReferencias(){
+      var fd = new FormData(); fd.append('block','referencias'); fd.append('client_id', cidEl.value);
+      Array.from(document.querySelectorAll('input[name="ref_nome[]"]')).forEach(function(el){ fd.append('ref_nome[]', el.value.trim()); });
+      Array.from(document.querySelectorAll('input[name="ref_relacao[]"]')).forEach(function(el){ fd.append('ref_relacao[]', el.value.trim()); });
+      Array.from(document.querySelectorAll('input[name="ref_telefone[]"]')).forEach(function(el){ fd.append('ref_telefone[]', el.value.trim()); });
+      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert('Bloco salvo'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveProfissionais(){
+      var fd = new FormData(); fd.append('block','profissionais'); fd.append('client_id', cidEl.value);
+      fd.append('ocupacao', document.getElementById('ocupacao').value.trim());
+      fd.append('tempo_trabalho', document.getElementById('tempo_trabalho').value.trim());
+      fd.append('renda_mensal', document.getElementById('renda_mensal').value.trim());
+      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert('Bloco salvo'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveDocumentos(){
+      var fd = new FormData(form); fd.set('block','documentos'); fd.set('client_id', cidEl.value);
+      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert(d.completed?'Documentos enviados. Cadastro completo.':'Documentos enviados'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    document.getElementById('btn_save_dados') && document.getElementById('btn_save_dados').addEventListener('click', saveDados);
+    document.getElementById('btn_save_dados_b') && document.getElementById('btn_save_dados_b').addEventListener('click', saveDados);
+    document.getElementById('btn_save_endereco') && document.getElementById('btn_save_endereco').addEventListener('click', saveEndereco);
+    document.getElementById('btn_save_referencias') && document.getElementById('btn_save_referencias').addEventListener('click', saveReferencias);
+    document.getElementById('btn_save_profissionais') && document.getElementById('btn_save_profissionais').addEventListener('click', saveProfissionais);
+    document.getElementById('btn_save_documentos') && document.getElementById('btn_save_documentos').addEventListener('click', saveDocumentos);
   })();
   (function(){
     var hol = document.getElementById('inp_holerites');

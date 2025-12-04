@@ -3,37 +3,41 @@
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
-  <form method="post" enctype="multipart/form-data" class="space-y-8">
-    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+  <form method="post" enctype="multipart/form-data" class="space-y-8" id="cadastro_form">
+    <input type="hidden" name="client_id" id="client_id">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50" data-step="1">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div class="md:col-span-2">
-          <input class="w-full border rounded px-3 py-2" name="nome" id="nome" placeholder="Nome Completo" required>
+          <input class="w-full border rounded px-3 py-2" name="nome" id="nome" placeholder="Nome Completo">
           <div class="text-sm text-gray-600 mt-0.5">Nome Completo <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="cpf" id="cpf" placeholder="CPF" required>
+          <input class="w-full border rounded px-3 py-2" name="cpf" id="cpf" placeholder="CPF">
           <div class="text-sm text-gray-600 mt-0.5">CPF <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" type="date" name="data_nascimento" id="data_nascimento" required>
+          <input class="w-full border rounded px-3 py-2" type="date" name="data_nascimento" id="data_nascimento">
           <div class="text-sm text-gray-600 mt-0.5">Data de Nascimento <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" type="email" name="email" id="email" placeholder="Email" required>
+          <input class="w-full border rounded px-3 py-2" type="email" name="email" id="email" placeholder="Email">
           <div class="text-sm text-gray-600 mt-0.5">Email <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="telefone" id="telefone" placeholder="Telefone" required>
+          <input class="w-full border rounded px-3 py-2" name="telefone" id="telefone" placeholder="Telefone">
           <div class="text-sm text-gray-600 mt-0.5">Telefone <span class="text-red-600">*</span></div>
         </div>
       </div>
+      <div class="text-right">
+        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step1_next">Salvar e Próximo</button>
+      </div>
     </div>
-    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="1">
       <div class="text-lg font-semibold">Dados Bancários</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
-          <select class="w-full border rounded px-3 py-2" name="pix_tipo" id="pix_tipo" required>
+          <select class="w-full border rounded px-3 py-2" name="pix_tipo" id="pix_tipo">
             <option value=""></option>
             <option value="cpf">Chave CPF</option>
             <option value="email">Chave Email</option>
@@ -43,27 +47,30 @@
           <div class="text-sm text-gray-600 mt-0.5">Tipo de Chave PIX <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="pix_chave" id="pix_chave" placeholder="Digite a chave PIX" required>
+          <input class="w-full border rounded px-3 py-2" name="pix_chave" id="pix_chave" placeholder="Digite a chave PIX">
           <div class="text-xs mt-0.5" id="pix_helper"></div>
         </div>
       </div>
+      <div class="text-right">
+        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step1_next_b">Salvar e Próximo</button>
+      </div>
     </div>
-    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="2">
       <div class="text-lg font-semibold">Endereço</div>
       <div class="flex gap-2 items-start">
         <div class="flex-1">
-          <input class="w-full border rounded px-3 py-2" name="cep" id="cep" placeholder="CEP" required>
+          <input class="w-full border rounded px-3 py-2" name="cep" id="cep" placeholder="CEP">
           <div class="text-sm text-gray-600 mt-0.5">CEP <span class="text-red-600">*</span></div>
         </div>
         <button type="button" class="btn-primary px-4 py-2 rounded" id="buscarCep">Buscar</button>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="endereco" id="endereco" placeholder="Endereço" required>
+        <input class="w-full border rounded px-3 py-2" name="endereco" id="endereco" placeholder="Endereço">
         <div class="text-sm text-gray-600 mt-0.5">Endereço <span class="text-red-600">*</span></div>
       </div>
       <div class="grid md:grid-cols-3 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="numero" id="numero" placeholder="Número" required>
+          <input class="w-full border rounded px-3 py-2" name="numero" id="numero" placeholder="Número">
           <div class="text-sm text-gray-600 mt-0.5">Número <span class="text-red-600">*</span></div>
         </div>
         <div>
@@ -71,22 +78,25 @@
           <div class="text-sm text-gray-600 mt-0.5">Complemento</div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="bairro" id="bairro" placeholder="Bairro" required>
+          <input class="w-full border rounded px-3 py-2" name="bairro" id="bairro" placeholder="Bairro">
           <div class="text-sm text-gray-600 mt-0.5">Bairro <span class="text-red-600">*</span></div>
         </div>
       </div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="cidade" id="cidade" placeholder="Cidade" required>
+          <input class="w-full border rounded px-3 py-2" name="cidade" id="cidade" placeholder="Cidade">
           <div class="text-sm text-gray-600 mt-0.5">Cidade <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="estado" id="estado" placeholder="UF" required>
+          <input class="w-full border rounded px-3 py-2" name="estado" id="estado" placeholder="UF">
           <div class="text-sm text-gray-600 mt-0.5">UF <span class="text-red-600">*</span></div>
         </div>
       </div>
+      <div class="text-right">
+        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step2_next">Salvar e Próximo</button>
+      </div>
     </div>
-    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="3">
       <div class="text-lg font-semibold">Referências</div>
       <div class="space-y-2">
         <div class="grid md:grid-cols-2 gap-2">
@@ -121,16 +131,19 @@
         </div>
         <div class="text-xs text-gray-500">Você pode incluir até 3 referências.</div>
       </div>
+      <div class="text-right">
+        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step3_next">Salvar e Próximo</button>
+      </div>
     </div>
-    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="4">
       <div class="text-lg font-semibold">Dados Profissionais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="ocupacao" id="ocupacao" placeholder="Ocupação" required>
+          <input class="w-full border rounded px-3 py-2" name="ocupacao" id="ocupacao" placeholder="Ocupação">
           <div class="text-sm text-gray-600 mt-0.5">Ocupação <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <select class="w-full border rounded px-3 py-2" name="tempo_trabalho" id="tempo_trabalho" required>
+          <select class="w-full border rounded px-3 py-2" name="tempo_trabalho" id="tempo_trabalho">
             <option value=""></option>
             <option value="menos de 6 meses">menos de 6 meses</option>
             <option value="até 1 ano">até 1 ano</option>
@@ -141,49 +154,51 @@
           <div class="text-sm text-gray-600 mt-0.5">Tempo de Trabalho <span class="text-red-600">*</span></div>
         </div>
         <div class="md:col-span-2">
-          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" placeholder="Renda Mensal" required>
+          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" placeholder="Renda Mensal">
           <div class="text-sm text-gray-600 mt-0.5">Renda Mensal <span class="text-red-600">*</span></div>
         </div>
       </div>
     </div>
-    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50">
+    <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="4">
       <div class="text-lg font-semibold">Documentos</div>
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
       <div class="grid md:grid-cols-2 gap-4">
         <div class="space-y-2">
           <div id="lbl_frente">CNH/RG Frente <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
+            <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
           </div>
         </div>
         <div class="space-y-2" id="cnh_verso_cell">
           <div>CNH/RG Verso <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="cnh_verso" id="inp_cnh_verso" accept=".pdf,.jpg,.jpeg,.png" required>
+            <input class="w-full" type="file" name="cnh_verso" id="inp_cnh_verso" accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Verso</div>
           </div>
         </div>
         <div class="space-y-2">
           <div>Selfie <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png" required>
+            <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
           </div>
         </div>
         <div class="space-y-2">
           <div>Holerites (múltiplos) <span class="text-red-600">*</span></div>
           <div>
-            <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
+            <input class="w-full" type="file" name="holerites[]" multiple accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Holerites</div>
           </div>
         </div>
       </div>
       <input type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step4_save">Salvar</button>
+        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step4_finish">Finalizar</button>
+      </div>
     </div>
-    
-    <div class="text-xs text-gray-500">Ao enviar, seus dados serão avaliados pela equipe e você será contatado.</div>
-    <button class="btn-primary px-4 py-2 rounded" type="submit">Enviar Cadastro</button>
+    <div class="text-xs text-gray-500">Você pode salvar e voltar mais tarde. Quando todas as etapas estiverem completas, finalize.</div>
   </form>
 </div>
 <style>
@@ -222,7 +237,7 @@
         versoCell.classList.add('hidden');
         lblFrente.textContent = 'Documento Único *';
         inpUnico.classList.remove('hidden');
-        inpUnico.required = true;
+        inpUnico.required = false;
         inpFrente.required = false;
         inpVerso.required = false;
       } else {
@@ -230,8 +245,8 @@
         lblFrente.textContent = 'CNH/RG Frente *';
         inpUnico.classList.add('hidden');
         inpUnico.required = false;
-        inpFrente.required = true;
-        inpVerso.required = true;
+        inpFrente.required = false;
+        inpVerso.required = false;
       }
     }
     chk.addEventListener('change', toggleUnico);
@@ -285,5 +300,50 @@
       cpfEl && cpfEl.addEventListener('input', function(){ if ((tipoEl.value||'')==='cpf') onTipoChange(); });
       ['input','blur','change'].forEach(function(ev){ chaveEl.addEventListener(ev, validate); });
     }
+  })();
+  (function(){
+    var form = document.getElementById('cadastro_form');
+    var cidEl = document.getElementById('client_id');
+    function showStep(n){ Array.from(document.querySelectorAll('[data-step]')).forEach(function(sec){ sec.classList.toggle('hidden', sec.getAttribute('data-step')!=n); }); }
+    async function saveStep1(){
+      var fd = new FormData();
+      fd.append('step','1');
+      fd.append('nome', document.getElementById('nome').value.trim());
+      fd.append('cpf', document.getElementById('cpf').value.trim());
+      fd.append('data_nascimento', document.getElementById('data_nascimento').value.trim());
+      fd.append('email', document.getElementById('email').value.trim());
+      fd.append('telefone', document.getElementById('telefone').value.trim());
+      fd.append('pix_tipo', document.getElementById('pix_tipo').value.trim());
+      fd.append('pix_chave', document.getElementById('pix_chave').value.trim());
+      var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
+      var d = await r.json();
+      if (d && d.ok){ cidEl.value = d.client_id; showStep('2'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveStep2(){
+      var fd = new FormData();
+      fd.append('step','2'); fd.append('client_id', cidEl.value);
+      ['cep','endereco','numero','complemento','bairro','cidade','estado'].forEach(function(k){ fd.append(k, document.getElementById(k).value.trim()); });
+      var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
+      var d = await r.json(); if (d && d.ok){ showStep('3'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveStep3(){
+      var fd = new FormData(); fd.append('step','3'); fd.append('client_id', cidEl.value);
+      Array.from(document.querySelectorAll('input[name="ref_nome[]"]')).forEach(function(el){ fd.append('ref_nome[]', el.value.trim()); });
+      Array.from(document.querySelectorAll('input[name="ref_telefone[]"]')).forEach(function(el){ fd.append('ref_telefone[]', el.value.trim()); });
+      var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
+      var d = await r.json(); if (d && d.ok){ showStep('4'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    async function saveStep4Finish(){
+      var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value);
+      var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json();
+      if (d && d.ok && d.completed && d.redirect){ window.location.href = d.redirect; } else if (d && d.ok){ alert('Dados salvos. Você pode finalizar quando tudo estiver completo.'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+    }
+    document.getElementById('btn_step1_next') && document.getElementById('btn_step1_next').addEventListener('click', saveStep1);
+    document.getElementById('btn_step1_next_b') && document.getElementById('btn_step1_next_b').addEventListener('click', saveStep1);
+    document.getElementById('btn_step2_next') && document.getElementById('btn_step2_next').addEventListener('click', saveStep2);
+    document.getElementById('btn_step3_next') && document.getElementById('btn_step3_next').addEventListener('click', saveStep3);
+    document.getElementById('btn_step4_finish') && document.getElementById('btn_step4_finish').addEventListener('click', saveStep4Finish);
+    document.getElementById('btn_step4_save') && document.getElementById('btn_step4_save').addEventListener('click', async function(){ var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value); var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert('Dados salvos'); } else { alert((d&&d.error)||'Erro ao salvar'); } });
+    showStep('1');
   })();
 </script>
