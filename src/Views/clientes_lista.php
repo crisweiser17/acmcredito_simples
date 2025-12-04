@@ -4,6 +4,7 @@
     <h2 class="text-2xl font-semibold">Clientes</h2>
     <a class="btn-primary px-4 py-2 rounded" href="/clientes/novo">Novo Cliente</a>
   </div>
+  <div id="cli_toast" class="hidden px-3 py-2 rounded bg-green-100 text-green-700 fixed top-4 left-1/2" style="transform:translateX(-50%); max-width: 90%; z-index: 10000;">Link copiado</div>
   <div class="rounded border border-gray-200 p-4">
   <form method="get" class="flex flex-wrap items-end gap-3">
     <div class="flex-1 min-w-[240px]">
@@ -109,7 +110,7 @@
           <td class="border px-2 py-1"><?php $cpfDigits = preg_replace('/\D+/', '', (string)$c['cpf']); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); echo htmlspecialchars($cpfFmt); } else { echo htmlspecialchars((string)$c['cpf']); } ?></td>
           <td class="border px-2 py-1 text-center">
             <?php if ((int)($c['is_draft'] ?? 0) === 1): ?>
-              <i class="fa fa-file text-gray-600" title="Rascunho" aria-hidden="true"></i>
+              <button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-blue-50 copy-link-btn" data-client-id="<?php echo (int)$c['id']; ?>" title="Copiar link de cadastro" aria-label="Copiar link de cadastro"><i class="fa fa-file text-gray-600" aria-hidden="true"></i></button>
             <?php else: ?>
               <i class="fa fa-check text-green-600" title="Ativo" aria-hidden="true"></i>
             <?php endif; ?>
@@ -174,7 +175,7 @@
       function fmtCPF(c){ var d = (c||'').replace(/\D+/g,''); if (d.length===11){ return d.substring(0,3)+'.'+d.substring(3,6)+'.'+d.substring(6,9)+'-'+d.substring(9); } return c||''; }
       function badge(val){ var v = String(val||'').toLowerCase(); var cls = 'bg-gray-100 text-gray-800'; if (v==='aprovado'){ cls='bg-green-100 text-green-800'; } else if (v==='pendente'){ cls='bg-yellow-100 text-yellow-800'; } else if (v==='reprovado'){ cls='bg-red-100 text-red-800'; } return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(v? (v.charAt(0).toUpperCase()+v.slice(1)) : '—')+'</span>'; }
       function elig(pv,cpf,cr){ var ok = (String(pv).toLowerCase()==='aprovado' && String(cpf).toLowerCase()==='aprovado' && String(cr).toLowerCase()==='aprovado'); var cls = ok?'bg-green-100 text-green-800':'bg-red-100 text-red-800'; return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(ok?'Sim':'Não')+'</span>'; }
-      function statusIcon(isDraft){ return (parseInt(isDraft,10)===1) ? '<i class="fa fa-file text-gray-600" title="Rascunho" aria-hidden="true"></i>' : '<i class="fa fa-check text-green-600" title="Ativo" aria-hidden="true"></i>'; }
+      function statusIcon(isDraft, id){ return (parseInt(isDraft,10)===1) ? '<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-blue-50 copy-link-btn" data-client-id="'+(id||'')+'" title="Copiar link de cadastro" aria-label="Copiar link de cadastro"><i class="fa fa-file text-gray-600" aria-hidden="true"></i></button>' : '<i class="fa fa-check text-green-600" title="Ativo" aria-hidden="true"></i>'; }
       function refCheck(json){ try{ var arr = (typeof json==='string')?JSON.parse(json||'[]'):(json||[]); if(!Array.isArray(arr)) arr=[]; var st='pendente'; for(var i=0;i<arr.length;i++){ var r=arr[i]||{}; var op = String((r.operador&&r.operador.status)||'').toLowerCase(); var pb = String((r.public&&r.public.status)||'').toLowerCase(); if(op==='aprovado'||pb==='aprovado'){ st='aprovado'; break; } if(op==='reprovado'||pb==='reprovado'){ st = (st==='aprovado') ? 'aprovado' : 'reprovado'; } } var color = (st==='aprovado')?'#16a34a':((st==='reprovado')?'#ef4444':'#9ca3af'); return '<i class="fa fa-check-circle" aria-hidden="true" style="color:'+color+'"></i>'; } catch(e){ return '<i class="fa fa-check-circle" aria-hidden="true" style="color:#9ca3af"></i>'; } }
       function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); return dd+'/'+mm+'/'+yy; }
       perSel.addEventListener('change', function(){
@@ -190,7 +191,7 @@
             '<td class="border px-2 py-1">'+(c.id||'')+'</td>'+
             '<td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline uppercase" href="/clientes/'+(c.id||'')+'/ver">'+(c.nome? String(c.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtCPF(c.cpf||'')+'</td>'+
-            '<td class="border px-2 py-1 text-center">'+statusIcon(c.is_draft)+'</td>'+
+            '<td class="border px-2 py-1 text-center">'+statusIcon(c.is_draft, c.id)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.prova_vida_status)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.cpf_check_status)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.criterios_status)+'</td>'+
@@ -208,10 +209,13 @@
             '</td>'+
           '</tr>'; }); tb.innerHTML = out; var pi = document.getElementById('cli_pageinfo'); if (pi){ var p = j.pagination||{}; pi.textContent = 'Página '+(p.page||1)+' de '+(p.pages_total||1)+' • Total '+(p.total||0); }
           bindDeleteButtons();
-          });
+          bindCopyButtons();
+        });
       });
       function bindDeleteButtons(){ var btns = document.querySelectorAll('[data-del-id]'); btns.forEach(function(b){ b.addEventListener('click', function(){ var id = parseInt(b.getAttribute('data-del-id')||'0',10); if(!id) return; if(!confirm('Excluir cliente '+id+'? Esta ação não pode ser desfeita.')) return; fetch('/clientes/'+id+'/excluir', { method:'POST' }).then(function(r){ if(r.ok){ window.location.reload(); } else { r.json().then(function(j){ alert(j && j.error ? j.error : 'Falha ao excluir'); }).catch(function(){ r.text().then(function(t){ alert(t || 'Falha ao excluir'); }); }); } }); }); }); }
+      function bindCopyButtons(){ var btns = document.querySelectorAll('.copy-link-btn'); var toast = document.getElementById('cli_toast'); btns.forEach(function(b){ b.addEventListener('click', async function(){ try { var id = parseInt(b.getAttribute('data-client-id')||'0',10); if(!id) return; var fd = new FormData(); fd.append('client_id', String(id)); var r = await fetch('/api/clientes/cadastro-link', { method:'POST', body: fd }); var d = await r.json(); if (d && d.ok && d.link) { await navigator.clipboard.writeText(String(d.link)); if (toast){ toast.textContent = 'Link copiado'; toast.classList.remove('hidden'); setTimeout(function(){ toast.classList.add('hidden'); }, 2000); } } else { alert((d && d.error) || 'Erro ao gerar link'); } } catch (e) { alert('Erro ao copiar link'); } }); }); }
       bindDeleteButtons();
+      bindCopyButtons();
     })();
   </script>
 </div>
