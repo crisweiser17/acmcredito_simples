@@ -334,9 +334,9 @@
   function toggleUnico(){
     if (chk.checked) {
       versoCell.classList.add('hidden');
-      lblFrente.textContent = 'Documento Único *';
+      lblFrente.textContent = 'Documento Único';
       inpUnico.classList.remove('hidden');
-      inpUnico.required = true;
+      inpUnico.required = false;
       inpFrente.required = false;
       inpVerso.required = false;
     } else {
@@ -450,6 +450,7 @@
   </script>
 </div>
 <?php endif; ?>
+<script>
   (function(){
     var cpfEl = document.getElementById('cpf');
     var helper = document.createElement('div'); helper.className='text-xs mt-0.5'; cpfEl && cpfEl.parentNode && cpfEl.parentNode.appendChild(helper);
@@ -466,3 +467,4 @@
     refreshStatus();
     ['click','change','input'].forEach(function(ev){ document.body.addEventListener(ev, function(e){ if (e && e.target && e.target.id && (/btn_save_|client_id/).test(e.target.id)){ setTimeout(refreshStatus, 200); } }); });
   })();
+</script>

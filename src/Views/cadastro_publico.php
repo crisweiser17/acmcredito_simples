@@ -258,7 +258,7 @@
     function toggleUnico(){
       if (chk.checked) {
         versoCell.classList.add('hidden');
-        lblFrente.textContent = 'Documento Único *';
+        lblFrente.textContent = 'Documento Único';
         frenteBoxFrente.classList.add('hidden');
         frenteBoxUnico.classList.remove('hidden');
         inpUnico.required = false;

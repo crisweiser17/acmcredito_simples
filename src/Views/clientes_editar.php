@@ -173,7 +173,7 @@
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle" <?php echo ($c['cnh_arquivo_unico'] ? 'checked' : ''); ?>><span>Documento frente/verso no mesmo arquivo</span></label>
       <div id="doc_grid" class="grid gap-6 md:grid-cols-2">
         <div class="p-4 border rounded">
-          <div class="font-medium mb-2"><span id="label_frente"><?php echo ($c['cnh_arquivo_unico'] ? 'Documento Único *' : 'Frente *'); ?></span></div>
+          <div class="font-medium mb-2"><span id="label_frente"><?php echo ($c['cnh_arquivo_unico'] ? 'Documento Único' : 'Frente *'); ?></span></div>
           <?php if (!empty($c['doc_cnh_frente'])): ?>
             <?php $ext = strtolower(pathinfo($c['doc_cnh_frente'], PATHINFO_EXTENSION)); ?>
             <?php if ($ext === 'pdf'): ?>
@@ -375,10 +375,10 @@
   const verso = document.getElementById('verso_block');
   const labelFrente = document.getElementById('label_frente');
   chk.addEventListener('change', function(){
-    if (chk.checked) { verso.style.display='none'; labelFrente.textContent = 'Documento Único *'; }
+    if (chk.checked) { verso.style.display='none'; labelFrente.textContent = 'Documento Único'; }
     else { verso.style.display=''; labelFrente.textContent = 'Frente *'; }
   });
-  (function(){ if (chk.checked){ labelFrente.textContent='Documento Único *'; } else { labelFrente.textContent='Frente *'; } })();
+  (function(){ if (chk.checked){ labelFrente.textContent='Documento Único'; } else { labelFrente.textContent='Frente *'; } })();
   (function(){
     var hol = document.getElementById('inp_holerites_ed');
     if (!hol) return;
