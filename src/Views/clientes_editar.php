@@ -16,7 +16,7 @@
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
-  <div id="form_toast" class="px-3 py-2 rounded bg-red-100 text-red-700 hidden"></div>
+  <div id="form_toast" class="hidden px-3 py-2 rounded bg-red-100 text-red-700 fixed top-4 left-1/2" style="transform:translateX(-50%); max-width: 90%; z-index: 10000;"></div>
   <?php if (!empty($_SESSION['undo_hint'])): $tok = $_SESSION['undo_hint']; ?>
   <form method="post" class="mb-4">
     <input type="hidden" name="acao" value="restaurar_doc">
@@ -27,7 +27,7 @@
     </div>
   </form>
   <?php endif; ?>
-  <form method="post" enctype="multipart/form-data" class="space-y-8" id="editForm">
+  <form method="post" enctype="multipart/form-data" class="space-y-8" id="editForm" novalidate>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -458,14 +458,21 @@
 (function(){
   var form = document.getElementById('editForm');
   var toast = document.getElementById('form_toast');
-  function showToast(msg){ if(!toast) return; toast.textContent = msg; toast.classList.remove('hidden'); setTimeout(function(){ toast.classList.add('hidden'); }, 5000); }
+  function showToast(msg){ if(!toast) return; toast.textContent = msg; toast.classList.remove('hidden'); setTimeout(function(){ toast.classList.add('hidden'); }, 7000); }
   function val(name){ var el = document.querySelector('[name="'+name+'"]'); return (el && (el.value||'').trim()) || ''; }
   function numDigits(el){ return ((el && el.value)||'').replace(/\D/g,''); }
   if(form){
+    form.noValidate = true;
+    // Clear previous highlights on input/change
+    Array.from(form.querySelectorAll('input, select, textarea')).forEach(function(el){
+      el.addEventListener('input', function(){ el.classList.remove('border-red-600'); el.classList.remove('ring'); el.style.borderColor=''; });
+      el.addEventListener('change', function(){ el.classList.remove('border-red-600'); el.classList.remove('ring'); el.style.borderColor=''; });
+    });
     form.addEventListener('submit', function(ev){
       var missing = [];
       var req = [['nome','Nome Completo'],['cpf','CPF'],['data_nascimento','Data de Nascimento'],['email','Email'],['telefone','Telefone'],['cep','CEP'],['endereco','Endereço'],['numero','Número'],['bairro','Bairro'],['cidade','Cidade'],['estado','Estado'],['ocupacao','Ocupação'],['tempo_trabalho','Tempo de Trabalho']];
-      for(var i=0;i<req.length;i++){ if(!val(req[i][0])) missing.push(req[i][1]); }
+      var firstEl = null;
+      for(var i=0;i<req.length;i++){ if(!val(req[i][0])) { missing.push(req[i][1]); var el = form.querySelector('[name="'+req[i][0]+'"]'); if (el){ el.classList.add('border-red-600'); el.style.borderColor = '#dc2626'; if(!firstEl) firstEl = el; } } }
       var rendaEl = document.getElementById('renda_mensal'); var rendaDigits = numDigits(rendaEl); if(!(parseInt(rendaDigits||'0',10)>0)) missing.push('Renda Mensal');
       var ptEl = document.getElementById('pix_tipo'); var pcEl = document.getElementById('pix_chave'); var pt = (ptEl && ptEl.value||'').trim(); var pc = (pcEl && pcEl.value||'').trim(); if(!pt) missing.push('Tipo de Chave PIX'); if(!pc) missing.push('Chave PIX');
       var frenteExisting = <?php echo !empty($c['doc_cnh_frente']) ? 'true' : 'false'; ?>;
@@ -481,7 +488,7 @@
       if(!okCnh){ missing.push(cnhUnico ? 'Documento Único (CNH/RG)' : 'CNH/RG Frente e Verso'); }
       var okSelfie = selfieExisting || hasS; if(!okSelfie){ missing.push('Selfie'); }
       var holInput = document.getElementById('inp_holerites_ed'); var hasNewHol = !!(holInput && holInput.files && holInput.files.length); var okHol = (holCount>0) || hasNewHol; if(!okHol){ missing.push('Holerite (mínimo 1)'); }
-      if(missing.length){ ev.preventDefault(); showToast('Campos obrigatórios: ' + missing.join(', ')); }
+      if(missing.length){ ev.preventDefault(); if(firstEl){ try{ firstEl.scrollIntoView({behavior:'smooth', block:'center'}); firstEl.focus(); }catch(e){} } showToast('Campos obrigatórios: ' + missing.join(', ')); }
     });
   }
 })();
