@@ -190,11 +190,15 @@
       <div class="text-lg font-semibold">Documentos</div>
       <label class="inline-flex items-center gap-2"><input type="checkbox" name="cnh_arquivo_unico" id="cnh_unico_toggle"><span>Documento frente/verso no mesmo arquivo</span></label>
       <div class="grid md:grid-cols-2 gap-4">
-        <div class="space-y-2">
+        <div class="space-y-2" id="cnh_frente_cell">
           <div id="lbl_frente">CNH/RG Frente <span class="text-red-600">*</span></div>
-          <div>
+          <div id="cnh_frente_box_frente">
             <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
+          </div>
+          <div id="cnh_frente_box_unico" class="hidden">
+            <input class="w-full" type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png">
+            <div class="text-sm text-gray-600 mt-0.5">Documento Único</div>
           </div>
         </div>
         <div class="space-y-2" id="cnh_verso_cell">
@@ -219,7 +223,6 @@
           </div>
         </div>
       </div>
-      <input type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
       <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_documentos">Salvar documentos</button></div>
     </div>
     <div class="space-y-2">
@@ -327,6 +330,9 @@
   });
   const chk = document.getElementById('cnh_unico_toggle');
   const versoCell = document.getElementById('cnh_verso_cell');
+  const frenteCell = document.getElementById('cnh_frente_cell');
+  const frenteBoxFrente = document.getElementById('cnh_frente_box_frente');
+  const frenteBoxUnico = document.getElementById('cnh_frente_box_unico');
   const lblFrente = document.getElementById('lbl_frente');
   const inpFrente = document.getElementById('inp_cnh_frente');
   const inpVerso = document.getElementById('inp_cnh_verso');
@@ -335,14 +341,16 @@
     if (chk.checked) {
       versoCell.classList.add('hidden');
       lblFrente.textContent = 'Documento Único';
-      inpUnico.classList.remove('hidden');
+      frenteBoxFrente.classList.add('hidden');
+      frenteBoxUnico.classList.remove('hidden');
       inpUnico.required = false;
       inpFrente.required = false;
       inpVerso.required = false;
     } else {
       versoCell.classList.remove('hidden');
       lblFrente.textContent = 'CNH/RG Frente *';
-      inpUnico.classList.add('hidden');
+      frenteBoxFrente.classList.remove('hidden');
+      frenteBoxUnico.classList.add('hidden');
       inpUnico.required = false;
       inpFrente.required = true;
       inpVerso.required = true;

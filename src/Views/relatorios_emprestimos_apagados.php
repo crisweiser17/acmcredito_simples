@@ -1,7 +1,11 @@
 <?php $rows = $rows ?? []; $periodo = $_GET['periodo'] ?? ''; $q = trim($_GET['q'] ?? ''); ?>
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h2 class="text-2xl font-semibold">Empréstimos Apagados</h2>
+    <h2 class="text-2xl font-semibold">Apagados</h2>
+  </div>
+  <div class="flex gap-2">
+    <button type="button" id="tab_loans_btn" class="px-3 py-2 rounded border bg-blue-600 text-white">Empréstimos Apagados</button>
+    <button type="button" id="tab_clients_btn" class="px-3 py-2 rounded border bg-white text-gray-700">Clientes Apagados</button>
   </div>
   <div class="rounded border border-gray-200 p-4">
   <form method="get" class="flex flex-wrap items-end gap-3">
@@ -43,8 +47,16 @@
       function upd(){ var c = sel.value==='custom'; ini.disabled = !c; fim.disabled = !c; var box = document.getElementById('rep_del_dates'); if (box){ box.style.display = c?'block':'none'; var sib = box.nextElementSibling; if (sib){ sib.style.display = c?'block':'none'; } } }
       if (sel && ini && fim){ upd(); sel.addEventListener('change', upd); }
     })();
+    (function(){
+      var btnL = document.getElementById('tab_loans_btn');
+      var btnC = document.getElementById('tab_clients_btn');
+      var boxL = document.getElementById('tab_loans');
+      var boxC = document.getElementById('tab_clients');
+      function show(which){ var loans = which==='loans'; boxL.classList.toggle('hidden', !loans); boxC.classList.toggle('hidden', loans); btnL.className = loans ? 'px-3 py-2 rounded border bg-blue-600 text-white' : 'px-3 py-2 rounded border bg-white text-gray-700'; btnC.className = loans ? 'px-3 py-2 rounded border bg-white text-gray-700' : 'px-3 py-2 rounded border bg-blue-600 text-white'; }
+      if (btnL && btnC && boxL && boxC){ btnL.addEventListener('click', function(){ show('loans'); }); btnC.addEventListener('click', function(){ show('clients'); }); show('loans'); }
+    })();
   </script>
-  <div class="border rounded p-4">
+  <div id="tab_loans" class="border rounded p-4">
     <table class="w-full border-collapse">
       <thead><tr><th class="border px-2 py-1">Empréstimo</th><th class="border px-2 py-1">Cliente</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Parcelas</th><th class="border px-2 py-1">Valor Parcela</th><th class="border px-2 py-1">Status</th><th class="border px-2 py-1">Criado em</th><th class="border px-2 py-1">Apagado por</th></tr></thead>
       <tbody>
@@ -66,6 +78,23 @@
                 </a>
               </div>
             </td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <div id="tab_clients" class="border rounded p-4 hidden">
+    <table class="w-full border-collapse">
+      <thead><tr><th class="border px-2 py-1">Cliente</th><th class="border px-2 py-1">CPF</th><th class="border px-2 py-1">Telefone</th><th class="border px-2 py-1">Email</th><th class="border px-2 py-1">Criado em</th><th class="border px-2 py-1">Apagado em</th></tr></thead>
+      <tbody>
+        <?php foreach (($clientesApagados ?? []) as $c): ?>
+          <tr>
+            <td class="border px-2 py-1"><?php echo htmlspecialchars($c['nome'] ?? ''); ?></td>
+            <td class="border px-2 py-1"><?php echo htmlspecialchars($c['cpf'] ?? ''); ?></td>
+            <td class="border px-2 py-1"><?php echo htmlspecialchars($c['telefone'] ?? ''); ?></td>
+            <td class="border px-2 py-1"><?php echo htmlspecialchars($c['email'] ?? ''); ?></td>
+            <td class="border px-2 py-1"><?php echo !empty($c['created_at'])?date('d/m/Y H:i', strtotime($c['created_at'])):''; ?></td>
+            <td class="border px-2 py-1"><?php echo !empty($c['deleted_at'])?date('d/m/Y H:i', strtotime($c['deleted_at'])):''; ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>

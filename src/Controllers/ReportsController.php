@@ -135,7 +135,25 @@ use App\Database\Connection;
     $sql .= ' ORDER BY l.created_at DESC';
     $rows = [];
     try { $stmt = $pdo->prepare($sql); $stmt->execute($params); $rows = $stmt->fetchAll(); } catch (\Throwable $e) { $rows = []; }
-    $title = 'Empréstimos Apagados';
+    $clientesApagados = [];
+    try {
+      $sqlCli = 'SELECT id, nome, cpf, telefone, email, created_at, deleted_at FROM clients WHERE deleted_at IS NOT NULL';
+      $pCli = [];
+      if ($q !== '') {
+        $cpfNorm = preg_replace('/\D/', '', $q);
+        $sqlCli .= ' AND (nome LIKE :qc OR REPLACE(REPLACE(REPLACE(cpf, ".", ""), "-", ""), " ", "") = :cpf)';
+        $pCli['qc'] = '%'.$q.'%';
+        $pCli['cpf'] = $cpfNorm;
+      }
+      if ($ini !== '' && $fim !== '') { $sqlCli .= ' AND DATE(deleted_at) BETWEEN :inic AND :fimc'; $pCli['inic']=$ini; $pCli['fimc']=$fim; }
+      elseif ($ini !== '') { $sqlCli .= ' AND DATE(deleted_at) >= :inic'; $pCli['inic']=$ini; }
+      elseif ($fim !== '') { $sqlCli .= ' AND DATE(deleted_at) <= :fimc'; $pCli['fimc']=$fim; }
+      $sqlCli .= ' ORDER BY deleted_at DESC';
+      $stc = $pdo->prepare($sqlCli);
+      $stc->execute($pCli);
+      $clientesApagados = $stc->fetchAll();
+    } catch (\Throwable $e) { $clientesApagados = []; }
+    $title = 'Apagados';
     $content = __DIR__ . '/../Views/relatorios_emprestimos_apagados.php';
     include __DIR__ . '/../Views/layout.php';
   }

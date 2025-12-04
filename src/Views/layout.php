@@ -97,7 +97,7 @@ $saved = isset($_GET['saved']);
             <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
             <a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a>
             <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
-              <a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Emprestimos Apagados</a>
+              <a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Apagados</a>
             <?php endif; ?>
           </div>
         </div>
