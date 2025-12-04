@@ -1022,10 +1022,17 @@ class ClientesController {
       $okCnh = $cnhUnicoPost ? ($hasFrenteExisting || $hasFrenteNew) : (($hasFrenteExisting || $hasFrenteNew) && ($hasVersoExisting || $hasVersoNew));
       $okSelfie = ($hasSelfieExisting || $hasSelfieNew);
       if (!empty($missing) || (!$hasNewHol && count($existingHol) === 0) || !$okCnh || !$okSelfie) {
-        $error = 'Preencha todos os campos obrigatórios, envie ao menos um holerite e garanta CNH/RG (frente e verso ou arquivo único) e Selfie.';
-        $title = 'Editar Cliente';
-        $content = __DIR__ . '/../Views/clientes_editar.php';
-        include __DIR__ . '/../Views/layout.php';
+        $map = [
+          'nome'=>'Nome Completo','cpf'=>'CPF','data_nascimento'=>'Data de Nascimento','email'=>'Email','telefone'=>'Telefone','cep'=>'CEP','endereco'=>'Endereço','numero'=>'Número','bairro'=>'Bairro','cidade'=>'Cidade','estado'=>'Estado','ocupacao'=>'Ocupação','tempo_trabalho'=>'Tempo de Trabalho','renda_mensal'=>'Renda Mensal'
+        ];
+        $labels = [];
+        foreach ($missing as $m) { $labels[] = $map[$m] ?? $m; }
+        $extra = [];
+        if (!$okCnh) { $extra[] = $cnhUnicoPost ? 'Documento Único (CNH/RG)' : 'CNH/RG Frente e Verso'; }
+        if (!$okSelfie) { $extra[] = 'Selfie'; }
+        if (!$hasNewHol && count($existingHol) === 0) { $extra[] = 'Holerite (mínimo 1)'; }
+        $_SESSION['toast'] = 'Campos obrigatórios: ' . implode(', ', array_merge($labels, $extra));
+        header('Location: /clientes/'.$id.'/editar');
         return;
       }
       $cpfNorm = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
@@ -1044,10 +1051,8 @@ class ClientesController {
       $pixValid = true; $pixNorm = null; $pixErr = null;
       if ($pixTipo !== '') { [$pixValid, $pixNorm, $pixErr] = self::validarENormalizarPix($pixTipo, $pixChaveIn, $cpfNorm); }
       if ($pixTipo !== '' && !$pixValid) {
-        $error = $pixErr ?: 'Chave PIX inválida.';
-        $title = 'Editar Cliente';
-        $content = __DIR__ . '/../Views/clientes_editar.php';
-        include __DIR__ . '/../Views/layout.php';
+        $_SESSION['toast'] = $pixErr ?: 'Chave PIX inválida.';
+        header('Location: /clientes/'.$id.'/editar');
         return;
       }
       $sql = 'UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, ocupacao=:ocupacao, tempo_trabalho=:tempo_trabalho, renda_mensal=:renda_mensal, observacoes=:observacoes, pix_tipo=:pix_tipo, pix_chave=:pix_chave WHERE id=:id';
