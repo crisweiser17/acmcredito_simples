@@ -499,6 +499,9 @@ class LoansController {
       $orig = ($loan['contrato_html'] ?? '');
       $orig = preg_replace_callback('#(<span[^>]*id=\"assin_devedor\"[^>]*>)(.*?)(</span>)#i', function($m) use ($nome){ return $m[1] . htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') . $m[3]; }, $orig);
       file_put_contents($path, $orig . $footer);
+      try {
+        $pdo->prepare('UPDATE loans SET contrato_html=:h WHERE id=:id')->execute(['h'=>$orig.$footer,'id'=>$loan['id']]);
+      } catch (\Throwable $e) { }
       $pdfPathRel = null;
       $bin = @shell_exec('command -v wkhtmltopdf');
       if ($bin) {

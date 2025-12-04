@@ -26,7 +26,7 @@ class ContractService {
       if ($path === '') return '';
       $src = implode('/', array_map('rawurlencode', explode('/', $path)));
       $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-      if (in_array($ext, ['jpg','jpeg','png','gif'])) {
+      if (in_array($ext, ['jpg','jpeg','png','gif','webp','heic'])) {
         return '<div class="doc-card"><div class="title">'.$label.'</div><img src="'.$src.'" alt="'.$label.'"></div>';
       }
       if ($ext === 'pdf') {

@@ -26,6 +26,8 @@ class FileController {
         'jpeg' => 'image/jpeg',
         'png' => 'image/png',
         'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'heic' => 'image/heic',
         'pdf' => 'application/pdf',
         'html' => 'text/html; charset=utf-8',
         'htm' => 'text/html; charset=utf-8'
