@@ -162,8 +162,9 @@
           <div class="text-sm text-gray-600 mt-0.5">Tempo de Trabalho <span class="text-red-600">*</span></div>
         </div>
         <div class="md:col-span-2">
-          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" value="<?php echo htmlspecialchars(number_format((float)($c['renda_mensal'] ?? 0), 2, ',', '.')); ?>" required>
+          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" value="<?php echo htmlspecialchars(number_format((float)floor((float)($c['renda_mensal'] ?? 0)), 0, '', '.')); ?>" required>
           <div class="text-sm text-gray-600 mt-0.5">Renda Mensal <span class="text-red-600">*</span></div>
+          <div class="text-xs text-gray-600 mt-0.5" id="renda_helper"></div>
         </div>
       </div>
     </div>
@@ -267,7 +268,12 @@
   (function(){
     var rendaEl = document.getElementById('renda_mensal');
     if (rendaEl) {
-      IMask(rendaEl, { mask: Number, scale: 2, signed: false, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'], prefix: 'R$ ' });
+      var mask = IMask(rendaEl, { mask: Number, scale: 0, signed: false, thousandsSeparator: '.', normalizeZeros: true, prefix: 'R$ ' });
+      var helper = document.getElementById('renda_helper');
+      function fmtIntBR(n){ try { var s = String(n).replace(/\D/g,''); if(!s){ return ''; } var x = s.replace(/^0+(?!$)/,''); var parts=[]; while(x.length>3){ parts.unshift(x.slice(-3)); x=x.slice(0,-3);} parts.unshift(x); return 'R$ ' + parts.join('.') + ',00'; } catch(e){ return ''; } }
+      function updateHelper(){ if(!helper){ return; } var val = rendaEl.value||''; var s = val.replace(/\D/g,''); helper.textContent = s ? fmtIntBR(s) : ''; }
+      ['input','change','blur'].forEach(function(ev){ rendaEl.addEventListener(ev, updateHelper); });
+      updateHelper();
     }
   })();
   ['ref_tel_1','ref_tel_2','ref_tel_3'].forEach(function(id){ var el=document.getElementById(id); if(el){ IMask(el,{ mask: '(00) 00000-0000' }); }});
@@ -281,7 +287,7 @@
       var t = (tipoEl && tipoEl.value||'').toLowerCase(); var v = (chaveEl && chaveEl.value||'').trim(); var ok=false; var msg='';
       if(!t){ helpEl.textContent=''; helpEl.className='text-xs mt-0.5'; return; }
       if(t==='cpf'){
-        var d = (cpfEl && cpfEl.value||'').replace(/\D/g,''); ok = d.length===11; v = fmtCpfDigits(d); if(chaveEl){ chaveEl.value = v; } msg = ok?'CPF do cliente (bloqueado)':'CPF inválido';
+        var d = (cpfEl && cpfEl.value||'').replace(/\D/g,''); ok = d.length===11; v = fmtCpfDigits(d); if(chaveEl){ chaveEl.value = v; } msg = ok?'Obrigatorio usar o CPF do cliente':'CPF inválido';
       } else if(t==='email'){
         ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); msg = ok?'Email válido':'Email inválido';
       } else if(t==='telefone'){

@@ -181,6 +181,7 @@
         <div class="md:col-span-2">
           <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" placeholder="Renda Mensal" required>
           <div class="text-sm text-gray-600 mt-0.5">Renda Mensal <span class="text-red-600">*</span></div>
+          <div class="text-xs text-gray-600 mt-0.5" id="renda_helper"></div>
         </div>
       </div>
       <div class="text-right"><button type="button" class="px-3 py-2 rounded bg-gray-100" id="btn_save_profissionais">Salvar bloco</button></div>
@@ -240,16 +241,19 @@
   (function(){
     var rendaEl = document.getElementById('renda_mensal');
     if (rendaEl) {
-      IMask(rendaEl, {
+      var mask = IMask(rendaEl, {
         mask: Number,
-        scale: 2,
+        scale: 0,
         signed: false,
         thousandsSeparator: '.',
-        padFractionalZeros: true,
-        radix: ',',
-        mapToRadix: ['.'],
+        normalizeZeros: true,
         prefix: 'R$ '
       });
+      var helper = document.getElementById('renda_helper');
+      function fmtIntBR(n){ try { var s = String(n).replace(/\D/g,''); if(!s){ return ''; } var x = s.replace(/^0+(?!$)/,''); var parts=[]; while(x.length>3){ parts.unshift(x.slice(-3)); x=x.slice(0,-3);} parts.unshift(x); return 'R$ ' + parts.join('.') + ',00'; } catch(e){ return ''; } }
+      function updateHelper(){ if(!helper){ return; } var val = rendaEl.value||''; var s = val.replace(/\D/g,''); helper.textContent = s ? fmtIntBR(s) : ''; }
+      ['input','change','blur'].forEach(function(ev){ rendaEl.addEventListener(ev, updateHelper); });
+      updateHelper();
     }
   })();
   (function(){
@@ -392,7 +396,7 @@
       var t = (tipoEl.value||'').toLowerCase(); var v = (chaveEl.value||'').trim(); var ok=false; var msg='';
       if(!t){ helpEl.textContent=''; helpEl.className='text-xs mt-0.5'; return; }
       if(t==='cpf'){
-        var d = (cpfEl.value||'').replace(/\D/g,''); ok = d.length===11; v = fmtCpfDigits(d); chaveEl.value = v; msg = ok?'CPF do cliente (bloqueado)':'CPF inválido';
+        var d = (cpfEl.value||'').replace(/\D/g,''); ok = d.length===11; v = fmtCpfDigits(d); chaveEl.value = v; msg = ok?'Obrigatorio usar o CPF do cliente':'CPF inválido';
       } else if(t==='email'){
         ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); msg = ok?'Email válido':'Email inválido';
       } else if(t==='telefone'){

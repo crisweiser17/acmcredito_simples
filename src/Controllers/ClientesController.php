@@ -11,26 +11,39 @@ class ClientesController {
     $s = trim((string)$val);
     if ($s === '') return 0.0;
     $s = preg_replace('/[^\d,\.]/', '', $s);
-    $hasComma = strpos($s, ',') !== false;
-    $hasDot = strpos($s, '.') !== false;
-    if ($hasComma && $hasDot) {
-      $lastComma = strrpos($s, ',');
-      $lastDot = strrpos($s, '.');
-      if ($lastDot !== false && $lastComma !== false && $lastDot > $lastComma) {
-        $s = str_replace(',', '', $s);
-      } else {
-        $s = str_replace('.', '', $s);
-        $s = str_replace(',', '.', $s);
-      }
-    } elseif ($hasComma) {
-      $s = str_replace(',', '.', $s);
+    if ($s === '') return 0.0;
+    $lastComma = strrpos($s, ',');
+    $lastDot = strrpos($s, '.');
+    if ($lastComma === false && $lastDot === false) {
+      $norm = $s;
     } else {
-      $s = $s;
+      if ($lastComma !== false && $lastDot !== false) {
+        $lastPos = max($lastComma, $lastDot);
+        $left = substr($s, 0, $lastPos);
+        $norm = str_replace(['.',','], '', $left);
+      } else if ($lastComma !== false) {
+        $digitsAfter = strlen(substr($s, $lastComma+1));
+        if ($digitsAfter === 2) {
+          $left = substr($s, 0, $lastComma);
+          $norm = str_replace(['.',','], '', $left);
+        } else {
+          $norm = str_replace(['.',','], '', $s);
+        }
+      } else {
+        $digitsAfter = strlen(substr($s, $lastDot+1));
+        if ($digitsAfter === 2) {
+          $left = substr($s, 0, $lastDot);
+          $norm = str_replace(['.',','], '', $left);
+        } else {
+          $norm = str_replace(['.',','], '', $s);
+        }
+      }
     }
-    $f = (float)$s;
+    $f = (float)$norm;
     if ($f > 99999999.99) $f = 99999999.99;
     if ($f < 0) $f = 0.0;
-    return round($f, 2);
+    $f = floor($f + 1e-9);
+    return (float)$f;
   }
   private static function validarENormalizarPix(string $tipo, string $chave, string $cpfNorm): array {
     $t = strtolower(trim($tipo));
