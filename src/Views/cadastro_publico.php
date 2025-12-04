@@ -209,11 +209,12 @@
         <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step4_save">Salvar</button>
         <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step4_finish">Finalizar</button>
       </div>
+      <div class="text-xs text-gray-500 mt-2 text-right">Você pode salvar e voltar mais tarde. Quando todas as etapas estiverem completas, finalize.</div>
     </div>
     <div class="flex items-center justify-end gap-2 hidden" data-step="4">
       <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step4_prev">Retornar</button>
     </div>
-    <div class="text-xs text-gray-500">Você pode salvar e voltar mais tarde. Quando todas as etapas estiverem completas, finalize.</div>
+    
   </form>
 </div>
 <style>
