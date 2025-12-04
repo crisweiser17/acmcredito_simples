@@ -16,6 +16,7 @@
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
+  <div id="form_toast" class="px-3 py-2 rounded bg-red-100 text-red-700 hidden"></div>
   <?php if (!empty($_SESSION['undo_hint'])): $tok = $_SESSION['undo_hint']; ?>
   <form method="post" class="mb-4">
     <input type="hidden" name="acao" value="restaurar_doc">
@@ -26,7 +27,7 @@
     </div>
   </form>
   <?php endif; ?>
-  <form method="post" enctype="multipart/form-data" class="space-y-8">
+  <form method="post" enctype="multipart/form-data" class="space-y-8" id="editForm">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -417,7 +418,7 @@
     }
     lb.innerHTML = '<img src="'+src+'" style="max-width:90%;max-height:90%;border-radius:8px" />';
   }
-  </script>
+</script>
 <div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:8px;padding:16px;min-width:280px;max-width:90%">
     <div class="text-lg font-semibold mb-2">Remover documento?</div>
@@ -451,5 +452,37 @@
   });
   cancelBtn && cancelBtn.addEventListener('click', function(){ close(); });
   modal && modal.addEventListener('click', function(e){ if(e.target===modal){ close(); } });
+})();
+</script>
+<script>
+(function(){
+  var form = document.getElementById('editForm');
+  var toast = document.getElementById('form_toast');
+  function showToast(msg){ if(!toast) return; toast.textContent = msg; toast.classList.remove('hidden'); setTimeout(function(){ toast.classList.add('hidden'); }, 5000); }
+  function val(name){ var el = document.querySelector('[name="'+name+'"]'); return (el && (el.value||'').trim()) || ''; }
+  function numDigits(el){ return ((el && el.value)||'').replace(/\D/g,''); }
+  if(form){
+    form.addEventListener('submit', function(ev){
+      var missing = [];
+      var req = [['nome','Nome Completo'],['cpf','CPF'],['data_nascimento','Data de Nascimento'],['email','Email'],['telefone','Telefone'],['cep','CEP'],['endereco','Endereço'],['numero','Número'],['bairro','Bairro'],['cidade','Cidade'],['estado','Estado'],['ocupacao','Ocupação'],['tempo_trabalho','Tempo de Trabalho']];
+      for(var i=0;i<req.length;i++){ if(!val(req[i][0])) missing.push(req[i][1]); }
+      var rendaEl = document.getElementById('renda_mensal'); var rendaDigits = numDigits(rendaEl); if(!(parseInt(rendaDigits||'0',10)>0)) missing.push('Renda Mensal');
+      var ptEl = document.getElementById('pix_tipo'); var pcEl = document.getElementById('pix_chave'); var pt = (ptEl && ptEl.value||'').trim(); var pc = (pcEl && pcEl.value||'').trim(); if(!pt) missing.push('Tipo de Chave PIX'); if(!pc) missing.push('Chave PIX');
+      var frenteExisting = <?php echo !empty($c['doc_cnh_frente']) ? 'true' : 'false'; ?>;
+      var versoExisting = <?php echo !empty($c['doc_cnh_verso']) ? 'true' : 'false'; ?>;
+      var selfieExisting = <?php echo !empty($c['doc_selfie']) ? 'true' : 'false'; ?>;
+      var holCount = <?php $hcTmp = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($hcTmp)) $hcTmp=[]; echo (int)count($hcTmp); ?>;
+      var fFile = document.getElementById('inp_cnh_frente'); var vFile = document.getElementById('inp_cnh_verso'); var sFile = document.querySelector('input[name=selfie]');
+      var hasF = !!(fFile && fFile.files && fFile.files.length);
+      var hasV = !!(vFile && vFile.files && vFile.files.length);
+      var hasS = !!(sFile && sFile.files && sFile.files.length);
+      var cnhUnicoEl = document.getElementById('cnh_unico_toggle'); var cnhUnico = !!(cnhUnicoEl && cnhUnicoEl.checked);
+      var okCnh = cnhUnico ? (frenteExisting || hasF) : ((frenteExisting || hasF) && (versoExisting || hasV));
+      if(!okCnh){ missing.push(cnhUnico ? 'Documento Único (CNH/RG)' : 'CNH/RG Frente e Verso'); }
+      var okSelfie = selfieExisting || hasS; if(!okSelfie){ missing.push('Selfie'); }
+      var holInput = document.getElementById('inp_holerites_ed'); var hasNewHol = !!(holInput && holInput.files && holInput.files.length); var okHol = (holCount>0) || hasNewHol; if(!okHol){ missing.push('Holerite (mínimo 1)'); }
+      if(missing.length){ ev.preventDefault(); showToast('Campos obrigatórios: ' + missing.join(', ')); }
+    });
+  }
 })();
 </script>
