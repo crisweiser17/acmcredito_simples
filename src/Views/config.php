@@ -81,11 +81,13 @@ $production = readEnvFile('.env.production');
     <div class="space-y-4">
       <div class="text-lg font-semibold">Info da Empresa</div>
       <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
+      <?php $empresaFantasia = \App\Helpers\ConfigRepo::get('empresa_nome_fantasia', ''); ?>
       <?php $empresaCnpj = \App\Helpers\ConfigRepo::get('empresa_cnpj', '00.000.000/0001-00'); ?>
       <?php $empresaEmail = \App\Helpers\ConfigRepo::get('empresa_email', 'contato@acm.com.br'); ?>
       <?php $empresaTelefone = \App\Helpers\ConfigRepo::get('empresa_telefone', '(11) 90000-0000'); ?>
       <?php $empresaEndereco = \App\Helpers\ConfigRepo::get('empresa_endereco', 'Rua Exemplo, 123 - Centro, São Paulo/SP'); ?>
       <input class="w-full border rounded px-3 py-2" name="empresa_razao_social" placeholder="Razão Social" value="<?php echo htmlspecialchars($empresaRazao); ?>">
+      <input class="w-full border rounded px-3 py-2" name="empresa_nome_fantasia" placeholder="Nome Fantasia" value="<?php echo htmlspecialchars($empresaFantasia); ?>">
       <input class="w-full border rounded px-3 py-2" name="empresa_cnpj" placeholder="CNPJ" value="<?php echo htmlspecialchars($empresaCnpj); ?>">
       <input class="w-full border rounded px-3 py-2" type="email" name="empresa_email" placeholder="Email" value="<?php echo htmlspecialchars($empresaEmail); ?>">
       <input class="w-full border rounded px-3 py-2" name="empresa_telefone" placeholder="Telefone" value="<?php echo htmlspecialchars($empresaTelefone); ?>">

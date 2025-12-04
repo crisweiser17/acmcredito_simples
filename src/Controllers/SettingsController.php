@@ -92,10 +92,12 @@ class SettingsController {
       if ($lytexJuros !== '') { ConfigRepo::set('lytex_juros_percentual_dia', $lytexJuros, 'Lytex Juros Percentual/Dia'); }
       $empresaEndereco = trim($_POST['empresa_endereco'] ?? '');
       $empresaRazao = trim($_POST['empresa_razao_social'] ?? '');
+      $empresaFantasia = trim($_POST['empresa_nome_fantasia'] ?? '');
       $empresaCnpj = trim($_POST['empresa_cnpj'] ?? '');
       $empresaEmail = trim($_POST['empresa_email'] ?? '');
       $empresaTelefone = trim($_POST['empresa_telefone'] ?? '');
       if ($empresaRazao !== '') { ConfigRepo::set('empresa_razao_social', $empresaRazao, 'Razão Social da Empresa'); ConfigRepo::set('empresa_nome', $empresaRazao, 'Nome da Empresa (compatibilidade)'); }
+      if ($empresaFantasia !== '') { ConfigRepo::set('empresa_nome_fantasia', $empresaFantasia, 'Nome Fantasia da Empresa'); }
       if ($empresaCnpj !== '') { ConfigRepo::set('empresa_cnpj', $empresaCnpj, 'CNPJ da Empresa'); }
       if ($empresaEmail !== '') { ConfigRepo::set('empresa_email', $empresaEmail, 'Email da Empresa'); }
       if ($empresaTelefone !== '') { ConfigRepo::set('empresa_telefone', $empresaTelefone, 'Telefone da Empresa'); }

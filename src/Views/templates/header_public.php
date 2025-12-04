@@ -1,11 +1,11 @@
-<?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', ''); $empresaEmail = \App\Helpers\ConfigRepo::get('empresa_email', ''); $empresaTelefone = \App\Helpers\ConfigRepo::get('empresa_telefone', ''); $telDigits = preg_replace('/\D/', '', (string)$empresaTelefone); $telHref = $telDigits ? ('tel:+55'.$telDigits) : ''; $mailHref = $empresaEmail ? ('mailto:'.$empresaEmail) : ''; ?>
+<?php $empresaFantasia = \App\Helpers\ConfigRepo::get('empresa_nome_fantasia', ''); $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', ''); $empresaTopo = $empresaFantasia !== '' ? $empresaFantasia : $empresaRazao; $empresaEmail = \App\Helpers\ConfigRepo::get('empresa_email', ''); $empresaTelefone = \App\Helpers\ConfigRepo::get('empresa_telefone', ''); $telDigits = preg_replace('/\D/', '', (string)$empresaTelefone); $telHref = $telDigits ? ('tel:+55'.$telDigits) : ''; $mailHref = $empresaEmail ? ('mailto:'.$empresaEmail) : ''; ?>
 <div class="w-full bg-gradient-to-r from-slate-900 to-indigo-900 text-white">
   <div class="max-w-3xl mx-auto p-5 md:p-6 grid md:grid-cols-2 md:items-center gap-4">
     <div class="flex items-center gap-4">
       <div>
-        <?php if ($empresaRazao): ?>
+        <?php if ($empresaTopo): ?>
           <div class="text-2xl md:text-3xl font-semibold tracking-tight">
-            <?php echo htmlspecialchars($empresaRazao); ?>
+            <?php echo htmlspecialchars($empresaTopo); ?>
           </div>
         <?php endif; ?>
         <div class="mt-0.5 text-sm md:text-base text-white/80">Soluções de crédito</div>

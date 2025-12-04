@@ -34,8 +34,8 @@ $saved = isset($_GET['saved']);
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
         <span>Menu</span>
       </button>
-      <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
-      <div class="text-sm font-semibold truncate"><?php echo htmlspecialchars($empresaRazao); ?></div>
+      <?php $empresaFantasia = \App\Helpers\ConfigRepo::get('empresa_nome_fantasia', ''); $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); $empresaTopo = $empresaFantasia !== '' ? $empresaFantasia : $empresaRazao; ?>
+      <div class="text-sm font-semibold truncate"><?php echo htmlspecialchars($empresaTopo); ?></div>
     </div>
     <div id="mobile_overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden z-40 md:hidden"></div>
     <div class="flex">
@@ -47,8 +47,8 @@ $saved = isset($_GET['saved']);
         </button>
       </div>
       <div class="p-4">
-        <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
-        <h1 class="text-xl font-bold"><?php echo htmlspecialchars($empresaRazao); ?></h1>
+        <?php $empresaFantasia = \App\Helpers\ConfigRepo::get('empresa_nome_fantasia', ''); $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); $empresaTopo = $empresaFantasia !== '' ? $empresaFantasia : $empresaRazao; ?>
+        <h1 class="text-xl font-bold"><?php echo htmlspecialchars($empresaTopo); ?></h1>
         <p class="text-sm text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_nome'] ?? ''); ?></p>
       </div>
       <nav>
