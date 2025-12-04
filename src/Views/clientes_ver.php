@@ -65,9 +65,11 @@
             <?php if (!empty($r['relacao'])): ?><span class="text-sm text-gray-600"><?php echo htmlspecialchars($r['relacao'] ?? ''); ?></span><?php endif; ?>
             <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></span>
             <?php if (!empty($link)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span><?php endif; ?>
-            <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo (empty($tel) || empty($link))?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
+            <?php if (!empty($tel) && !empty($link)): ?>
+            <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
               <i class="fa fa-whatsapp" aria-hidden="true"></i>
             </a>
+            <?php endif; ?>
           </div>
         <?php endforeach; ?>
       </div>
