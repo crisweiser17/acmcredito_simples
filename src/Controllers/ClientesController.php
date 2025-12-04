@@ -211,6 +211,19 @@ class ClientesController {
       if (!empty($_FILES['selfie']['name'])) {
         try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie = :s WHERE id = :id')->execute(['s'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
       }
+      $st = $pdo->prepare('SELECT doc_cnh_frente, doc_cnh_verso, doc_selfie, doc_holerites FROM clients WHERE id=:id');
+      $st->execute(['id'=>$clientId]);
+      $d = $st->fetch();
+      $hol = json_decode($d['doc_holerites'] ?? '[]', true); if (!is_array($hol)) { $hol = []; }
+      $okCnh = isset($_POST['cnh_arquivo_unico']) ? !empty($d['doc_cnh_frente']) : (!empty($d['doc_cnh_frente']) && !empty($d['doc_cnh_verso']));
+      $okSelfie = !empty($d['doc_selfie']);
+      $okHol = count($hol) > 0;
+      $st2 = $pdo->prepare('SELECT nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, pix_tipo, pix_chave FROM clients WHERE id=:id');
+      $st2->execute(['id'=>$clientId]);
+      $c = $st2->fetch();
+      $pixOk = $c && trim((string)($c['pix_tipo'] ?? ''))!=='' && trim((string)($c['pix_chave'] ?? ''))!=='';
+      $allFilled = $c && trim((string)$c['nome'])!=='' && trim((string)$c['cpf'])!=='' && trim((string)$c['data_nascimento'])!=='' && trim((string)$c['email'])!=='' && trim((string)$c['telefone'])!=='' && trim((string)$c['cep'])!=='' && trim((string)$c['endereco'])!=='' && trim((string)$c['numero'])!=='' && trim((string)$c['bairro'])!=='' && trim((string)$c['cidade'])!=='' && trim((string)$c['estado'])!=='' && trim((string)$c['ocupacao'])!=='' && trim((string)$c['tempo_trabalho'])!=='' && (float)$c['renda_mensal'] > 0;
+      if ($allFilled && $okCnh && $okSelfie && $okHol && $pixOk) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=novo'); }
       Audit::log('create', 'clients', $clientId, 'Cliente criado');
       $createdId = $clientId;
       $createdRefs = $refs;
@@ -636,10 +649,11 @@ class ClientesController {
             ]);
         $clientId = (int)$pdo->lastInsertId();
         $created = true;
-        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=publico');
+        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=' . ($hasLoans?0:1) . ' origem=publico');
       } else {
         $clientId = (int)$exist['id'];
-        $pdo->prepare('UPDATE clients SET nome=:nome, data_nascimento=:nasc, email=:email, telefone=:telefone, pix_tipo=:pix_tipo, pix_chave=:pix_chave, is_draft=1 WHERE id=:id')
+        $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+        $pdo->prepare('UPDATE clients SET nome=:nome, data_nascimento=:nasc, email=:email, telefone=:telefone, pix_tipo=:pix_tipo, pix_chave=:pix_chave, is_draft=:draft WHERE id=:id')
             ->execute([
               'nome' => (function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome),
               'nasc' => $nasc,
@@ -647,6 +661,7 @@ class ClientesController {
               'telefone' => $telefone,
               'pix_tipo' => strtolower($pixTipo),
               'pix_chave' => $pixNorm,
+              'draft' => $hasLoans ? 0 : 1,
               'id' => $clientId
             ]);
         \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=publico');
@@ -664,8 +679,9 @@ class ClientesController {
       $cidade = trim($_POST['cidade'] ?? '');
       $estado = trim($_POST['estado'] ?? '');
       if ($cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '') { echo json_encode(['error'=>'Preencha os campos obrigatórios']); return; }
-      $pdo->prepare('UPDATE clients SET cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, is_draft=1 WHERE id=:id')
-          ->execute(['cep'=>$cep,'endereco'=>$endereco,'numero'=>$numero,'complemento'=>$complemento,'bairro'=>$bairro,'cidade'=>$cidade,'estado'=>$estado,'id'=>$clientId]);
+      $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+      $pdo->prepare('UPDATE clients SET cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, is_draft=:draft WHERE id=:id')
+          ->execute(['cep'=>$cep,'endereco'=>$endereco,'numero'=>$numero,'complemento'=>$complemento,'bairro'=>$bairro,'cidade'=>$cidade,'estado'=>$estado,'draft'=>$hasLoans?0:1,'id'=>$clientId]);
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -682,7 +698,8 @@ class ClientesController {
         $nUp = (function($x){ $x = trim((string)$x); if ($x==='') return $x; return function_exists('mb_strtoupper') ? mb_strtoupper($x,'UTF-8') : strtoupper($x); })($n);
         $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t, 'token'=>bin2hex(random_bytes(32))];
       }
-      $pdo->prepare('UPDATE clients SET referencias=:r, is_draft=1 WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]);
+      $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+      $pdo->prepare('UPDATE clients SET referencias=:r, is_draft=:draft WHERE id=:id')->execute(['r'=>json_encode($refs),'draft'=>$hasLoans?0:1,'id'=>$clientId]);
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -730,11 +747,12 @@ class ClientesController {
       $okSelfie = !empty($d['doc_selfie']);
       $okHol = count($hol) > 0;
       $okDocs = $okCnh && $okSelfie && $okHol;
-      $st2 = $pdo->prepare('SELECT nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal FROM clients WHERE id=:id');
+      $st2 = $pdo->prepare('SELECT nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, pix_tipo, pix_chave FROM clients WHERE id=:id');
       $st2->execute(['id'=>$clientId]);
       $c = $st2->fetch();
+      $pixOk = $c && trim((string)($c['pix_tipo'] ?? ''))!=='' && trim((string)($c['pix_chave'] ?? ''))!=='';
       $allFilled = $c && trim((string)$c['nome'])!=='' && trim((string)$c['cpf'])!=='' && trim((string)$c['data_nascimento'])!=='' && trim((string)$c['email'])!=='' && trim((string)$c['telefone'])!=='' && trim((string)$c['cep'])!=='' && trim((string)$c['endereco'])!=='' && trim((string)$c['numero'])!=='' && trim((string)$c['bairro'])!=='' && trim((string)$c['cidade'])!=='' && trim((string)$c['estado'])!=='' && trim((string)$c['ocupacao'])!=='' && trim((string)$c['tempo_trabalho'])!=='' && (float)$c['renda_mensal'] > 0;
-      if ($allFilled && $okDocs) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=publico'); \App\Helpers\Audit::log('create_public','clients',$clientId,'Cadastro público finalizado'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true,'redirect'=>'/cadastro/sucesso']); return; }
+      if ($allFilled && $okDocs && $pixOk) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=publico'); \App\Helpers\Audit::log('create_public','clients',$clientId,'Cadastro público finalizado'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true,'redirect'=>'/cadastro/sucesso']); return; }
       echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>false,'upload_errors'=>$uploadErrors]);
       return;
     }
@@ -763,10 +781,11 @@ class ClientesController {
         $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, pix_tipo, pix_chave, is_draft) VALUES (:nome,:cpf,:nasc,:email,:telefone,:pix_tipo,:pix_chave,1)')
             ->execute(['nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome),'cpf'=>$cpfNorm,'nasc'=>$nasc,'email'=>$email,'telefone'=>$telefone,'pix_tipo'=>$pixTipo!==''?strtolower($pixTipo):null,'pix_chave'=>$pixTipo!==''?$pixNorm:null]);
         $clientId = (int)$pdo->lastInsertId();
-        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
+        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=' . ($hasLoans?0:1) . ' origem=interno');
       } else {
-        $pdo->prepare('UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:nasc, email=:email, telefone=:telefone, pix_tipo=:pix_tipo, pix_chave=:pix_chave, is_draft=1 WHERE id=:id')
-            ->execute(['nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome),'cpf'=>$cpfNorm,'nasc'=>$nasc,'email'=>$email,'telefone'=>$telefone,'pix_tipo'=>$pixTipo!==''?strtolower($pixTipo):null,'pix_chave'=>$pixTipo!==''?$pixNorm:null,'id'=>$clientId]);
+        $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+        $pdo->prepare('UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:nasc, email=:email, telefone=:telefone, pix_tipo=:pix_tipo, pix_chave=:pix_chave, is_draft=:draft WHERE id=:id')
+            ->execute(['nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome),'cpf'=>$cpfNorm,'nasc'=>$nasc,'email'=>$email,'telefone'=>$telefone,'pix_tipo'=>$pixTipo!==''?strtolower($pixTipo):null,'pix_chave'=>$pixTipo!==''?$pixNorm:null,'draft'=>$hasLoans?0:1,'id'=>$clientId]);
         \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
       }
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
@@ -782,9 +801,10 @@ class ClientesController {
       $cidade = trim($_POST['cidade'] ?? '');
       $estado = trim($_POST['estado'] ?? '');
       if ($cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '') { echo json_encode(['error'=>'Preencha os campos obrigatórios']); return; }
-      $pdo->prepare('UPDATE clients SET cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, is_draft=1 WHERE id=:id')
-          ->execute(['cep'=>$cep,'endereco'=>$endereco,'numero'=>$numero,'complemento'=>$complemento,'bairro'=>$bairro,'cidade'=>$cidade,'estado'=>$estado,'id'=>$clientId]);
-      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
+      $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+      $pdo->prepare('UPDATE clients SET cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, is_draft=:draft WHERE id=:id')
+          ->execute(['cep'=>$cep,'endereco'=>$endereco,'numero'=>$numero,'complemento'=>$complemento,'bairro'=>$bairro,'cidade'=>$cidade,'estado'=>$estado,'draft'=>$hasLoans?0:1,'id'=>$clientId]);
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=' . ($hasLoans?0:1) . ' origem=interno');
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -801,8 +821,9 @@ class ClientesController {
         $nUp = (function($x){ $x = trim((string)$x); if ($x==='') return $x; return function_exists('mb_strtoupper') ? mb_strtoupper($x,'UTF-8') : strtoupper($x); })($n);
         $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t, 'token'=>bin2hex(random_bytes(32))];
       }
-      $pdo->prepare('UPDATE clients SET referencias=:r, is_draft=1 WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]);
-      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
+      $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+      $pdo->prepare('UPDATE clients SET referencias=:r, is_draft=:draft WHERE id=:id')->execute(['r'=>json_encode($refs),'draft'=>$hasLoans?0:1,'id'=>$clientId]);
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=' . ($hasLoans?0:1) . ' origem=interno');
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -810,9 +831,10 @@ class ClientesController {
       $ocupacao = trim($_POST['ocupacao'] ?? '');
       $tempo = trim($_POST['tempo_trabalho'] ?? '');
       $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
-      $pdo->prepare('UPDATE clients SET ocupacao=:ocupacao, tempo_trabalho=:tempo, renda_mensal=:renda, is_draft=1 WHERE id=:id')
-          ->execute(['ocupacao'=>$ocupacao,'tempo'=>$tempo,'renda'=>$renda,'id'=>$clientId]);
-      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
+      $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+      $pdo->prepare('UPDATE clients SET ocupacao=:ocupacao, tempo_trabalho=:tempo, renda_mensal=:renda, is_draft=:draft WHERE id=:id')
+          ->execute(['ocupacao'=>$ocupacao,'tempo'=>$tempo,'renda'=>$renda,'draft'=>$hasLoans?0:1,'id'=>$clientId]);
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=' . ($hasLoans?0:1) . ' origem=interno');
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -820,6 +842,8 @@ class ClientesController {
       $uploadErrors = [];
       $cnhUnico = isset($_POST['cnh_arquivo_unico']);
       $pdo->prepare('UPDATE clients SET cnh_arquivo_unico=:u WHERE id=:id')->execute(['u'=>$cnhUnico?1:0,'id'=>$clientId]);
+      $hasLoans = false; try { $stl = $pdo->prepare('SELECT COUNT(*) AS c FROM loans WHERE client_id=:id'); $stl->execute(['id'=>$clientId]); $hasLoans = ((int)($stl->fetch()['c'] ?? 0)) > 0; } catch (\Throwable $e) {}
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=' . ($hasLoans?0:1) . ' origem=interno');
       $hasUnico = !empty($_FILES['cnh_unico']['name'] ?? '');
       $hasFrente = !empty($_FILES['cnh_frente']['name'] ?? '');
       $hasVerso = !empty($_FILES['cnh_verso']['name'] ?? '');
@@ -854,11 +878,12 @@ class ClientesController {
       $okCnh = $cnhUnico ? !empty($d['doc_cnh_frente']) : (!empty($d['doc_cnh_frente']) && !empty($d['doc_cnh_verso']));
       $okSelfie = !empty($d['doc_selfie']);
       $okHol = count($hol) > 0;
-      $st2 = $pdo->prepare('SELECT nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal FROM clients WHERE id=:id');
+      $st2 = $pdo->prepare('SELECT nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, pix_tipo, pix_chave FROM clients WHERE id=:id');
       $st2->execute(['id'=>$clientId]);
       $c = $st2->fetch();
+      $pixOk = $c && trim((string)($c['pix_tipo'] ?? ''))!=='' && trim((string)($c['pix_chave'] ?? ''))!=='';
       $allFilled = $c && trim((string)$c['nome'])!=='' && trim((string)$c['cpf'])!=='' && trim((string)$c['data_nascimento'])!=='' && trim((string)$c['email'])!=='' && trim((string)$c['telefone'])!=='' && trim((string)$c['cep'])!=='' && trim((string)$c['endereco'])!=='' && trim((string)$c['numero'])!=='' && trim((string)$c['bairro'])!=='' && trim((string)$c['cidade'])!=='' && trim((string)$c['estado'])!=='' && trim((string)$c['ocupacao'])!=='' && trim((string)$c['tempo_trabalho'])!=='' && (float)$c['renda_mensal'] > 0;
-      if ($allFilled && $okCnh && $okSelfie && $okHol) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=interno'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true]); return; }
+      if ($allFilled && $okCnh && $okSelfie && $okHol && $pixOk) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=interno'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true]); return; }
       echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>false,'upload_errors'=>$uploadErrors]);
       return;
     }
@@ -905,6 +930,83 @@ class ClientesController {
     $client = $stmt->fetch();
     if (!$client) { header('Location: /clientes'); return; }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      if (isset($_POST['acao']) && $_POST['acao'] === 'remover_doc') {
+        $doc = trim((string)($_POST['doc'] ?? ''));
+        $pathParam = trim((string)($_POST['path'] ?? ''));
+        $base = realpath(dirname(__DIR__,2) . '/uploads') ?: (dirname(__DIR__,2) . '/uploads');
+        $trashDir = dirname(__DIR__,2) . '/uploads/' . $id . '/trash'; if (!is_dir($trashDir)) { @mkdir($trashDir, 0755, true); }
+        $moved = false; $origPath = null; $trashPath = null;
+        if (in_array($doc, ['cnh_frente','cnh_verso','selfie'], true)) {
+          $field = $doc === 'cnh_frente' ? 'doc_cnh_frente' : ($doc === 'cnh_verso' ? 'doc_cnh_verso' : 'doc_selfie');
+          $cur = (string)($client[$field] ?? '');
+          if ($cur !== '' && preg_match('#^/uploads/'.preg_quote((string)$id,'#').'/#', $cur)) {
+            $abs = dirname(__DIR__,2) . '/' . ltrim($cur,'/');
+            $real = realpath($abs) ?: $abs;
+            if ($real && strpos($real, $base) === 0) { $origPath = $cur; $trashPath = '/uploads/' . $id . '/trash/' . (bin2hex(random_bytes(6)) . '_' . basename($real)); @rename($real, dirname(__DIR__,2) . '/' . ltrim($trashPath,'/')); $moved = file_exists(dirname(__DIR__,2) . '/' . ltrim($trashPath,'/')); }
+          }
+          $pdo->prepare('UPDATE clients SET '.$field.'=NULL WHERE id=:id')->execute(['id'=>$id]);
+          if (!isset($_SESSION['undo_doc_tokens'])) { $_SESSION['undo_doc_tokens'] = []; }
+          $tok = bin2hex(random_bytes(16));
+          $_SESSION['undo_doc_tokens'][$tok] = ['client_id'=>$id,'type'=>$doc,'orig'=>$origPath,'trash'=>$trashPath,'created_at'=>time()];
+          $_SESSION['undo_hint'] = $tok;
+          \App\Helpers\Audit::log('doc_delete','clients',$id,'tipo='.$doc.' path='.$origPath);
+          $_SESSION['toast'] = 'Documento removido. Você pode desfazer.';
+          header('Location: /clientes/'.$id.'/editar');
+          return;
+        }
+        if ($doc === 'holerite') {
+          $list = json_decode($client['doc_holerites'] ?? '[]', true); if (!is_array($list)) { $list = []; }
+          $new = [];
+          foreach ($list as $p) {
+            if ($p === $pathParam) { $abs = dirname(__DIR__,2) . '/' . ltrim($p,'/'); $real = realpath($abs) ?: $abs; if ($real && strpos($real, $base) === 0) { $origPath = $p; $trashPath = '/uploads/' . $id . '/trash/' . (bin2hex(random_bytes(6)) . '_' . basename($real)); @rename($real, dirname(__DIR__,2) . '/' . ltrim($trashPath,'/')); $moved = file_exists(dirname(__DIR__,2) . '/' . ltrim($trashPath,'/')); } continue; }
+            $new[] = $p;
+          }
+          $pdo->prepare('UPDATE clients SET doc_holerites=:j WHERE id=:id')->execute(['j'=>json_encode($new),'id'=>$id]);
+          if (!isset($_SESSION['undo_doc_tokens'])) { $_SESSION['undo_doc_tokens'] = []; }
+          $tok = bin2hex(random_bytes(16));
+          $_SESSION['undo_doc_tokens'][$tok] = ['client_id'=>$id,'type'=>'holerite','orig'=>$origPath,'trash'=>$trashPath,'created_at'=>time()];
+          $_SESSION['undo_hint'] = $tok;
+          \App\Helpers\Audit::log('doc_delete','clients',$id,'tipo=holerite path='.$origPath);
+          $_SESSION['toast'] = $moved ? 'Holerite removido. Você pode desfazer.' : 'Nenhum holerite removido';
+          header('Location: /clientes/'.$id.'/editar');
+          return;
+        }
+        $_SESSION['toast'] = 'Ação inválida';
+        header('Location: /clientes/'.$id.'/editar');
+        return;
+      }
+      if (isset($_POST['acao']) && $_POST['acao'] === 'restaurar_doc') {
+        $tok = trim((string)($_POST['token'] ?? ''));
+        $info = $_SESSION['undo_doc_tokens'][$tok] ?? null;
+        if (!$info || (int)($info['client_id'] ?? 0) !== (int)$id) { $_SESSION['toast'] = 'Nada para desfazer'; header('Location: /clientes/'.$id.'/editar'); return; }
+        $orig = (string)($info['orig'] ?? ''); $trash = (string)($info['trash'] ?? '');
+        $root = dirname(__DIR__,2);
+        $ok = false;
+        if ($orig !== '' && $trash !== '') {
+          $origAbs = $root . '/' . ltrim($orig,'/');
+          $trashAbs = $root . '/' . ltrim($trash,'/');
+          if (file_exists($trashAbs)) { @rename($trashAbs, $origAbs); $ok = file_exists($origAbs); }
+        }
+        if ($ok) {
+          if (in_array(($info['type'] ?? ''), ['cnh_frente','cnh_verso','selfie'], true)) {
+            $field = $info['type'] === 'cnh_frente' ? 'doc_cnh_frente' : ($info['type'] === 'cnh_verso' ? 'doc_cnh_verso' : 'doc_selfie');
+            $pdo->prepare('UPDATE clients SET '.$field.'=:p WHERE id=:id')->execute(['p'=>$orig,'id'=>$id]);
+          } elseif (($info['type'] ?? '') === 'holerite') {
+            $list = json_decode($client['doc_holerites'] ?? '[]', true); if (!is_array($list)) { $list = []; }
+            if ($orig !== '') { $list[] = $orig; }
+            $pdo->prepare('UPDATE clients SET doc_holerites=:j WHERE id=:id')->execute(['j'=>json_encode($list),'id'=>$id]);
+          }
+          \App\Helpers\Audit::log('doc_restore','clients',$id,'token='.$tok);
+          $_SESSION['toast'] = 'Remoção desfeita';
+        } else {
+          $_SESSION['toast'] = 'Não foi possível desfazer';
+        }
+        unset($_SESSION['undo_doc_tokens'][$tok]);
+        if (empty($_SESSION['undo_doc_tokens'])) unset($_SESSION['undo_doc_tokens']);
+        unset($_SESSION['undo_hint']);
+        header('Location: /clientes/'.$id.'/editar');
+        return;
+      }
       $req = ['nome','cpf','data_nascimento','email','telefone','cep','endereco','numero','bairro','cidade','estado','ocupacao','tempo_trabalho','renda_mensal'];
       $missing = [];
       foreach ($req as $k) { $v = trim((string)($_POST[$k] ?? '')); if ($v === '') { $missing[] = $k; } }
@@ -1019,6 +1121,19 @@ class ClientesController {
         $existing = array_slice($existing, 0, $maxHol);
         $pdo->prepare('UPDATE clients SET doc_holerites = :j WHERE id = :id')->execute(['j'=>json_encode($existing),'id'=>$id]);
       }
+      $st = $pdo->prepare('SELECT doc_cnh_frente, doc_cnh_verso, doc_selfie, doc_holerites FROM clients WHERE id=:id');
+      $st->execute(['id'=>$id]);
+      $d = $st->fetch();
+      $hol = json_decode($d['doc_holerites'] ?? '[]', true); if (!is_array($hol)) { $hol = []; }
+      $okCnh = ($cnhUnico===1) ? !empty($d['doc_cnh_frente']) : (!empty($d['doc_cnh_frente']) && !empty($d['doc_cnh_verso']));
+      $okSelfie = !empty($d['doc_selfie']);
+      $okHol = count($hol) > 0;
+      $st2 = $pdo->prepare('SELECT nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, pix_tipo, pix_chave FROM clients WHERE id=:id');
+      $st2->execute(['id'=>$id]);
+      $c2 = $st2->fetch();
+      $pixOk = $c2 && trim((string)($c2['pix_tipo'] ?? ''))!=='' && trim((string)($c2['pix_chave'] ?? ''))!=='';
+      $allFilled = $c2 && trim((string)$c2['nome'])!=='' && trim((string)$c2['cpf'])!=='' && trim((string)$c2['data_nascimento'])!=='' && trim((string)$c2['email'])!=='' && trim((string)$c2['telefone'])!=='' && trim((string)$c2['cep'])!=='' && trim((string)$c2['endereco'])!=='' && trim((string)$c2['numero'])!=='' && trim((string)$c2['bairro'])!=='' && trim((string)$c2['cidade'])!=='' && trim((string)$c2['estado'])!=='' && trim((string)$c2['ocupacao'])!=='' && trim((string)$c2['tempo_trabalho'])!=='' && (float)$c2['renda_mensal'] > 0;
+      if ($allFilled && $okCnh && $okSelfie && $okHol && $pixOk) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$id]); \App\Helpers\Audit::log('draft_status_change','clients',$id,'is_draft=0 origem=editar'); }
       \App\Helpers\Audit::log('update','clients',$id,'Cliente atualizado');
       header('Location: /clientes');
       return;

@@ -10,7 +10,7 @@ class LoansController {
     $pdo = Connection::get();
     try { $col = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$col) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
     $taxaDefault = ConfigRepo::get('taxa_juros_padrao_mensal', '2.5');
-    $clients = $pdo->query("SELECT id, nome, cpf FROM clients WHERE prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado' ORDER BY nome")->fetchAll();
+    $clients = $pdo->query("SELECT id, nome, cpf FROM clients WHERE (deleted_at IS NULL) AND (is_draft = 0) AND prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado' ORDER BY nome")->fetchAll();
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $client_id = (int)($_POST['client_id'] ?? 0);
       $valor = self::parseMoney($_POST['valor_principal'] ?? 0);
@@ -20,6 +20,16 @@ class LoansController {
       $primeiro = $_POST['data_primeiro_vencimento'] ?? null;
       $dataBase = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id']===1 && !empty($_POST['data_base_custom'])) ? ($_POST['data_base'] ?? null) : null;
       if ($client_id && $valor > 0 && $parcelas > 0 && $primeiro) {
+        $cinfo = $pdo->prepare('SELECT is_draft, deleted_at FROM clients WHERE id=:id');
+        $cinfo->execute(['id'=>$client_id]);
+        $ci = $cinfo->fetch();
+        if (!$ci || ((int)($ci['is_draft'] ?? 0)) === 1 || !empty($ci['deleted_at'])) {
+          $error = 'Cliente em rascunho ou apagado não pode gerar empréstimo';
+          $title = 'Calculadora de Empréstimos';
+          $content = __DIR__ . '/../Views/emprestimos_calculadora.php';
+          include __DIR__ . '/../Views/layout.php';
+          return;
+        }
         $chk = $pdo->prepare("SELECT COUNT(*) AS c FROM loans WHERE client_id=:cid AND status IN ('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo')");
         $chk->execute(['cid'=>$client_id]);
         if (((int)($chk->fetch()['c'] ?? 0)) > 0) {

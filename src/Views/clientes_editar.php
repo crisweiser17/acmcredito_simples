@@ -16,6 +16,16 @@
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
+  <?php if (!empty($_SESSION['undo_hint'])): $tok = $_SESSION['undo_hint']; ?>
+  <form method="post" class="mb-4">
+    <input type="hidden" name="acao" value="restaurar_doc">
+    <input type="hidden" name="token" value="<?php echo htmlspecialchars($tok); ?>">
+    <div class="px-3 py-2 rounded bg-yellow-100 text-yellow-800 flex items-center justify-between">
+      <span>Documento removido. Deseja desfazer?</span>
+      <button type="submit" class="px-3 py-1 rounded bg-yellow-200">Desfazer</button>
+    </div>
+  </form>
+  <?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="space-y-8">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
@@ -181,8 +191,10 @@
                 <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-full h-full"></iframe>
               </div>
               <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>">Abrir tela cheia</a>
+              <form method="post" class="inline-block ml-2 rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="cnh_frente"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
             <?php else: ?>
               <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
+              <form method="post" class="inline-block mt-2 rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="cnh_frente"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
             <?php endif; ?>
           <?php endif; ?>
           <div class="mt-2">
@@ -199,8 +211,10 @@
                 <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-full h-full"></iframe>
               </div>
               <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>">Abrir tela cheia</a>
+              <form method="post" class="inline-block ml-2 rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="cnh_verso"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
             <?php else: ?>
               <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>')" />
+              <form method="post" class="inline-block mt-2 rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="cnh_verso"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
             <?php endif; ?>
           <?php endif; ?>
           <div class="mt-2">
@@ -217,8 +231,10 @@
                 <iframe src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-full h-full"></iframe>
               </div>
               <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>">Abrir tela cheia</a>
+              <form method="post" class="inline-block ml-2 rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="selfie"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
             <?php else: ?>
               <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
+              <form method="post" class="inline-block mt-2"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="selfie"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
             <?php endif; ?>
           <?php endif; ?>
           <div class="mt-2">
@@ -236,9 +252,11 @@
                 <div class="p-2 border rounded flex items-center justify-between">
                   <span>PDF</span>
                   <a class="px-2 py-1 rounded bg-blue-100 text-blue-700" target="_blank" href="/arquivo/view?p=<?php echo rawurlencode($h); ?>">Abrir</a>
+                  <form method="post" class="inline-block rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="holerite"><input type="hidden" name="path" value="<?php echo htmlspecialchars($h); ?>"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
                 </div>
               <?php else: ?>
                 <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>" class="w-24 h-24 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $h))); ?>')" />
+                <form method="post" class="inline-block mt-1 rm-form"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="holerite"><input type="hidden" name="path" value="<?php echo htmlspecialchars($h); ?>"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
               <?php endif; ?>
             <?php endforeach; ?>
           </div>
@@ -400,3 +418,29 @@
     lb.innerHTML = '<img src="'+src+'" style="max-width:90%;max-height:90%;border-radius:8px" />';
   }
   </script>
+<div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:8px;padding:16px;min-width:280px;max-width:90%">
+    <div class="text-lg font-semibold mb-2">Remover documento?</div>
+    <div class="text-sm text-gray-700 mb-4">Esta ação pode ser desfeita por alguns minutos.</div>
+    <div class="flex gap-2 justify-end">
+      <button id="confirmCancel" class="px-3 py-2 rounded bg-gray-200">Cancelar</button>
+      <button id="confirmOk" class="px-3 py-2 rounded bg-red-600 text-white">Remover</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modal = document.getElementById('confirmModal');
+  var okBtn = document.getElementById('confirmOk');
+  var cancelBtn = document.getElementById('confirmCancel');
+  var pendingForm = null;
+  function open(){ modal.style.display='flex'; }
+  function close(){ modal.style.display='none'; pendingForm=null; }
+  Array.from(document.querySelectorAll('form.rm-form')).forEach(function(f){
+    f.addEventListener('submit', function(ev){ ev.preventDefault(); pendingForm = f; open(); });
+  });
+  okBtn && okBtn.addEventListener('click', function(){ if(pendingForm){ pendingForm.submit(); } close(); });
+  cancelBtn && cancelBtn.addEventListener('click', function(){ close(); });
+  modal && modal.addEventListener('click', function(e){ if(e.target===modal){ close(); } });
+})();
+</script>
