@@ -1,11 +1,11 @@
 <?php $c = $client ?? []; ?>
 <div class="space-y-8">
-  <h2 class="text-2xl font-semibold">Visualizar Cliente</h2>
-  <?php if (!empty($c['cadastro_publico'])): ?>
-  <div class="flex justify-end">
-    <span class="inline-block bg-yellow-100 text-yellow-800 text-xs rounded px-2 py-1 mb-2">cadastro feito pelo cliente</span>
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-semibold">Visualizar Cliente</h2>
+    <?php if (!empty($c['cadastro_publico'])): ?>
+      <span class="inline-block bg-yellow-100 text-yellow-800 text-xs rounded px-2 py-1">cadastro feito pelo cliente</span>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
   <div class="flex gap-3">
     <a class="px-4 py-2 rounded bg-red-600 text-white" href="/clientes/<?php echo (int)$c['id']; ?>/validar">Validar</a>
     <a class="btn-primary px-4 py-2 rounded" href="/clientes/<?php echo (int)$c['id']; ?>/editar">Editar</a>

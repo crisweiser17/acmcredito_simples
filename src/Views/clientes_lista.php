@@ -138,6 +138,11 @@
                 <i class="fa fa-money text-[14px]" aria-hidden="true"></i>
               </a>
               <?php endif; ?>
+              <?php if ((int)($_SESSION['user_id'] ?? 0) === 1 && (int)($c['loans_count'] ?? 0) === 0): ?>
+              <button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" title="Excluir" aria-label="Excluir" data-del-id="<?php echo (int)$c['id']; ?>">
+                <i class="fa fa-trash text-red-600 text-[14px]" aria-hidden="true"></i>
+              </button>
+              <?php endif; ?>
             </div>
           </td>
         </tr>
@@ -163,6 +168,7 @@
   <?php } ?>
   <script>
     (function(){
+      var CAN_DELETE = <?php echo ((int)($_SESSION['user_id'] ?? 0) === 1) ? 'true' : 'false'; ?>;
       var perSel = document.getElementById('cli_per_page');
       if (!perSel) return;
       function fmtCPF(c){ var d = (c||'').replace(/\D+/g,''); if (d.length===11){ return d.substring(0,3)+'.'+d.substring(3,6)+'.'+d.substring(6,9)+'-'+d.substring(9); } return c||''; }
@@ -197,11 +203,15 @@
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/ver" title="Ver" aria-label="Ver"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/editar" title="Editar" aria-label="Editar"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>'+
                 ((c.loans_count&&parseInt(c.loans_count,10)>0)?('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos?client_id='+(c.id||'')+'" title="Empréstimos" aria-label="Empréstimos"><i class="fa fa-money text-[14px]" aria-hidden="true"></i></a>'):'')+
+                ((CAN_DELETE && !(c.loans_count && parseInt(c.loans_count,10)>0))?('<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" title="Excluir" aria-label="Excluir" data-del-id="'+(c.id||'')+'"><i class="fa fa-trash text-red-600 text-[14px]" aria-hidden="true"></i></button>'):'')+
               '</div>'+
             '</td>'+
           '</tr>'; }); tb.innerHTML = out; var pi = document.getElementById('cli_pageinfo'); if (pi){ var p = j.pagination||{}; pi.textContent = 'Página '+(p.page||1)+' de '+(p.pages_total||1)+' • Total '+(p.total||0); }
+          bindDeleteButtons();
           });
       });
+      function bindDeleteButtons(){ var btns = document.querySelectorAll('[data-del-id]'); btns.forEach(function(b){ b.addEventListener('click', function(){ var id = parseInt(b.getAttribute('data-del-id')||'0',10); if(!id) return; if(!confirm('Excluir cliente '+id+'? Esta ação não pode ser desfeita.')) return; fetch('/clientes/'+id+'/excluir', { method:'POST' }).then(function(r){ if(r.ok){ window.location.reload(); } else { r.json().then(function(j){ alert(j && j.error ? j.error : 'Falha ao excluir'); }).catch(function(){ r.text().then(function(t){ alert(t || 'Falha ao excluir'); }); }); } }); }); }); }
+      bindDeleteButtons();
     })();
   </script>
 </div>

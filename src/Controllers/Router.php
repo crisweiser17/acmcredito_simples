@@ -151,6 +151,10 @@ class Router {
       \App\Controllers\ClientesController::validar((int)$m[1]);
       return;
     }
+    if (preg_match('#^/clientes/(\d+)/excluir$#', $path, $m)) {
+      \App\Controllers\ClientesController::excluir((int)$m[1]);
+      return;
+    }
     if (preg_match('#^/referencia/(\d+)/(\d+)/([a-f0-9]{12,64})$#', $path, $m)) {
       \App\Controllers\ClientesController::referenciaPublica((int)$m[1], (int)$m[2], $m[3]);
       return;

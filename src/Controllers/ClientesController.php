@@ -345,7 +345,7 @@ class ClientesController {
     $cs = trim($_GET['cpf_status'] ?? '');
     $draft = trim($_GET['draft'] ?? '');
     $origem = trim($_GET['origem'] ?? '');
-    $baseSql = 'FROM clients WHERE 1=1';
+    $baseSql = 'FROM clients WHERE deleted_at IS NULL';
     $params = [];
     if ($q !== '') { $baseSql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
     if ($ini !== '') { $baseSql .= ' AND DATE(created_at) >= :ini'; $params['ini'] = $ini; }
@@ -378,6 +378,32 @@ class ClientesController {
     $title = 'Clientes';
     $content = __DIR__ . '/../Views/clientes_lista.php';
     include __DIR__ . '/../Views/layout.php';
+  }
+  public static function excluir(int $id): void {
+    if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) { http_response_code(403); echo 'forbidden'; return; }
+    $pdo = Connection::get();
+    $hasLoans = 0;
+    try {
+      $chk = $pdo->prepare('SELECT COUNT(*) AS total FROM loans WHERE client_id = :id');
+      $chk->execute(['id'=>$id]);
+      $hasLoans = (int)($chk->fetch()['total'] ?? 0);
+    } catch (\Throwable $e) { $hasLoans = 0; }
+    if ($hasLoans > 0) {
+      if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        http_response_code(409);
+        header('Content-Type: application/json');
+        echo json_encode(['ok'=>false,'error'=>'Cliente possui empréstimos vinculados e não pode ser excluído.']);
+        return;
+      }
+      $_SESSION['toast'] = 'Cliente possui empréstimos vinculados e não pode ser excluído.';
+      header('Location: /clientes');
+      return;
+    }
+    $stmt = $pdo->prepare('UPDATE clients SET deleted_at = NOW() WHERE id = :id');
+    $stmt->execute(['id'=>$id]);
+    Audit::log('delete', 'clients', $id, 'Cliente excluído');
+    if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') { header('Content-Type: application/json'); echo json_encode(['ok'=>true]); return; }
+    header('Location: /clientes');
   }
   public static function validar(int $id): void {
     $pdo = Connection::get();
