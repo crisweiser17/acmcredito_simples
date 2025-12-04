@@ -71,8 +71,14 @@
     <?php foreach ($grp as $loanId => $items): ?>
       <div class="border rounded p-4">
         <div class="font-semibold mb-2"><a class="text-blue-700 underline" href="/emprestimos/<?php echo (int)$loanId; ?>">Empréstimo #<?php echo (int)$loanId; ?></a> — <a class="text-blue-700 underline" href="/clientes/<?php echo isset($items[0]['client_id'])?(int)$items[0]['client_id']:0; ?>/ver"><?php echo htmlspecialchars($items[0]['cliente_nome'] ?? ''); ?></a></div>
-        <table class="w-full border-collapse">
-          <thead><tr><th class="border px-2 py-1">Parcela</th><th class="border px-2 py-1">Vencimento</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Status</th><th class="border px-2 py-1">Ação</th></tr></thead>
+        <table class="w-full border-collapse sort-table" data-table-type="group">
+          <thead><tr>
+            <th class="border px-2 py-1 cursor-pointer" data-sort-index="0">Parcela</th>
+            <th class="border px-2 py-1 cursor-pointer" data-sort-index="1">Vencimento</th>
+            <th class="border px-2 py-1 cursor-pointer" data-sort-index="2">Valor</th>
+            <th class="border px-2 py-1 cursor-pointer" data-sort-index="3">Status</th>
+            <th class="border px-2 py-1">Ação</th>
+          </tr></thead>
           <tbody>
             <?php foreach ($items as $p): ?>
               <tr>
@@ -97,8 +103,16 @@
     <?php endforeach; ?>
   <?php else: ?>
     <div class="border rounded p-4">
-      <table class="w-full border-collapse">
-        <thead><tr><th class="border px-2 py-1">Empréstimo</th><th class="border px-2 py-1">Cliente</th><th class="border px-2 py-1">Parcela</th><th class="border px-2 py-1">Vencimento</th><th class="border px-2 py-1">Valor</th><th class="border px-2 py-1">Status</th><th class="border px-2 py-1">Ação</th></tr></thead>
+      <table class="w-full border-collapse sort-table" data-table-type="flat">
+        <thead><tr>
+          <th class="border px-2 py-1 cursor-pointer" data-sort-index="0">Empréstimo</th>
+          <th class="border px-2 py-1 cursor-pointer" data-sort-index="1">Cliente</th>
+          <th class="border px-2 py-1 cursor-pointer" data-sort-index="2">Parcela</th>
+          <th class="border px-2 py-1 cursor-pointer" data-sort-index="3">Vencimento</th>
+          <th class="border px-2 py-1 cursor-pointer" data-sort-index="4">Valor</th>
+          <th class="border px-2 py-1 cursor-pointer" data-sort-index="5">Status</th>
+          <th class="border px-2 py-1">Ação</th>
+        </tr></thead>
         <tbody>
           <?php foreach ($rows as $p): ?>
             <tr>
@@ -152,6 +166,55 @@
           var form = document.getElementById('parcela_form');
           if (!form) return;
           form.pid.value = pid; form.status.value = st; form.submit();
+        });
+      });
+    })();
+  </script>
+  <script>
+    (function(){
+      function parseVal(type, text){
+        var t = text.trim();
+        if (type==='num'){ var n = parseInt(t.replace(/\D+/g,''),10); return isNaN(n)?0:n; }
+        if (type==='date'){ var m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m) return 0; return new Date(m[3]+'-'+m[2]+'-'+m[1]).getTime()||0; }
+        if (type==='money'){ var s = t.replace(/[^\d,\.]/g,''); if(!s) return 0; var i = s.lastIndexOf(','); if(i>=0){ s = s.slice(0,i).replace(/\./g,''); } else { s = s.replace(/\./g,''); } var n = parseInt(s,10); return isNaN(n)?0:n; }
+        return t.toLowerCase();
+      }
+      function getCellText(td){
+        var a = td.querySelector('a');
+        var v = a ? a.textContent : td.textContent;
+        return v||'';
+      }
+      function sortTable(table, colIdx, dir){
+        var typeMapFlat = {0:'num',1:'text',2:'num',3:'date',4:'money',5:'text'};
+        var typeMapGroup = {0:'num',1:'date',2:'money',3:'text'};
+        var ttype = table.getAttribute('data-table-type');
+        var map = ttype==='group'?typeMapGroup:typeMapFlat;
+        var tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort(function(r1,r2){
+          var t1 = parseVal(map[colIdx]||'text', getCellText(r1.children[colIdx]));
+          var t2 = parseVal(map[colIdx]||'text', getCellText(r2.children[colIdx]));
+          if (t1<t2) return dir==='asc'? -1 : 1;
+          if (t1>t2) return dir==='asc'? 1 : -1;
+          return 0;
+        });
+        rows.forEach(function(r){ tbody.appendChild(r); });
+      }
+      function clearIndicators(ths){ ths.forEach(function(th){ var s = th.querySelector('.sort-ind'); if (s) s.remove(); }); }
+      function addIndicator(th, dir){ var s = document.createElement('span'); s.className='sort-ind ml-1'; s.textContent = dir==='asc'?'▲':'▼'; th.appendChild(s); }
+      Array.from(document.querySelectorAll('table.sort-table')).forEach(function(tbl){
+        var ths = Array.from(tbl.querySelectorAll('thead th[data-sort-index]'));
+        var state = { idx: null, dir: 'asc' };
+        ths.forEach(function(th){
+          th.addEventListener('click', function(){
+            var idx = parseInt(th.getAttribute('data-sort-index'),10);
+            if (state.idx === idx){ state.dir = state.dir==='asc'?'desc':'asc'; }
+            else { state.idx = idx; state.dir = 'asc'; }
+            clearIndicators(ths);
+            addIndicator(th, state.dir);
+            sortTable(tbl, idx, state.dir);
+          });
         });
       });
     })();
