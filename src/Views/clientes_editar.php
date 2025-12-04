@@ -1,6 +1,13 @@
 <?php $c = $client ?? []; ?>
 <div class="space-y-8">
+<div class="flex items-center justify-between">
   <h2 class="text-2xl font-semibold">Editar Cliente</h2>
+  <?php if ((int)($c['is_draft'] ?? 0) === 1): ?>
+    <span class="inline-block bg-gray-100 text-gray-700 rounded px-2 py-1">rascunho</span>
+  <?php else: ?>
+    <span class="inline-block bg-green-100 text-green-700 rounded px-2 py-1">ativo</span>
+  <?php endif; ?>
+</div>
   <?php if (!empty($c['cadastro_publico'])): ?>
   <span class="inline-block bg-yellow-100 text-yellow-800 text-xs rounded px-2 py-1 mb-2">Cadastro Público</span>
   <?php endif; ?>

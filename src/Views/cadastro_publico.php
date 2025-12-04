@@ -355,7 +355,7 @@
     async function saveStep4Finish(){
       var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value);
       var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json();
-      if (d && d.ok && d.completed && d.redirect){ try { localStorage.removeItem('acm_client_id'); } catch (e) {} window.location.href = d.redirect; } else if (d && d.ok){ alert('Dados salvos. Você pode finalizar quando tudo estiver completo.'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+      if (d && d.ok && d.completed && d.redirect){ try { localStorage.removeItem('acm_client_id'); } catch (e) {} window.location.href = d.redirect; } else if (d && d.ok){ var errs = (d.upload_errors||[]); if (errs.length>0){ alert('Alguns arquivos não foram aceitos:\n- '+errs.join('\n- ')); } else { alert('Dados salvos. Você pode finalizar quando tudo estiver completo.'); } } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
     document.getElementById('btn_step1_next') && document.getElementById('btn_step1_next').addEventListener('click', saveStep1);
     document.getElementById('btn_step2_prev') && document.getElementById('btn_step2_prev').addEventListener('click', function(){ showStep('1', true); });
@@ -363,7 +363,7 @@
     document.getElementById('btn_step3_prev') && document.getElementById('btn_step3_prev').addEventListener('click', function(){ showStep('2', true); });
     document.getElementById('btn_step3_next') && document.getElementById('btn_step3_next').addEventListener('click', saveStep3);
     document.getElementById('btn_step4_finish') && document.getElementById('btn_step4_finish').addEventListener('click', saveStep4Finish);
-    document.getElementById('btn_step4_save') && document.getElementById('btn_step4_save').addEventListener('click', async function(){ var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value); var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert('Dados salvos'); } else { alert((d&&d.error)||'Erro ao salvar'); } });
+    document.getElementById('btn_step4_save') && document.getElementById('btn_step4_save').addEventListener('click', async function(){ var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value); var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ var errs = (d.upload_errors||[]); if (errs.length>0){ alert('Alguns arquivos não foram aceitos:\n- '+errs.join('\n- ')); } else { alert('Dados salvos'); } } else { alert((d&&d.error)||'Erro ao salvar'); } });
     document.getElementById('btn_step4_prev') && document.getElementById('btn_step4_prev').addEventListener('click', function(){ showStep('3', true); });
     (function(){
       var urlStep=null; try { var u = new URL(window.location.href); urlStep = u.searchParams.get('step'); } catch (e) {}

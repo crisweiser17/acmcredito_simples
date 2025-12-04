@@ -139,6 +139,10 @@ class Router {
       \App\Controllers\ClientesController::salvarParcialInterno();
       return;
     }
+    if ($path === '/api/clientes/check-cpf') {
+      \App\Controllers\ClientesController::checkCpf();
+      return;
+    }
     if (preg_match('#^/api/clientes/(\d+)$#', $path, $m)) {
       \App\Controllers\ClientesController::buscarPorId((int)$m[1]);
       return;

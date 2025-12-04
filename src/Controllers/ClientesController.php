@@ -343,6 +343,8 @@ class ClientesController {
     }
     $ps = trim($_GET['prova_status'] ?? '');
     $cs = trim($_GET['cpf_status'] ?? '');
+    $draft = trim($_GET['draft'] ?? '');
+    $origem = trim($_GET['origem'] ?? '');
     $baseSql = 'FROM clients WHERE 1=1';
     $params = [];
     if ($q !== '') { $baseSql .= ' AND (nome LIKE :q OR cpf LIKE :q)'; $params['q'] = '%'.$q.'%'; }
@@ -350,6 +352,8 @@ class ClientesController {
     if ($fim !== '') { $baseSql .= ' AND DATE(created_at) <= :fim'; $params['fim'] = $fim; }
     if ($ps !== '' && in_array($ps, ['aprovado','reprovado','pendente'], true)) { $baseSql .= ' AND prova_vida_status = :ps'; $params['ps'] = $ps; }
     if ($cs !== '' && in_array($cs, ['aprovado','reprovado','pendente'], true)) { $baseSql .= ' AND cpf_check_status = :cs'; $params['cs'] = $cs; }
+    if ($draft !== '' && in_array($draft, ['0','1'], true)) { $baseSql .= ' AND is_draft = :draft'; $params['draft'] = (int)$draft; }
+    if ($origem !== '' && in_array($origem, ['publico','interno'], true)) { $baseSql .= ' AND cadastro_publico = :orig'; $params['orig'] = ($origem === 'publico') ? 1 : 0; }
 
     $perSel = (int)($_GET['per_page'] ?? 25);
     $allowed = [25,50,100];
@@ -361,7 +365,7 @@ class ClientesController {
     $countStmt->execute($params);
     $total = (int)($countStmt->fetch()['total'] ?? 0);
 
-    $rowsStmt = $pdo->prepare('SELECT id, nome, cpf, is_draft, prova_vida_status, cpf_check_status, criterios_status, referencias, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count ' . $baseSql . ' ORDER BY created_at DESC LIMIT ' . (int)$perSel . ' OFFSET ' . (int)$offset);
+    $rowsStmt = $pdo->prepare('SELECT id, nome, cpf, cadastro_publico, is_draft, prova_vida_status, cpf_check_status, criterios_status, referencias, created_at, (SELECT COUNT(*) FROM loans WHERE loans.client_id = clients.id) AS loans_count ' . $baseSql . ' ORDER BY created_at DESC LIMIT ' . (int)$perSel . ' OFFSET ' . (int)$offset);
     $rowsStmt->execute($params);
     $rows = $rowsStmt->fetchAll();
     $pagesTotal = $perSel > 0 ? max(1, (int)ceil($total / $perSel)) : 1;
@@ -593,6 +597,7 @@ class ClientesController {
             ]);
         $clientId = (int)$pdo->lastInsertId();
         $created = true;
+        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=publico');
       } else {
         $clientId = (int)$exist['id'];
         $pdo->prepare('UPDATE clients SET nome=:nome, data_nascimento=:nasc, email=:email, telefone=:telefone, pix_tipo=:pix_tipo, pix_chave=:pix_chave, is_draft=1 WHERE id=:id')
@@ -605,6 +610,7 @@ class ClientesController {
               'pix_chave' => $pixNorm,
               'id' => $clientId
             ]);
+        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=publico');
       }
       echo json_encode(['ok'=>true,'client_id'=>$clientId,'created'=>$created]);
       return;
@@ -642,6 +648,7 @@ class ClientesController {
       return;
     }
     if ($step === 4) {
+      $uploadErrors = [];
       $ocupacao = trim($_POST['ocupacao'] ?? '');
       $tempo = trim($_POST['tempo_trabalho'] ?? '');
       $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
@@ -653,12 +660,12 @@ class ClientesController {
       $hasVerso = !empty($_FILES['cnh_verso']['name'] ?? '');
       $hasSelfie = !empty($_FILES['selfie']['name'] ?? '');
       $hasHol = !empty($_FILES['holerites']['name'][0] ?? '');
-      if ($hasUnico) { try { $path = Upload::save($_FILES['cnh_unico'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f, doc_cnh_verso=NULL WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+      if ($hasUnico) { try { $path = Upload::save($_FILES['cnh_unico'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f, doc_cnh_verso=NULL WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=cnh_unico path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'Documento único: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
       if (!$cnhUnico) {
-        if ($hasFrente) { try { $path = Upload::save($_FILES['cnh_frente'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
-        if ($hasVerso) { try { $path = Upload::save($_FILES['cnh_verso'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_verso=:v WHERE id=:id')->execute(['v'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+        if ($hasFrente) { try { $path = Upload::save($_FILES['cnh_frente'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=cnh_frente path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'CNH frente: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+        if ($hasVerso) { try { $path = Upload::save($_FILES['cnh_verso'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_verso=:v WHERE id=:id')->execute(['v'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=cnh_verso path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'CNH verso: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
       }
-      if ($hasSelfie) { try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie=:s WHERE id=:id')->execute(['s'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+      if ($hasSelfie) { try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie=:s WHERE id=:id')->execute(['s'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=selfie path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'Selfie: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
       if ($hasHol) {
         $holerites = [];
         $maxHol = 5;
@@ -671,7 +678,7 @@ class ClientesController {
             'error' => $_FILES['holerites']['error'][$i],
             'size' => $_FILES['holerites']['size'][$i]
           ];
-          try { $holerites[] = Upload::save($file, $clientId, 'holerites'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+          try { $holerites[] = Upload::save($file, $clientId, 'holerites'); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=holerite path='.end($holerites)); } catch (\Throwable $e) { $uploadErrors[] = 'Holerite ' . ($i+1) . ': ' . $e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
         }
         $pdo->prepare('UPDATE clients SET doc_holerites=:j WHERE id=:id')->execute(['j'=>json_encode($holerites),'id'=>$clientId]);
       }
@@ -688,8 +695,8 @@ class ClientesController {
       $st2->execute(['id'=>$clientId]);
       $c = $st2->fetch();
       $allFilled = $c && trim((string)$c['nome'])!=='' && trim((string)$c['cpf'])!=='' && trim((string)$c['data_nascimento'])!=='' && trim((string)$c['email'])!=='' && trim((string)$c['telefone'])!=='' && trim((string)$c['cep'])!=='' && trim((string)$c['endereco'])!=='' && trim((string)$c['numero'])!=='' && trim((string)$c['bairro'])!=='' && trim((string)$c['cidade'])!=='' && trim((string)$c['estado'])!=='' && trim((string)$c['ocupacao'])!=='' && trim((string)$c['tempo_trabalho'])!=='' && (float)$c['renda_mensal'] > 0;
-      if ($allFilled && $okDocs) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('create_public','clients',$clientId,'Cadastro público finalizado'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true,'redirect'=>'/cadastro/sucesso']); return; }
-      echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>false]);
+      if ($allFilled && $okDocs) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=publico'); \App\Helpers\Audit::log('create_public','clients',$clientId,'Cadastro público finalizado'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true,'redirect'=>'/cadastro/sucesso']); return; }
+      echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>false,'upload_errors'=>$uploadErrors]);
       return;
     }
     echo json_encode(['error'=>'Etapa inválida']);
@@ -717,9 +724,11 @@ class ClientesController {
         $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, pix_tipo, pix_chave, is_draft) VALUES (:nome,:cpf,:nasc,:email,:telefone,:pix_tipo,:pix_chave,1)')
             ->execute(['nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome),'cpf'=>$cpfNorm,'nasc'=>$nasc,'email'=>$email,'telefone'=>$telefone,'pix_tipo'=>$pixTipo!==''?strtolower($pixTipo):null,'pix_chave'=>$pixTipo!==''?$pixNorm:null]);
         $clientId = (int)$pdo->lastInsertId();
+        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
       } else {
         $pdo->prepare('UPDATE clients SET nome=:nome, cpf=:cpf, data_nascimento=:nasc, email=:email, telefone=:telefone, pix_tipo=:pix_tipo, pix_chave=:pix_chave, is_draft=1 WHERE id=:id')
             ->execute(['nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; return function_exists('mb_strtoupper') ? mb_strtoupper($n,'UTF-8') : strtoupper($n); })($nome),'cpf'=>$cpfNorm,'nasc'=>$nasc,'email'=>$email,'telefone'=>$telefone,'pix_tipo'=>$pixTipo!==''?strtolower($pixTipo):null,'pix_chave'=>$pixTipo!==''?$pixNorm:null,'id'=>$clientId]);
+        \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
       }
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
@@ -736,6 +745,7 @@ class ClientesController {
       if ($cep === '' || $endereco === '' || $numero === '' || $bairro === '' || $cidade === '' || $estado === '') { echo json_encode(['error'=>'Preencha os campos obrigatórios']); return; }
       $pdo->prepare('UPDATE clients SET cep=:cep, endereco=:endereco, numero=:numero, complemento=:complemento, bairro=:bairro, cidade=:cidade, estado=:estado, is_draft=1 WHERE id=:id')
           ->execute(['cep'=>$cep,'endereco'=>$endereco,'numero'=>$numero,'complemento'=>$complemento,'bairro'=>$bairro,'cidade'=>$cidade,'estado'=>$estado,'id'=>$clientId]);
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -753,6 +763,7 @@ class ClientesController {
         $refs[] = ['nome'=>$nUp, 'relacao'=>$rel, 'telefone'=>$t, 'token'=>bin2hex(random_bytes(32))];
       }
       $pdo->prepare('UPDATE clients SET referencias=:r, is_draft=1 WHERE id=:id')->execute(['r'=>json_encode($refs),'id'=>$clientId]);
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
@@ -762,10 +773,12 @@ class ClientesController {
       $renda = self::parseRenda($_POST['renda_mensal'] ?? '0');
       $pdo->prepare('UPDATE clients SET ocupacao=:ocupacao, tempo_trabalho=:tempo, renda_mensal=:renda, is_draft=1 WHERE id=:id')
           ->execute(['ocupacao'=>$ocupacao,'tempo'=>$tempo,'renda'=>$renda,'id'=>$clientId]);
+      \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=1 origem=interno');
       echo json_encode(['ok'=>true,'client_id'=>$clientId]);
       return;
     }
     if ($block === 'documentos') {
+      $uploadErrors = [];
       $cnhUnico = isset($_POST['cnh_arquivo_unico']);
       $pdo->prepare('UPDATE clients SET cnh_arquivo_unico=:u WHERE id=:id')->execute(['u'=>$cnhUnico?1:0,'id'=>$clientId]);
       $hasUnico = !empty($_FILES['cnh_unico']['name'] ?? '');
@@ -773,12 +786,12 @@ class ClientesController {
       $hasVerso = !empty($_FILES['cnh_verso']['name'] ?? '');
       $hasSelfie = !empty($_FILES['selfie']['name'] ?? '');
       $hasHol = !empty($_FILES['holerites']['name'][0] ?? '');
-      if ($hasUnico) { try { $path = Upload::save($_FILES['cnh_unico'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f, doc_cnh_verso=NULL WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+      if ($hasUnico) { try { $path = Upload::save($_FILES['cnh_unico'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f, doc_cnh_verso=NULL WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=cnh_unico path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'Documento único: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
       if (!$cnhUnico) {
-        if ($hasFrente) { try { $path = Upload::save($_FILES['cnh_frente'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
-        if ($hasVerso) { try { $path = Upload::save($_FILES['cnh_verso'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_verso=:v WHERE id=:id')->execute(['v'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+        if ($hasFrente) { try { $path = Upload::save($_FILES['cnh_frente'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_frente=:f WHERE id=:id')->execute(['f'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=cnh_frente path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'CNH frente: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+        if ($hasVerso) { try { $path = Upload::save($_FILES['cnh_verso'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_cnh_verso=:v WHERE id=:id')->execute(['v'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=cnh_verso path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'CNH verso: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
       }
-      if ($hasSelfie) { try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie=:s WHERE id=:id')->execute(['s'=>$path,'id'=>$clientId]); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
+      if ($hasSelfie) { try { $path = Upload::save($_FILES['selfie'], $clientId, 'documentos'); $pdo->prepare('UPDATE clients SET doc_selfie=:s WHERE id=:id')->execute(['s'=>$path,'id'=>$clientId]); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=selfie path='.$path); } catch (\Throwable $e) { $uploadErrors[] = 'Selfie: '.$e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); } }
       if ($hasHol) {
         $holerites = [];
         $maxHol = 5;
@@ -791,7 +804,7 @@ class ClientesController {
             'error' => $_FILES['holerites']['error'][$i],
             'size' => $_FILES['holerites']['size'][$i]
           ];
-          try { $holerites[] = Upload::save($file, $clientId, 'holerites'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
+          try { $holerites[] = Upload::save($file, $clientId, 'holerites'); \App\Helpers\Audit::log('doc_upload','clients',$clientId,'tipo=holerite path='.end($holerites)); } catch (\Throwable $e) { $uploadErrors[] = 'Holerite ' . ($i+1) . ': ' . $e->getMessage(); \App\Helpers\Audit::log('upload_error','clients',$clientId,$e->getMessage()); }
         }
         $pdo->prepare('UPDATE clients SET doc_holerites=:j WHERE id=:id')->execute(['j'=>json_encode($holerites),'id'=>$clientId]);
       }
@@ -806,8 +819,8 @@ class ClientesController {
       $st2->execute(['id'=>$clientId]);
       $c = $st2->fetch();
       $allFilled = $c && trim((string)$c['nome'])!=='' && trim((string)$c['cpf'])!=='' && trim((string)$c['data_nascimento'])!=='' && trim((string)$c['email'])!=='' && trim((string)$c['telefone'])!=='' && trim((string)$c['cep'])!=='' && trim((string)$c['endereco'])!=='' && trim((string)$c['numero'])!=='' && trim((string)$c['bairro'])!=='' && trim((string)$c['cidade'])!=='' && trim((string)$c['estado'])!=='' && trim((string)$c['ocupacao'])!=='' && trim((string)$c['tempo_trabalho'])!=='' && (float)$c['renda_mensal'] > 0;
-      if ($allFilled && $okCnh && $okSelfie && $okHol) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true]); return; }
-      echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>false]);
+      if ($allFilled && $okCnh && $okSelfie && $okHol) { $pdo->prepare('UPDATE clients SET is_draft=0 WHERE id=:id')->execute(['id'=>$clientId]); \App\Helpers\Audit::log('draft_status_change','clients',$clientId,'is_draft=0 origem=interno'); echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>true]); return; }
+      echo json_encode(['ok'=>true,'client_id'=>$clientId,'completed'=>false,'upload_errors'=>$uploadErrors]);
       return;
     }
     echo json_encode(['error'=>'Bloco inválido']);
@@ -834,6 +847,17 @@ class ClientesController {
       }
     }
     include __DIR__ . '/../Views/referencia_publica.php';
+  }
+  public static function checkCpf(): void {
+    $pdo = Connection::get();
+    $cpf = preg_replace('/\D/', '', (string)($_GET['cpf'] ?? ''));
+    header('Content-Type: application/json');
+    if ($cpf === '' || strlen($cpf) !== 11) { echo json_encode(['exists'=>false]); return; }
+    $st = $pdo->prepare("SELECT id, nome, is_draft FROM clients WHERE REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),' ','') = :cpf LIMIT 1");
+    $st->execute(['cpf'=>$cpf]);
+    $row = $st->fetch();
+    if ($row) { echo json_encode(['exists'=>true, 'id'=>(int)$row['id'], 'nome'=>(string)$row['nome'], 'is_draft'=>((int)($row['is_draft'] ?? 0))===1]); return; }
+    echo json_encode(['exists'=>false]);
   }
   public static function editar(int $id): void {
     $pdo = Connection::get();
@@ -1003,7 +1027,7 @@ class ClientesController {
   }
   public static function buscarPorId(int $id): void {
     $pdo = Connection::get();
-    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone, renda_mensal, tempo_trabalho FROM clients WHERE id=:id');
+    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone, renda_mensal, tempo_trabalho, is_draft, cadastro_publico FROM clients WHERE id=:id');
     $stmt->execute(['id'=>$id]);
     $row = $stmt->fetch();
     header('Content-Type: application/json');

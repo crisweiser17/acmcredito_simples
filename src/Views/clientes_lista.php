@@ -52,6 +52,24 @@
         <option value="reprovado" <?php echo $cs==='reprovado'?'selected':''; ?>>Reprovado</option>
       </select>
     </div>
+    <div class="w-40">
+      <div class="text-xs text-gray-500 mb-1">Origem</div>
+      <?php $orig = $_GET['origem'] ?? ''; ?>
+      <select class="w-full border rounded px-3 py-2" name="origem">
+        <option value=""></option>
+        <option value="publico" <?php echo $orig==='publico'?'selected':''; ?>>Público</option>
+        <option value="interno" <?php echo $orig==='interno'?'selected':''; ?>>Interno</option>
+      </select>
+    </div>
+    <div class="w-40">
+      <div class="text-xs text-gray-500 mb-1">Rascunho</div>
+      <?php $dr = $_GET['draft'] ?? ''; ?>
+      <select class="w-full border rounded px-3 py-2" name="draft">
+        <option value=""></option>
+        <option value="1" <?php echo $dr==='1'?'selected':''; ?>>Sim</option>
+        <option value="0" <?php echo $dr==='0'?'selected':''; ?>>Não</option>
+      </select>
+    </div>
     <div class="ml-auto flex gap-2">
       <a class="px-4 py-2 rounded bg-gray-100" href="/clientes">Limpar</a>
       <button class="px-4 py-2 rounded btn-primary" type="submit">Filtrar</button>
@@ -73,6 +91,7 @@
         <th class="border px-2 py-1" style="width: 64px;">ID</th>
         <th class="border px-2 py-1">Nome</th>
         <th class="border px-2 py-1">CPF</th>
+        <th class="border px-2 py-1">Status</th>
         <th class="border px-2 py-1">Prova de Vida</th>
         <th class="border px-2 py-1">Consulta CPF</th>
         <th class="border px-2 py-1">Renda</th>
@@ -88,6 +107,13 @@
           <td class="border px-2 py-1"><?php echo (int)$c['id']; ?></td>
           <td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline uppercase" href="/clientes/<?php echo (int)$c['id']; ?>/ver"><?php echo htmlspecialchars($c['nome']); ?></a></td>
           <td class="border px-2 py-1"><?php $cpfDigits = preg_replace('/\D+/', '', (string)$c['cpf']); if (strlen($cpfDigits)===11){ $cpfFmt = substr($cpfDigits,0,3).'.'.substr($cpfDigits,3,3).'.'.substr($cpfDigits,6,3).'-'.substr($cpfDigits,9,2); echo htmlspecialchars($cpfFmt); } else { echo htmlspecialchars((string)$c['cpf']); } ?></td>
+          <td class="border px-2 py-1 text-center">
+            <?php if ((int)($c['is_draft'] ?? 0) === 1): ?>
+              <i class="fa fa-file text-gray-600" title="Rascunho" aria-hidden="true"></i>
+            <?php else: ?>
+              <i class="fa fa-check text-green-600" title="Ativo" aria-hidden="true"></i>
+            <?php endif; ?>
+          </td>
           <td class="border px-2 py-1"><?php $pv = strtolower((string)($c['prova_vida_status'] ?? '')); $pvClass = 'bg-gray-100 text-gray-800'; if ($pv==='aprovado'){ $pvClass='bg-green-100 text-green-800'; } elseif ($pv==='pendente'){ $pvClass='bg-yellow-100 text-yellow-800'; } elseif ($pv==='reprovado'){ $pvClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $pvClass; ?>"><?php echo htmlspecialchars($pv ? ucfirst($pv) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php $cs2 = strtolower((string)($c['cpf_check_status'] ?? '')); $csClass = 'bg-gray-100 text-gray-800'; if ($cs2==='aprovado'){ $csClass='bg-green-100 text-green-800'; } elseif ($cs2==='pendente'){ $csClass='bg-yellow-100 text-yellow-800'; } elseif ($cs2==='reprovado'){ $csClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $csClass; ?>"><?php echo htmlspecialchars($cs2 ? ucfirst($cs2) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php $cr = strtolower((string)($c['criterios_status'] ?? '')); $crClass = 'bg-gray-100 text-gray-800'; if ($cr==='aprovado'){ $crClass='bg-green-100 text-green-800'; } elseif ($cr==='pendente'){ $crClass='bg-yellow-100 text-yellow-800'; } elseif ($cr==='reprovado'){ $crClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $crClass; ?>"><?php echo htmlspecialchars($cr ? ucfirst($cr) : '—'); ?></span></td>
@@ -142,6 +168,7 @@
       function fmtCPF(c){ var d = (c||'').replace(/\D+/g,''); if (d.length===11){ return d.substring(0,3)+'.'+d.substring(3,6)+'.'+d.substring(6,9)+'-'+d.substring(9); } return c||''; }
       function badge(val){ var v = String(val||'').toLowerCase(); var cls = 'bg-gray-100 text-gray-800'; if (v==='aprovado'){ cls='bg-green-100 text-green-800'; } else if (v==='pendente'){ cls='bg-yellow-100 text-yellow-800'; } else if (v==='reprovado'){ cls='bg-red-100 text-red-800'; } return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(v? (v.charAt(0).toUpperCase()+v.slice(1)) : '—')+'</span>'; }
       function elig(pv,cpf,cr){ var ok = (String(pv).toLowerCase()==='aprovado' && String(cpf).toLowerCase()==='aprovado' && String(cr).toLowerCase()==='aprovado'); var cls = ok?'bg-green-100 text-green-800':'bg-red-100 text-red-800'; return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(ok?'Sim':'Não')+'</span>'; }
+      function statusIcon(isDraft){ return (parseInt(isDraft,10)===1) ? '<i class="fa fa-file text-gray-600" title="Rascunho" aria-hidden="true"></i>' : '<i class="fa fa-check text-green-600" title="Ativo" aria-hidden="true"></i>'; }
       function refCheck(json){ try{ var arr = (typeof json==='string')?JSON.parse(json||'[]'):(json||[]); if(!Array.isArray(arr)) arr=[]; var st='pendente'; for(var i=0;i<arr.length;i++){ var r=arr[i]||{}; var op = String((r.operador&&r.operador.status)||'').toLowerCase(); var pb = String((r.public&&r.public.status)||'').toLowerCase(); if(op==='aprovado'||pb==='aprovado'){ st='aprovado'; break; } if(op==='reprovado'||pb==='reprovado'){ st = (st==='aprovado') ? 'aprovado' : 'reprovado'; } } var color = (st==='aprovado')?'#16a34a':((st==='reprovado')?'#ef4444':'#9ca3af'); return '<i class="fa fa-check-circle" aria-hidden="true" style="color:'+color+'"></i>'; } catch(e){ return '<i class="fa fa-check-circle" aria-hidden="true" style="color:#9ca3af"></i>'; } }
       function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); return dd+'/'+mm+'/'+yy; }
       perSel.addEventListener('change', function(){
@@ -157,6 +184,7 @@
             '<td class="border px-2 py-1">'+(c.id||'')+'</td>'+
             '<td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline uppercase" href="/clientes/'+(c.id||'')+'/ver">'+(c.nome? String(c.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtCPF(c.cpf||'')+'</td>'+
+            '<td class="border px-2 py-1 text-center">'+statusIcon(c.is_draft)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.prova_vida_status)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.cpf_check_status)+'</td>'+
             '<td class="border px-2 py-1">'+badge(c.criterios_status)+'</td>'+

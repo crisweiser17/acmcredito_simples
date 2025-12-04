@@ -1,5 +1,8 @@
 <div class="space-y-8">
-  <h2 class="text-2xl font-semibold">Novo Cliente</h2>
+  <div class="flex items-center justify-between">
+    <h2 class="text-2xl font-semibold">Novo Cliente</h2>
+    <div id="status_badge" class="text-xs"></div>
+  </div>
   <?php if (!empty($error)): ?>
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
@@ -286,7 +289,7 @@
     }
     async function saveDocumentos(){
       var fd = new FormData(form); fd.set('block','documentos'); fd.set('client_id', cidEl.value);
-      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert(d.completed?'Documentos enviados. Cadastro completo.':'Documentos enviados'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+      var r = await fetch('/api/clientes/partial-save', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ var errs = (d.upload_errors||[]); if (errs.length>0){ alert('Alguns arquivos não foram aceitos:\n- '+errs.join('\n- ')); } else { alert(d.completed?'Documentos enviados. Cadastro completo.':'Documentos enviados'); } } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
     document.getElementById('btn_save_dados') && document.getElementById('btn_save_dados').addEventListener('click', saveDados);
     document.getElementById('btn_save_dados_b') && document.getElementById('btn_save_dados_b').addEventListener('click', saveDados);
@@ -443,3 +446,19 @@
   </script>
 </div>
 <?php endif; ?>
+  (function(){
+    var cpfEl = document.getElementById('cpf');
+    var helper = document.createElement('div'); helper.className='text-xs mt-0.5'; cpfEl && cpfEl.parentNode && cpfEl.parentNode.appendChild(helper);
+    async function checkDup(){ if(!cpfEl) return; var d = (cpfEl.value||'').replace(/\D/g,''); if (d.length!==11){ helper.textContent=''; helper.className='text-xs mt-0.5'; return; }
+      try { var r = await fetch('/api/clientes/check-cpf?cpf='+encodeURIComponent(d)); var j = await r.json(); if(j && j.exists){ var isDraft = !!j.is_draft; var link = isDraft ? ('/clientes/'+(j.id||'')+'/editar') : ('/clientes/'+(j.id||'')+'/ver'); var msg = isDraft ? ('CPF já existe em rascunho. Clique para continuar o cadastro.') : ('CPF já cadastrado. Clique para ver.'); helper.innerHTML = '<a href="'+link+'" class="text-red-700 underline">'+msg+'</a>'; helper.className='text-xs mt-0.5'; } else { helper.textContent=''; helper.className='text-xs mt-0.5'; } } catch(e){ }
+    }
+    if (cpfEl){ ['blur','input'].forEach(function(ev){ cpfEl.addEventListener(ev, checkDup); }); }
+  })();
+  (function(){
+    var statusEl = document.getElementById('status_badge');
+    var cidEl = document.getElementById('client_id');
+    async function refreshStatus(){ try { var id = parseInt(cidEl.value||'0',10); if (!id){ statusEl.innerHTML = '<span class="inline-block bg-gray-100 text-gray-700 rounded px-2 py-1">rascunho</span>'; return; } var r = await fetch('/api/clientes/'+id); var j = await r.json(); var isDraft = !!(j && j.is_draft==1); statusEl.innerHTML = isDraft ? '<span class="inline-block bg-gray-100 text-gray-700 rounded px-2 py-1">rascunho</span>' : '<span class="inline-block bg-green-100 text-green-700 rounded px-2 py-1">ativo</span>'; } catch(e){ }
+    }
+    refreshStatus();
+    ['click','change','input'].forEach(function(ev){ document.body.addEventListener(ev, function(e){ if (e && e.target && e.target.id && (/btn_save_|client_id/).test(e.target.id)){ setTimeout(refreshStatus, 200); } }); });
+  })();
