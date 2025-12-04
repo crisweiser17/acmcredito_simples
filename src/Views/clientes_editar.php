@@ -27,7 +27,7 @@
     </div>
   </form>
   <?php endif; ?>
-  <form method="post" enctype="multipart/form-data" class="space-y-8" id="editForm" novalidate>
+  <form method="post" enctype="multipart/form-data" class="space-y-8" id="editForm" novalidate action="/clientes/<?php echo (int)($c['id'] ?? 0); ?>/editar">
     <div class="space-y-4">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -235,7 +235,7 @@
               <button type="button" class="px-2 py-1 rounded bg-red-100 text-red-700 ml-2 rm-btn" data-doc="selfie">Remover</button>
             <?php else: ?>
               <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
-              <form method="post" class="inline-block mt-2"><input type="hidden" name="acao" value="remover_doc"><input type="hidden" name="doc" value="selfie"><button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700">Remover</button></form>
+              <button type="button" class="px-2 py-1 rounded bg-red-100 text-red-700 mt-2 rm-btn" data-doc="selfie">Remover</button>
             <?php endif; ?>
           <?php endif; ?>
           <div class="mt-2">
@@ -287,7 +287,7 @@
   (function(){
     var rendaEl = document.getElementById('renda_mensal');
     if (rendaEl) {
-      var mask = IMask(rendaEl, { mask: Number, scale: 0, signed: false, thousandsSeparator: '.', normalizeZeros: true, prefix: 'R$ ' });
+      var mask = (typeof IMask !== 'undefined') ? IMask(rendaEl, { mask: Number, scale: 0, signed: false, thousandsSeparator: '.', normalizeZeros: true, prefix: 'R$ ' }) : null;
       var helper = document.getElementById('renda_helper');
       function fmtIntBR(n){ try { var s = String(n).replace(/\D/g,''); if(!s){ return ''; } var x = s.replace(/^0+(?!$)/,''); var parts=[]; while(x.length>3){ parts.unshift(x.slice(-3)); x=x.slice(0,-3);} parts.unshift(x); return 'R$ ' + parts.join('.') + ',00'; } catch(e){ return ''; } }
       function updateHelper(){ if(!helper){ return; } var val = rendaEl.value||''; var s = val.replace(/\D/g,''); helper.textContent = s ? fmtIntBR(s) : ''; }
@@ -295,7 +295,7 @@
       updateHelper();
     }
   })();
-  ['ref_tel_1','ref_tel_2','ref_tel_3'].forEach(function(id){ var el=document.getElementById(id); if(el){ IMask(el,{ mask: '(00) 00000-0000' }); }});
+  ['ref_tel_1','ref_tel_2','ref_tel_3'].forEach(function(id){ var el=document.getElementById(id); if(el && typeof IMask !== 'undefined'){ IMask(el,{ mask: '(00) 00000-0000' }); }});
   (function(){
     var tipoEl = document.getElementById('pix_tipo');
     var chaveEl = document.getElementById('pix_chave');
@@ -371,11 +371,11 @@
   })();
   (function(){
     var cpfEl = document.querySelector('[name=cpf]');
-    if (cpfEl) IMask(cpfEl, { mask: '000.000.000-00' });
+    if (cpfEl && typeof IMask !== 'undefined') IMask(cpfEl, { mask: '000.000.000-00' });
     var telEl = document.querySelector('[name=telefone]');
-    if (telEl) IMask(telEl, { mask: '(00) 00000-0000' });
+    if (telEl && typeof IMask !== 'undefined') IMask(telEl, { mask: '(00) 00000-0000' });
     var cepEl = document.querySelector('[name=cep]');
-    if (cepEl) IMask(cepEl, { mask: '00000-000' });
+    if (cepEl && typeof IMask !== 'undefined') IMask(cepEl, { mask: '00000-000' });
   })();
   document.getElementById('buscarCep').addEventListener('click', async function(){
     const cep = (document.querySelector('[name=cep]').value||'').replace(/\D/g,'');
@@ -474,7 +474,7 @@
       var firstEl = null;
       for(var i=0;i<req.length;i++){ if(!val(req[i][0])) { missing.push(req[i][1]); var el = form.querySelector('[name="'+req[i][0]+'"]'); if (el){ el.classList.add('border-red-600'); el.style.borderColor = '#dc2626'; if(!firstEl) firstEl = el; } } }
       var rendaEl = document.getElementById('renda_mensal'); var rendaDigits = numDigits(rendaEl); if(!(parseInt(rendaDigits||'0',10)>0)) missing.push('Renda Mensal');
-      var ptEl = document.getElementById('pix_tipo'); var pcEl = document.getElementById('pix_chave'); var pt = (ptEl && ptEl.value||'').trim(); var pc = (pcEl && pcEl.value||'').trim(); if(!pt) missing.push('Tipo de Chave PIX'); if(!pc) missing.push('Chave PIX');
+      var ptEl = document.getElementById('pix_tipo'); var pcEl = document.getElementById('pix_chave'); var pt = (ptEl && ptEl.value||'').trim(); var pc = (pcEl && pcEl.value||'').trim(); var reqPix = (pt!=='' || pc!==''); if(reqPix){ if(!pt) missing.push('Tipo de Chave PIX'); if(!pc) missing.push('Chave PIX'); }
       var frenteExisting = <?php echo !empty($c['doc_cnh_frente']) ? 'true' : 'false'; ?>;
       var versoExisting = <?php echo !empty($c['doc_cnh_verso']) ? 'true' : 'false'; ?>;
       var selfieExisting = <?php echo !empty($c['doc_selfie']) ? 'true' : 'false'; ?>;
