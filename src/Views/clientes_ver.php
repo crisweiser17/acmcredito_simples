@@ -2,7 +2,9 @@
 <div class="space-y-8">
   <h2 class="text-2xl font-semibold">Visualizar Cliente</h2>
   <?php if (!empty($c['cadastro_publico'])): ?>
-  <span class="inline-block bg-yellow-100 text-yellow-800 text-xs rounded px-2 py-1 mb-2">Cadastro Público</span>
+  <div class="flex justify-end">
+    <span class="inline-block bg-yellow-100 text-yellow-800 text-xs rounded px-2 py-1 mb-2">cadastro feito pelo cliente</span>
+  </div>
   <?php endif; ?>
   <div class="flex gap-3">
     <a class="px-4 py-2 rounded bg-red-600 text-white" href="/clientes/<?php echo (int)$c['id']; ?>/validar">Validar</a>
@@ -15,23 +17,23 @@
     <div class="text-lg font-semibold">Dados Pessoais</div>
     <div class="grid md:grid-cols-2 gap-2">
       <div class="md:col-span-2">
-        <input class="w-full border rounded px-3 py-2" name="nome" value="<?php echo htmlspecialchars($c['nome']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="nome" value="<?php echo htmlspecialchars($c['nome'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Nome Completo</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="cpf" value="<?php echo htmlspecialchars($c['cpf']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="cpf" value="<?php echo htmlspecialchars($c['cpf'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">CPF</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" type="date" name="data_nascimento" value="<?php echo htmlspecialchars($c['data_nascimento']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" type="date" name="data_nascimento" value="<?php echo htmlspecialchars($c['data_nascimento'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Data de Nascimento</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" type="email" name="email" value="<?php echo htmlspecialchars($c['email']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" type="email" name="email" value="<?php echo htmlspecialchars($c['email'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Email</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="telefone" value="<?php echo htmlspecialchars($c['telefone']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="telefone" value="<?php echo htmlspecialchars($c['telefone'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Telefone</div>
       </div>
     </div>
@@ -41,7 +43,7 @@
     <div>
       <?php if (!empty($c['indicado_por_id'])): ?>
         <?php if (!empty($indicador)): ?>
-          <a class="text-blue-700 underline" href="/clientes/<?php echo (int)$indicador['id']; ?>/ver"><?php echo htmlspecialchars($indicador['nome']); ?></a>
+          <a class="text-blue-700 underline" href="/clientes/<?php echo (int)$indicador['id']; ?>/ver"><?php echo htmlspecialchars($indicador['nome'] ?? ''); ?></a>
           <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars(($indicador['telefone'] ?? '')); ?></span>
         <?php else: ?>
           <span>ID <?php echo (int)$c['indicado_por_id']; ?></span>
@@ -60,7 +62,7 @@
           <?php $tel = preg_replace('/\D/','', (string)($r['telefone'] ?? '')); if ($tel !== '' && substr($tel,0,2) !== '55' && (strlen($tel)===10 || strlen($tel)===11)) { $tel = '55' . $tel; } $nomeRef = (string)($r['nome'] ?? ''); $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000'; $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://'; $token = (string)($r['token'] ?? ''); $link = $token !== '' ? ($scheme . $host . '/referencia/' . (int)$c['id'] . '/' . (int)$i . '/' . $token) : ''; $rel = trim((string)($r['relacao'] ?? '')); $relTxt = $rel !== '' ? (' (relacionamento: ' . $rel . ')') : ''; $nomeRefUp = function_exists('mb_strtoupper') ? mb_strtoupper($nomeRef,'UTF-8') : strtoupper($nomeRef); $cliNomeUp = function_exists('mb_strtoupper') ? mb_strtoupper((string)($c['nome'] ?? ''),'UTF-8') : strtoupper((string)($c['nome'] ?? '')); $msg = 'Olá ' . $nomeRefUp . $relTxt . ', ' . $cliNomeUp . ' indicou você como referência. É rapidinho: você conhece e recomenda essa pessoa? Acesse: ' . $link . '. Sua resposta é confidencial. Obrigado! ACM Crédito.'; $wa = 'https://wa.me/' . ($tel !== '' ? $tel : '') . '?text=' . rawurlencode($msg); ?>
           <div class="flex items-center gap-2">
             <span><?php echo htmlspecialchars($r['nome'] ?? ''); ?></span>
-            <?php if (!empty($r['relacao'])): ?><span class="text-sm text-gray-600"><?php echo htmlspecialchars($r['relacao']); ?></span><?php endif; ?>
+            <?php if (!empty($r['relacao'])): ?><span class="text-sm text-gray-600"><?php echo htmlspecialchars($r['relacao'] ?? ''); ?></span><?php endif; ?>
             <span class="text-sm text-gray-600 ml-2"><?php echo htmlspecialchars($r['telefone'] ?? ''); ?></span>
             <?php if (!empty($link)): ?><span class="ml-2 text-xs px-2 py-0.5 rounded bg-blue-600 text-white">Link disponível</span><?php endif; ?>
             <a class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white <?php echo (empty($tel) || empty($link))?'opacity-50 pointer-events-none':''; ?>" href="<?php echo htmlspecialchars($wa); ?>" target="_blank" aria-label="Enviar WhatsApp para referência">
@@ -76,34 +78,34 @@
   <div class="space-y-4">
     <div class="text-lg font-semibold">Endereço</div>
     <div>
-      <input class="w-full border rounded px-3 py-2" name="cep" value="<?php echo htmlspecialchars($c['cep']); ?>" disabled>
+      <input class="w-full border rounded px-3 py-2" name="cep" value="<?php echo htmlspecialchars($c['cep'] ?? ''); ?>" disabled>
       <div class="text-sm text-gray-600 mt-0.5">CEP</div>
     </div>
     <div>
-      <input class="w-full border rounded px-3 py-2" name="endereco" id="endereco" value="<?php echo htmlspecialchars($c['endereco']); ?>" disabled>
+      <input class="w-full border rounded px-3 py-2" name="endereco" id="endereco" value="<?php echo htmlspecialchars($c['endereco'] ?? ''); ?>" disabled>
       <div class="text-sm text-gray-600 mt-0.5">Endereço</div>
     </div>
     <div class="grid md:grid-cols-3 gap-2">
       <div>
-        <input class="w-full border rounded px-3 py-2" name="numero" value="<?php echo htmlspecialchars($c['numero']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="numero" value="<?php echo htmlspecialchars($c['numero'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Número</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="complemento" value="<?php echo htmlspecialchars($c['complemento']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="complemento" value="<?php echo htmlspecialchars($c['complemento'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Complemento</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="bairro" id="bairro" value="<?php echo htmlspecialchars($c['bairro']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="bairro" id="bairro" value="<?php echo htmlspecialchars($c['bairro'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Bairro</div>
       </div>
     </div>
     <div class="grid md:grid-cols-2 gap-2">
       <div>
-        <input class="w-full border rounded px-3 py-2" name="cidade" id="cidade" value="<?php echo htmlspecialchars($c['cidade']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="cidade" id="cidade" value="<?php echo htmlspecialchars($c['cidade'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Cidade</div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="estado" id="estado" value="<?php echo htmlspecialchars($c['estado']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="estado" id="estado" value="<?php echo htmlspecialchars($c['estado'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">UF</div>
       </div>
     </div>
@@ -112,7 +114,7 @@
     <div class="text-lg font-semibold">Dados Profissionais</div>
     <div class="grid md:grid-cols-2 gap-2">
       <div>
-        <input class="w-full border rounded px-3 py-2" name="ocupacao" value="<?php echo htmlspecialchars($c['ocupacao']); ?>" disabled>
+        <input class="w-full border rounded px-3 py-2" name="ocupacao" value="<?php echo htmlspecialchars($c['ocupacao'] ?? ''); ?>" disabled>
         <div class="text-sm text-gray-600 mt-0.5">Ocupação</div>
       </div>
       <div>
@@ -203,7 +205,7 @@
   <div class="space-y-2">
     <div class="text-lg font-semibold">Observações</div>
     <div>
-      <textarea class="w-full border rounded px-3 py-2" name="observacoes" rows="4" disabled><?php echo htmlspecialchars($c['observacoes']); ?></textarea>
+      <textarea class="w-full border rounded px-3 py-2" name="observacoes" rows="4" disabled><?php echo htmlspecialchars($c['observacoes'] ?? ''); ?></textarea>
       <div class="text-sm text-gray-600 mt-0.5">Observações</div>
     </div>
   </div>

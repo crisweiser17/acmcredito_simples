@@ -5,6 +5,12 @@
   <?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="space-y-8" id="cadastro_form">
     <input type="hidden" name="client_id" id="client_id">
+    <div id="wizard_steps" class="flex flex-wrap items-center gap-2 text-sm">
+      <div data-tl="1" class="px-3 py-1 rounded border">1 - Dados Pessoais e Bancários</div>
+      <div data-tl="2" class="px-3 py-1 rounded border">2 - Endereço</div>
+      <div data-tl="3" class="px-3 py-1 rounded border">3 - Referências</div>
+      <div data-tl="4" class="px-3 py-1 rounded border">4 - Profissionais e Documentos</div>
+    </div>
     <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50" data-step="1">
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
@@ -29,9 +35,7 @@
           <div class="text-sm text-gray-600 mt-0.5">Telefone <span class="text-red-600">*</span></div>
         </div>
       </div>
-      <div class="text-right">
-        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step1_next">Salvar e Próximo</button>
-      </div>
+      
     </div>
     <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="1">
       <div class="text-lg font-semibold">Dados Bancários</div>
@@ -51,9 +55,10 @@
           <div class="text-xs mt-0.5" id="pix_helper"></div>
         </div>
       </div>
-      <div class="text-right">
-        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step1_next_b">Salvar e Próximo</button>
-      </div>
+      
+    </div>
+    <div class="text-right" data-step="1">
+      <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step1_next">Avançar</button>
     </div>
     <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="2">
       <div class="text-lg font-semibold">Endereço</div>
@@ -92,9 +97,10 @@
           <div class="text-sm text-gray-600 mt-0.5">UF <span class="text-red-600">*</span></div>
         </div>
       </div>
-      <div class="text-right">
-        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step2_next">Salvar e Próximo</button>
-      </div>
+    </div>
+    <div class="flex items-center justify-end gap-2" data-step="2">
+      <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step2_prev">Retornar</button>
+      <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step2_next">Avançar</button>
     </div>
     <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="3">
       <div class="text-lg font-semibold">Referências</div>
@@ -131,9 +137,11 @@
         </div>
         <div class="text-xs text-gray-500">Você pode incluir até 3 referências.</div>
       </div>
-      <div class="text-right">
-        <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step3_next">Salvar e Próximo</button>
-      </div>
+      
+    </div>
+    <div class="flex items-center justify-end gap-2 hidden" data-step="3">
+      <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step3_prev">Retornar</button>
+      <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step3_next">Avançar</button>
     </div>
     <div class="section-card space-y-4 border border-blue-200 rounded p-4 bg-blue-50 hidden" data-step="4">
       <div class="text-lg font-semibold">Dados Profissionais</div>
@@ -197,6 +205,9 @@
         <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step4_save">Salvar</button>
         <button type="button" class="btn-primary px-4 py-2 rounded" id="btn_step4_finish">Finalizar</button>
       </div>
+    </div>
+    <div class="flex items-center justify-end gap-2 hidden" data-step="4">
+      <button type="button" class="px-4 py-2 rounded bg-gray-100" id="btn_step4_prev">Retornar</button>
     </div>
     <div class="text-xs text-gray-500">Você pode salvar e voltar mais tarde. Quando todas as etapas estiverem completas, finalize.</div>
   </form>
@@ -304,7 +315,15 @@
   (function(){
     var form = document.getElementById('cadastro_form');
     var cidEl = document.getElementById('client_id');
-    function showStep(n){ Array.from(document.querySelectorAll('[data-step]')).forEach(function(sec){ sec.classList.toggle('hidden', sec.getAttribute('data-step')!=n); }); }
+    function showStep(n, push){
+      Array.from(document.querySelectorAll('[data-step]')).forEach(function(sec){ sec.classList.toggle('hidden', sec.getAttribute('data-step')!=n); });
+      var tl = document.querySelectorAll('[data-tl]'); tl.forEach(function(el){ var on = (String(el.getAttribute('data-tl'))===String(n)); el.className = 'px-3 py-1 rounded border ' + (on ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'); });
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.set('step', String(n));
+        if (push) { window.history.pushState({step:n}, '', url.toString()); } else { window.history.replaceState({step:n}, '', url.toString()); }
+      } catch (e) {}
+    }
     async function saveStep1(){
       var fd = new FormData();
       fd.append('step','1');
@@ -317,33 +336,44 @@
       fd.append('pix_chave', document.getElementById('pix_chave').value.trim());
       var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
       var d = await r.json();
-      if (d && d.ok){ cidEl.value = d.client_id; showStep('2'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+      if (d && d.ok){ cidEl.value = d.client_id; try { localStorage.setItem('acm_client_id', String(d.client_id)); } catch (e) {} showStep('2', true); } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
     async function saveStep2(){
       var fd = new FormData();
       fd.append('step','2'); fd.append('client_id', cidEl.value);
       ['cep','endereco','numero','complemento','bairro','cidade','estado'].forEach(function(k){ fd.append(k, document.getElementById(k).value.trim()); });
       var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
-      var d = await r.json(); if (d && d.ok){ showStep('3'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+      var d = await r.json(); if (d && d.ok){ showStep('3', true); } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
     async function saveStep3(){
       var fd = new FormData(); fd.append('step','3'); fd.append('client_id', cidEl.value);
       Array.from(document.querySelectorAll('input[name="ref_nome[]"]')).forEach(function(el){ fd.append('ref_nome[]', el.value.trim()); });
       Array.from(document.querySelectorAll('input[name="ref_telefone[]"]')).forEach(function(el){ fd.append('ref_telefone[]', el.value.trim()); });
       var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd });
-      var d = await r.json(); if (d && d.ok){ showStep('4'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+      var d = await r.json(); if (d && d.ok){ showStep('4', true); } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
     async function saveStep4Finish(){
       var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value);
       var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json();
-      if (d && d.ok && d.completed && d.redirect){ window.location.href = d.redirect; } else if (d && d.ok){ alert('Dados salvos. Você pode finalizar quando tudo estiver completo.'); } else { alert((d&&d.error)||'Erro ao salvar'); }
+      if (d && d.ok && d.completed && d.redirect){ try { localStorage.removeItem('acm_client_id'); } catch (e) {} window.location.href = d.redirect; } else if (d && d.ok){ alert('Dados salvos. Você pode finalizar quando tudo estiver completo.'); } else { alert((d&&d.error)||'Erro ao salvar'); }
     }
     document.getElementById('btn_step1_next') && document.getElementById('btn_step1_next').addEventListener('click', saveStep1);
-    document.getElementById('btn_step1_next_b') && document.getElementById('btn_step1_next_b').addEventListener('click', saveStep1);
+    document.getElementById('btn_step2_prev') && document.getElementById('btn_step2_prev').addEventListener('click', function(){ showStep('1', true); });
     document.getElementById('btn_step2_next') && document.getElementById('btn_step2_next').addEventListener('click', saveStep2);
+    document.getElementById('btn_step3_prev') && document.getElementById('btn_step3_prev').addEventListener('click', function(){ showStep('2', true); });
     document.getElementById('btn_step3_next') && document.getElementById('btn_step3_next').addEventListener('click', saveStep3);
     document.getElementById('btn_step4_finish') && document.getElementById('btn_step4_finish').addEventListener('click', saveStep4Finish);
     document.getElementById('btn_step4_save') && document.getElementById('btn_step4_save').addEventListener('click', async function(){ var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value); var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ alert('Dados salvos'); } else { alert((d&&d.error)||'Erro ao salvar'); } });
-    showStep('1');
+    document.getElementById('btn_step4_prev') && document.getElementById('btn_step4_prev').addEventListener('click', function(){ showStep('3', true); });
+    (function(){
+      var urlStep=null; try { var u = new URL(window.location.href); urlStep = u.searchParams.get('step'); } catch (e) {}
+      var stored=null; try { stored = localStorage.getItem('acm_client_id'); } catch (e) {}
+      var initial = '1';
+      if (urlStep && ['1','2','3','4'].indexOf(urlStep) !== -1) { initial = urlStep; }
+      else if (stored) { initial = '2'; }
+      if (stored) { cidEl.value = stored; }
+      showStep(initial, false);
+      window.addEventListener('popstate', function(e){ var st = (e.state && e.state.step) ? String(e.state.step) : null; if (st && ['1','2','3','4'].indexOf(st)!==-1){ showStep(st, false); } });
+    })();
   })();
 </script>

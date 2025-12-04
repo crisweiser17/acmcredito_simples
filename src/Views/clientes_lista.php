@@ -96,9 +96,11 @@
           <td class="border px-2 py-1"><?php echo !empty($c['created_at'])?date('d/m/Y', strtotime($c['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">
             <div class="flex items-center gap-0.5">
+              <?php if ((int)($c['is_draft'] ?? 0) === 0): ?>
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
                 <i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i>
               </a>
+              <?php endif; ?>
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
                 <i class="fa fa-eye text-[14px]" aria-hidden="true"></i>
               </a>
@@ -163,7 +165,7 @@
             '<td class="border px-2 py-1">'+toBRDate(c.created_at)+'</td>'+
             '<td class="border px-2 py-1">'+
               '<div class="flex items-center gap-0.5">'+
-                '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/validar" title="Validar" aria-label="Validar"><i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i></a>'+
+                ((parseInt(c.is_draft,10)===1)?(''):('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/validar" title="Validar" aria-label="Validar"><i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i></a>'))+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/ver" title="Ver" aria-label="Ver"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/editar" title="Editar" aria-label="Editar"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>'+
                 ((c.loans_count&&parseInt(c.loans_count,10)>0)?('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos?client_id='+(c.id||'')+'" title="Empréstimos" aria-label="Empréstimos"><i class="fa fa-money text-[14px]" aria-hidden="true"></i></a>'):'')+
