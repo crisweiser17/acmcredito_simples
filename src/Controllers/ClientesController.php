@@ -142,7 +142,8 @@ class ClientesController {
           'cnh_arquivo_unico' => isset($_POST['cnh_arquivo_unico']) ? 1 : 0,
           'observacoes' => trim($_POST['observacoes'] ?? ''),
           'pix_tipo' => strtolower($pixTipo),
-          'pix_chave' => $pixNorm
+          'pix_chave' => $pixNorm,
+          'cadastro_publico' => 0
         ]);
         $clientId = (int)$pdo->lastInsertId();
       }
@@ -269,7 +270,7 @@ class ClientesController {
         include __DIR__ . '/../Views/layout.php';
         return;
       }
-      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, pix_tipo, pix_chave) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:pix_tipo,:pix_chave)');
+      $stmt = $pdo->prepare('INSERT INTO clients (nome, cpf, data_nascimento, email, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ocupacao, tempo_trabalho, renda_mensal, cnh_arquivo_unico, observacoes, pix_tipo, pix_chave, cadastro_publico) VALUES (:nome,:cpf,:data_nascimento,:email,:telefone,:cep,:endereco,:numero,:complemento,:bairro,:cidade,:estado,:ocupacao,:tempo_trabalho,:renda_mensal,:cnh_arquivo_unico,:observacoes,:pix_tipo,:pix_chave,:cadastro_publico)');
       $stmt->execute([
         'nome'=>(function($n){ $n = trim((string)$n); if ($n==='') return $n; if (function_exists('mb_strtoupper')) { return mb_strtoupper($n, 'UTF-8'); } return strtoupper($n); })($nome), 'cpf'=>$cpfNorm, 'data_nascimento'=>$data_nascimento, 'email'=>$email, 'telefone'=>$telefone,
         'cep'=>$cep, 'endereco'=>$endereco, 'numero'=>$numero, 'complemento'=>trim($_POST['complemento'] ?? ''), 'bairro'=>$bairro, 'cidade'=>$cidade, 'estado'=>$estado,
