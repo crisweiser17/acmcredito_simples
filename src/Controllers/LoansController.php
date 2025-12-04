@@ -672,13 +672,25 @@ class LoansController {
         }
         $toDataUri = function($path) {
           $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-          $mime = 'image/png';
-          if ($ext === 'jpg' || $ext === 'jpeg') { $mime = 'image/jpeg'; }
-          elseif ($ext === 'gif') { $mime = 'image/gif'; }
+          $mime = null;
+          if (in_array($ext, ['jpg','jpeg'], true)) { $mime = 'image/jpeg'; }
           elseif ($ext === 'png') { $mime = 'image/png'; }
+          elseif ($ext === 'gif') { $mime = 'image/gif'; }
+          else {
+            $tmp = sys_get_temp_dir() . '/img_' . uniqid() . '.png';
+            $magick = @shell_exec('command -v magick');
+            $convert = @shell_exec('command -v convert');
+            if ($magick || $convert) {
+              $cmd = ($magick?trim($magick):trim($convert)) . ' convert ' . escapeshellarg($path) . ' ' . escapeshellarg($tmp);
+              @shell_exec($cmd);
+              if (file_exists($tmp) && filesize($tmp) > 1000) { $path = $tmp; $ext = 'png'; $mime = 'image/png'; }
+            }
+          }
+          if ($mime === null) { $mime = 'image/png'; }
           $data = @file_get_contents($path);
-          if ($data && strlen($data) > 0) { return 'data:'.$mime.';base64,'.base64_encode($data); }
-          return null;
+          $uri = ($data && strlen($data) > 0) ? ('data:'.$mime.';base64,'.base64_encode($data)) : null;
+          if (isset($tmp) && file_exists($tmp)) { @unlink($tmp); }
+          return $uri;
         };
         $html2 = preg_replace_callback('#<img[^>]+src="file://([^"]+)"[^>]*>#i', function($m) use ($toDataUri) {
           $p = $m[1];

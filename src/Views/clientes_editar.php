@@ -5,6 +5,7 @@
   <div class="flex items-center gap-2">
     <?php if ((int)($c['is_draft'] ?? 0) === 1): ?>
       <span class="inline-block bg-gray-100 text-gray-700 rounded px-2 py-1">rascunho</span>
+      <button type="button" id="btn_copy_draft_link" class="px-2 py-1 rounded bg-blue-100 text-blue-700">Copiar link</button>
     <?php else: ?>
       <span class="inline-block bg-green-100 text-green-700 rounded px-2 py-1">ativo</span>
     <?php endif; ?>
@@ -452,8 +453,26 @@
   });
   cancelBtn && cancelBtn.addEventListener('click', function(){ close(); });
   modal && modal.addEventListener('click', function(e){ if(e.target===modal){ close(); } });
-})();
-</script>
+  })();
+  (function(){
+    var btn = document.getElementById('btn_copy_draft_link');
+    if (!btn) return;
+    btn.addEventListener('click', async function(){
+      try {
+        var fd = new FormData(); fd.append('client_id', String(<?php echo (int)($c['id'] ?? 0); ?>));
+        var r = await fetch('/api/clientes/cadastro-link', { method:'POST', body: fd });
+        var d = await r.json();
+        if (d && d.ok && d.link) {
+          await navigator.clipboard.writeText(String(d.link));
+          var toast = document.getElementById('form_toast');
+          if (toast) { toast.textContent = 'Link copiado'; toast.classList.remove('hidden'); setTimeout(function(){ toast.classList.add('hidden'); }, 2000); }
+        } else {
+          alert((d && d.error) || 'Erro ao gerar link');
+        }
+      } catch (e) { alert('Erro ao copiar link'); }
+    });
+  })();
+  </script>
 <script>
 (function(){
   var form = document.getElementById('editForm');

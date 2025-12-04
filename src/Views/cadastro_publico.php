@@ -4,7 +4,7 @@
   <div class="px-3 py-2 rounded bg-red-100 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="space-y-8" id="cadastro_form">
-    <input type="hidden" name="client_id" id="client_id">
+    <input type="hidden" name="client_id" id="client_id" value="<?php echo isset($client_id) ? (int)$client_id : ''; ?>">
     <div id="wizard_steps" class="flex flex-wrap items-center gap-2 text-sm">
       <div data-tl="1" class="px-3 py-1 rounded border">1 - Dados Pessoais e Bancários</div>
       <div data-tl="2" class="px-3 py-1 rounded border">2 - Endereço</div>
@@ -15,23 +15,23 @@
       <div class="text-lg font-semibold">Dados Pessoais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div class="md:col-span-2">
-          <input class="w-full border rounded px-3 py-2" name="nome" id="nome" placeholder="Nome Completo">
+          <input class="w-full border rounded px-3 py-2" name="nome" id="nome" placeholder="Nome Completo" value="<?php echo htmlspecialchars($prefill['nome'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Nome Completo <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="cpf" id="cpf" placeholder="CPF">
+          <input class="w-full border rounded px-3 py-2" name="cpf" id="cpf" placeholder="CPF" value="<?php echo htmlspecialchars($prefill['cpf'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">CPF <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" type="date" name="data_nascimento" id="data_nascimento">
+          <input class="w-full border rounded px-3 py-2" type="date" name="data_nascimento" id="data_nascimento" value="<?php echo htmlspecialchars($prefill['data_nascimento'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Data de Nascimento <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" type="email" name="email" id="email" placeholder="Email">
+          <input class="w-full border rounded px-3 py-2" type="email" name="email" id="email" placeholder="Email" value="<?php echo htmlspecialchars($prefill['email'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Email <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="telefone" id="telefone" placeholder="Telefone">
+          <input class="w-full border rounded px-3 py-2" name="telefone" id="telefone" placeholder="Telefone" value="<?php echo htmlspecialchars($prefill['telefone'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Telefone <span class="text-red-600">*</span></div>
         </div>
       </div>
@@ -41,17 +41,18 @@
       <div class="text-lg font-semibold">Dados Bancários</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
+          <?php $pt = strtolower(trim((string)($prefill['pix_tipo'] ?? ''))); ?>
           <select class="w-full border rounded px-3 py-2" name="pix_tipo" id="pix_tipo">
             <option value=""></option>
-            <option value="cpf">Chave CPF</option>
-            <option value="email">Chave Email</option>
-            <option value="telefone">Chave Telefone</option>
-            <option value="aleatoria">Chave Aleatória</option>
+            <option value="cpf" <?php echo $pt==='cpf'?'selected':''; ?>>Chave CPF</option>
+            <option value="email" <?php echo $pt==='email'?'selected':''; ?>>Chave Email</option>
+            <option value="telefone" <?php echo $pt==='telefone'?'selected':''; ?>>Chave Telefone</option>
+            <option value="aleatoria" <?php echo $pt==='aleatoria'?'selected':''; ?>>Chave Aleatória</option>
           </select>
           <div class="text-sm text-gray-600 mt-0.5">Tipo de Chave PIX <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="pix_chave" id="pix_chave" placeholder="Digite a chave PIX">
+          <input class="w-full border rounded px-3 py-2" name="pix_chave" id="pix_chave" placeholder="Digite a chave PIX" value="<?php echo htmlspecialchars($prefill['pix_chave'] ?? ''); ?>">
           <div class="text-xs mt-0.5" id="pix_helper"></div>
         </div>
       </div>
@@ -64,36 +65,36 @@
       <div class="text-lg font-semibold">Endereço</div>
       <div class="flex gap-2 items-start">
         <div class="flex-1">
-          <input class="w-full border rounded px-3 py-2" name="cep" id="cep" placeholder="CEP">
+          <input class="w-full border rounded px-3 py-2" name="cep" id="cep" placeholder="CEP" value="<?php echo htmlspecialchars($prefill['cep'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">CEP <span class="text-red-600">*</span></div>
         </div>
         <button type="button" class="btn-primary px-4 py-2 rounded" id="buscarCep">Buscar</button>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" name="endereco" id="endereco" placeholder="Endereço">
+        <input class="w-full border rounded px-3 py-2" name="endereco" id="endereco" placeholder="Endereço" value="<?php echo htmlspecialchars($prefill['endereco'] ?? ''); ?>">
         <div class="text-sm text-gray-600 mt-0.5">Endereço <span class="text-red-600">*</span></div>
       </div>
       <div class="grid md:grid-cols-3 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="numero" id="numero" placeholder="Número">
+          <input class="w-full border rounded px-3 py-2" name="numero" id="numero" placeholder="Número" value="<?php echo htmlspecialchars($prefill['numero'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Número <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="complemento" id="complemento" placeholder="Complemento">
+          <input class="w-full border rounded px-3 py-2" name="complemento" id="complemento" placeholder="Complemento" value="<?php echo htmlspecialchars($prefill['complemento'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Complemento</div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="bairro" id="bairro" placeholder="Bairro">
+          <input class="w-full border rounded px-3 py-2" name="bairro" id="bairro" placeholder="Bairro" value="<?php echo htmlspecialchars($prefill['bairro'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Bairro <span class="text-red-600">*</span></div>
         </div>
       </div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="cidade" id="cidade" placeholder="Cidade">
+          <input class="w-full border rounded px-3 py-2" name="cidade" id="cidade" placeholder="Cidade" value="<?php echo htmlspecialchars($prefill['cidade'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Cidade <span class="text-red-600">*</span></div>
         </div>
         <div>
-          <input class="w-full border rounded px-3 py-2" name="estado" id="estado" placeholder="UF">
+          <input class="w-full border rounded px-3 py-2" name="estado" id="estado" placeholder="UF" value="<?php echo htmlspecialchars($prefill['estado'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">UF <span class="text-red-600">*</span></div>
         </div>
       </div>
@@ -147,22 +148,23 @@
       <div class="text-lg font-semibold">Dados Profissionais</div>
       <div class="grid md:grid-cols-2 gap-2">
         <div>
-          <input class="w-full border rounded px-3 py-2" name="ocupacao" id="ocupacao" placeholder="Ocupação">
+          <input class="w-full border rounded px-3 py-2" name="ocupacao" id="ocupacao" placeholder="Ocupação" value="<?php echo htmlspecialchars($prefill['ocupacao'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Ocupação <span class="text-red-600">*</span></div>
         </div>
         <div>
+          <?php $tt = (string)($prefill['tempo_trabalho'] ?? ''); ?>
           <select class="w-full border rounded px-3 py-2" name="tempo_trabalho" id="tempo_trabalho">
             <option value=""></option>
-            <option value="menos de 6 meses">menos de 6 meses</option>
-            <option value="até 1 ano">até 1 ano</option>
-            <option value="de 1 a 2 anos">de 1 a 2 anos</option>
-            <option value="de 3 a 5 anos">de 3 a 5 anos</option>
-            <option value="mais de 5 anos">mais de 5 anos</option>
+            <option value="menos de 6 meses" <?php echo $tt==='menos de 6 meses'?'selected':''; ?>>menos de 6 meses</option>
+            <option value="até 1 ano" <?php echo $tt==='até 1 ano'?'selected':''; ?>>até 1 ano</option>
+            <option value="de 1 a 2 anos" <?php echo $tt==='de 1 a 2 anos'?'selected':''; ?>>de 1 a 2 anos</option>
+            <option value="de 3 a 5 anos" <?php echo $tt==='de 3 a 5 anos'?'selected':''; ?>>de 3 a 5 anos</option>
+            <option value="mais de 5 anos" <?php echo $tt==='mais de 5 anos'?'selected':''; ?>>mais de 5 anos</option>
           </select>
           <div class="text-sm text-gray-600 mt-0.5">Tempo de Trabalho <span class="text-red-600">*</span></div>
         </div>
         <div class="md:col-span-2">
-          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" placeholder="Renda Mensal">
+          <input class="w-full border rounded px-3 py-2" name="renda_mensal" id="renda_mensal" placeholder="Renda Mensal" value="<?php echo htmlspecialchars($prefill['renda_mensal'] ?? ''); ?>">
           <div class="text-sm text-gray-600 mt-0.5">Renda Mensal <span class="text-red-600">*</span></div>
           <div class="text-xs text-gray-600 mt-0.5" id="renda_helper"></div>
         </div>
@@ -338,6 +340,7 @@
         if (push) { window.history.pushState({step:n}, '', url.toString()); } else { window.history.replaceState({step:n}, '', url.toString()); }
       } catch (e) {}
     }
+    try { showStep('1', false); } catch (e) {}
     async function saveStep1(){
       var fd = new FormData();
       fd.append('step','1');
@@ -387,13 +390,9 @@
     document.getElementById('btn_step4_save') && document.getElementById('btn_step4_save').addEventListener('click', async function(){ var fd = new FormData(form); fd.set('step','4'); fd.set('client_id', cidEl.value); var r = await fetch('/api/cadastro/salvar', { method:'POST', body:fd }); var d = await r.json(); if (d && d.ok){ var errs = (d.upload_errors||[]); if (errs.length>0){ alert('Alguns arquivos não foram aceitos:\n- '+errs.join('\n- ')); } else { alert('Dados salvos'); } } else { alert((d&&d.error)||'Erro ao salvar'); } });
     document.getElementById('btn_step4_prev') && document.getElementById('btn_step4_prev').addEventListener('click', function(){ showStep('3', true); });
     (function(){
-      var urlStep=null; try { var u = new URL(window.location.href); urlStep = u.searchParams.get('step'); } catch (e) {}
       var stored=null; try { stored = localStorage.getItem('acm_client_id'); } catch (e) {}
-      var initial = '1';
-      if (urlStep && ['1','2','3','4'].indexOf(urlStep) !== -1) { initial = urlStep; }
-      else if (stored) { initial = '2'; }
       if (stored) { cidEl.value = stored; }
-      showStep(initial, false);
+      showStep('1', false);
       window.addEventListener('popstate', function(e){ var st = (e.state && e.state.step) ? String(e.state.step) : null; if (st && ['1','2','3','4'].indexOf(st)!==-1){ showStep(st, false); } });
     })();
   })();

@@ -111,6 +111,10 @@ class Router {
       \App\Controllers\ClientesController::cadastroPublico();
       return;
     }
+    if (preg_match('#^/cadastro/([a-f0-9]{64})$#', $path, $m)) {
+      \App\Controllers\ClientesController::cadastroPublicoToken($m[1]);
+      return;
+    }
     if ($path === '/cadastro/sucesso') {
       \App\Controllers\ClientesController::cadastroPublicoSucesso();
       return;
@@ -133,6 +137,10 @@ class Router {
     }
     if ($path === '/api/clientes/draft-links') {
       \App\Controllers\ClientesController::gerarLinksDraft();
+      return;
+    }
+    if ($path === '/api/clientes/cadastro-link') {
+      \App\Controllers\ClientesController::cadastroLink();
       return;
     }
     if ($path === '/api/clientes/partial-save') {
@@ -204,6 +212,7 @@ class Router {
     if ($path === '/arquivo' || $path === '/arquivo/view' || $path === '/arquivo/download') return true;
     if (preg_match('#^/uploads/#', $path)) return true;
     if ($path === '/cadastro') return true;
+    if (preg_match('#^/cadastro/[a-f0-9]{64}$#', $path)) return true;
     if ($path === '/cadastro/sucesso') return true;
     if ($path === '/api/cadastro/salvar') return true;
     if (preg_match('#^/referencia/#', $path)) return true;

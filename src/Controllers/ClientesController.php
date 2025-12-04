@@ -353,6 +353,58 @@ class ClientesController {
     $content = __DIR__ . '/../Views/cadastro_publico.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function cadastroPublicoToken(string $token): void {
+    $pdo = \App\Database\Connection::get();
+    $st = $pdo->prepare('SELECT * FROM clients WHERE cadastro_token = :t');
+    $st->execute(['t'=>$token]);
+    $client = $st->fetch();
+    if (!$client) { header('Location: /cadastro'); return; }
+    $client_id = (int)$client['id'];
+    $prefill = [
+      'nome' => (string)($client['nome'] ?? ''),
+      'cpf' => (string)($client['cpf'] ?? ''),
+      'data_nascimento' => (string)($client['data_nascimento'] ?? ''),
+      'email' => (string)($client['email'] ?? ''),
+      'telefone' => (string)($client['telefone'] ?? ''),
+      'pix_tipo' => (string)($client['pix_tipo'] ?? ''),
+      'pix_chave' => (string)($client['pix_chave'] ?? ''),
+      'cep' => (string)($client['cep'] ?? ''),
+      'endereco' => (string)($client['endereco'] ?? ''),
+      'numero' => (string)($client['numero'] ?? ''),
+      'complemento' => (string)($client['complemento'] ?? ''),
+      'bairro' => (string)($client['bairro'] ?? ''),
+      'cidade' => (string)($client['cidade'] ?? ''),
+      'estado' => (string)($client['estado'] ?? ''),
+      'ocupacao' => (string)($client['ocupacao'] ?? ''),
+      'tempo_trabalho' => (string)($client['tempo_trabalho'] ?? ''),
+      'renda_mensal' => (string)($client['renda_mensal'] ?? ''),
+    ];
+    $title = 'Cadastro de Cliente';
+    $content = __DIR__ . '/../Views/cadastro_publico.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
+  public static function cadastroLink(): void {
+    if (!isset($_SESSION['user_id'])) { http_response_code(401); echo 'Não autorizado'; return; }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo 'Método não permitido'; return; }
+    header('Content-Type: application/json');
+    $pdo = \App\Database\Connection::get();
+    $id = (int)($_POST['client_id'] ?? 0);
+    if ($id <= 0) { echo json_encode(['error'=>'client_id obrigatório']); return; }
+    $st = $pdo->prepare('SELECT * FROM clients WHERE id=:id AND (deleted_at IS NULL)');
+    $st->execute(['id'=>$id]);
+    $c = $st->fetch();
+    if (!$c) { echo json_encode(['error'=>'Cliente não encontrado']); return; }
+    if ((int)($c['is_draft'] ?? 0) !== 1) { echo json_encode(['error'=>'Cliente não está em rascunho']); return; }
+    $tok = (string)($c['cadastro_token'] ?? '');
+    if (!preg_match('/^[a-f0-9]{64}$/', $tok)) {
+      $tok = bin2hex(random_bytes(32));
+      $pdo->prepare('UPDATE clients SET cadastro_token=:t WHERE id=:id')->execute(['t'=>$tok,'id'=>$id]);
+    }
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
+    $link = $scheme . $host . '/cadastro/' . $tok;
+    echo json_encode(['ok'=>true,'token'=>$tok,'link'=>$link]);
+  }
   public static function lista(): void {
     $pdo = Connection::get();
     try { $col = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$col) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
