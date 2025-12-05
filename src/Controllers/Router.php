@@ -194,6 +194,10 @@ class Router {
       \App\Controllers\ReportsController::scoreApiCliente((int)$m[1]);
       return;
     }
+    if (preg_match('#^/api/clientes/(\d+)/emprestimos$#', $path, $m)) {
+      \App\Controllers\LoansController::apiClienteEmprestimos((int)$m[1]);
+      return;
+    }
     if ($path === '/relatorios/logs') {
       \App\Controllers\ReportsController::logs();
       return;
