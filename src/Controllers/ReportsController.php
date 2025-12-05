@@ -100,7 +100,6 @@ use App\Database\Connection;
     include __DIR__ . '/../Views/layout.php';
   }
   public static function emprestimosApagados(): void {
-    if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) { header('Location: /'); return; }
     $pdo = Connection::get();
     try { $pdo->exec("CREATE TABLE IF NOT EXISTS loans_archive LIKE loans"); } catch (\Throwable $e) {}
     try { $pdo->exec("CREATE TABLE IF NOT EXISTS loan_parcelas_archive LIKE loan_parcelas"); } catch (\Throwable $e) {}

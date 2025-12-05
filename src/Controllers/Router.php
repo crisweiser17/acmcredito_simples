@@ -12,13 +12,13 @@ class Router {
     }
     if (!self::isPublic($path) && isset($_SESSION['user_id'])) {
       $uid = (int)$_SESSION['user_id'];
-      $adminPages = ['/config','/config/score','/config/superadmin','/admin/install','/usuarios'];
+      $adminPages = ['/config','/config/score','/config/superadmin','/admin/install','/usuarios','/relatorios/emprestimos-apagados'];
       if ($uid !== 1) {
         if (in_array($path, $adminPages, true)) {
           $allowedList = \App\Helpers\Permissions::pagesAllowed($uid);
-          if (!in_array($path, $allowedList, true)) { header('Location: /'); return; }
+          if (!in_array($path, $allowedList, true)) { $_SESSION['toast'] = 'Sem permissão'; header('Location: /'); return; }
         }
-        if (!\App\Helpers\Permissions::canAccessPage($uid, $path)) { header('Location: /'); return; }
+        if (!\App\Helpers\Permissions::canAccessPage($uid, $path)) { $_SESSION['toast'] = 'Sem permissão'; header('Location: /'); return; }
       }
     }
     if (preg_match('#^/uploads/#', $path)) {
@@ -34,27 +34,9 @@ class Router {
       \App\Controllers\AuthController::logout();
       return;
     }
-    if ($path === '/config') {
-      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) {
-        header('Location: /');
-        return;
-      }
-      \App\Controllers\SettingsController::handle();
-      return;
-    }
-    if ($path === '/config/score') {
-      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) {
-        header('Location: /');
-        return;
-      }
-      \App\Controllers\SettingsController::score();
-      return;
-    }
-    if ($path === '/config/superadmin') {
-      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) { header('Location: /'); return; }
-      \App\Controllers\SettingsController::superadmin();
-      return;
-    }
+    if ($path === '/config') { \App\Controllers\SettingsController::handle(); return; }
+    if ($path === '/config/score') { \App\Controllers\SettingsController::score(); return; }
+    if ($path === '/config/superadmin') { \App\Controllers\SettingsController::superadmin(); return; }
     if ($path === '/usuarios') {
       \App\Controllers\UsersController::handle();
       return;
@@ -71,14 +53,7 @@ class Router {
       \App\Controllers\FileController::download();
       return;
     }
-    if ($path === '/admin/install') {
-      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) {
-        header('Location: /');
-        return;
-      }
-      \App\Controllers\InstallController::handle();
-      return;
-    }
+    if ($path === '/admin/install') { \App\Controllers\InstallController::handle(); return; }
     if ($path === '/emprestimos/calculadora') {
       \App\Controllers\LoansController::calculadora();
       return;

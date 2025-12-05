@@ -16,10 +16,10 @@ $pages = [
   '/relatorios/filas' => 'Relatórios: Filas',
   '/relatorios/emprestimos-apagados' => 'Relatórios: Empréstimos Apagados',
   // Administrativas (sempre superadmin)
-  '/config' => 'Configurações (restrito)',
-  '/config/score' => 'Configurações de Score (restrito)',
-  '/config/superadmin' => 'Super Admin (restrito)',
-  '/admin/install' => 'Instalação/Setup (restrito)'
+  '/config' => 'Configurações',
+  '/config/score' => 'Configurações de Score',
+  '/config/superadmin' => 'Super Admin',
+  '/admin/install' => 'Instalação/Setup'
 ];
 $actions = [
   'loans_delete' => 'Excluir empréstimos',

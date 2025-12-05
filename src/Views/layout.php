@@ -17,7 +17,7 @@ $saved = isset($_GET['saved']);
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-gray-900 m-0">
-  <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; ?>
+  <?php $isLogged = isset($_SESSION['user_id']); $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'; $uid = (int)($_SESSION['user_id'] ?? 0); ?>
   <?php if ($path === '/cadastro'): ?>
     <div class="w-full">
       <?php include __DIR__ . '/templates/header_public.php'; ?>
@@ -52,7 +52,7 @@ $saved = isset($_GET['saved']);
         <p class="text-sm text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_nome'] ?? ''); ?></p>
       </div>
       <nav>
-        <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/config/score' || $path==='/admin/install' || $path==='/usuarios'); ?>
+        <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/config/score' || $path==='/config/superadmin' || $path==='/admin/install' || $path==='/usuarios'); ?>
         
         <div>
           <button type="button" data-target="menu-clientes" aria-expanded="<?php echo $openCli?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
@@ -63,8 +63,8 @@ $saved = isset($_GET['saved']);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
           <div id="menu-clientes" class="<?php echo $openCli?'block':'hidden'; ?>">
-            <a href="/clientes" class="block px-6 py-2 hover:bg-gray-800">Listar</a>
-            <a href="/clientes/novo" class="block px-6 py-2 hover:bg-gray-800">Novo</a>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/clientes')): ?><a href="/clientes" class="block px-6 py-2 hover:bg-gray-800">Listar</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/clientes/novo')): ?><a href="/clientes/novo" class="block px-6 py-2 hover:bg-gray-800">Novo</a><?php endif; ?>
           </div>
         </div>
         <div>
@@ -76,8 +76,8 @@ $saved = isset($_GET['saved']);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
           <div id="menu-emprestimos" class="<?php echo $openEmp?'block':'hidden'; ?>">
-            <a href="/emprestimos" class="block px-6 py-2 hover:bg-gray-800">Listar</a>
-            <a href="/emprestimos/calculadora" class="block px-6 py-2 hover:bg-gray-800">Novo</a>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/emprestimos')): ?><a href="/emprestimos" class="block px-6 py-2 hover:bg-gray-800">Listar</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/emprestimos/calculadora')): ?><a href="/emprestimos/calculadora" class="block px-6 py-2 hover:bg-gray-800">Novo</a><?php endif; ?>
           </div>
         </div>
         <div>
@@ -89,20 +89,16 @@ $saved = isset($_GET['saved']);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
           <div id="menu-relatorios" class="<?php echo strpos($path,'/relatorios')===0?'block':'hidden'; ?>">
-            <a href="/relatorios/aguardando-financiamento" class="block px-6 py-2 hover:bg-gray-800">Aguardando Financiamento</a>
-            <a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a>
-            <?php if (isset($_SESSION['user_id'])): ?>
-              <a href="/relatorios/financeiro" class="block px-6 py-2 hover:bg-gray-800">Financeiro</a>
-            <?php endif; ?>
-            <a href="/relatorios/score" class="block px-6 py-2 hover:bg-gray-800">Score</a>
-            <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
-            <a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a>
-            <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
-              <a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Apagados</a>
-            <?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/aguardando-financiamento')): ?><a href="/relatorios/aguardando-financiamento" class="block px-6 py-2 hover:bg-gray-800">Aguardando Financiamento</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/parcelas')): ?><a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/financeiro')): ?><a href="/relatorios/financeiro" class="block px-6 py-2 hover:bg-gray-800">Financeiro</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/score')): ?><a href="/relatorios/score" class="block px-6 py-2 hover:bg-gray-800">Score</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/logs')): ?><a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/filas')): ?><a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/emprestimos-apagados')): ?><a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Apagados</a><?php endif; ?>
           </div>
         </div>
-        <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
+        <?php $showCfg = (\App\Helpers\Permissions::canAccessPage($uid,'/config') || \App\Helpers\Permissions::canAccessPage($uid,'/config/score') || \App\Helpers\Permissions::canAccessPage($uid,'/config/superadmin') || \App\Helpers\Permissions::canAccessPage($uid,'/admin/install') || \App\Helpers\Permissions::canAccessPage($uid,'/usuarios')); if ($showCfg): ?>
         <div>
           <button type="button" data-target="menu-config" aria-expanded="<?php echo $openCfg?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
             <span class="flex items-center gap-2">
@@ -112,11 +108,11 @@ $saved = isset($_GET['saved']);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="transition-transform" data-chevron><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
           <div id="menu-config" class="<?php echo $openCfg?'block':'hidden'; ?>">
-            <a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a>
-            <a href="/config/score" class="block px-6 py-2 hover:bg-gray-800">Score</a>
-            <a href="/config/superadmin" class="block px-6 py-2 hover:bg-gray-800">Super Admin</a>
-            <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
-            <a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/config')): ?><a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/config/score')): ?><a href="/config/score" class="block px-6 py-2 hover:bg-gray-800">Score</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/config/superadmin')): ?><a href="/config/superadmin" class="block px-6 py-2 hover:bg-gray-800">Super Admin</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/admin/install')): ?><a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/usuarios')): ?><a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a><?php endif; ?>
           </div>
         </div>
         <?php endif; ?>
