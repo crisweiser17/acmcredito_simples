@@ -380,7 +380,7 @@ const btnPlanos = document.getElementById('btn_planos');
 const modalPlanos = document.getElementById('modal_planos');
 if (btnPlanos && modalPlanos) {
   function updatePlanLabels(){
-    const taxa = parsePercentBR((document.getElementById('taxa_juros_mensal')?.value||'').toString());
+    const taxa = parsePercentBR(((function(){ var el=document.getElementById('taxa_juros_mensal'); return el ? (el.value||'') : ''; })()).toString());
     const i = taxa/100;
     const opts = modalPlanos.querySelectorAll('.plan_option');
     opts.forEach(function(b){
@@ -427,7 +427,7 @@ if (taxaInput) {
       const evt = new Event('click');
       const btn = document.getElementById('btn_planos');
       if (btn) { // refresh labels while open
-        const taxa = parsePercentBR((document.getElementById('taxa_juros_mensal')?.value||'').toString());
+        const taxa = parsePercentBR(((function(){ var el=document.getElementById('taxa_juros_mensal'); return el ? (el.value||'') : ''; })()).toString());
         const i = taxa/100;
         const opts = modalPlanos.querySelectorAll('.plan_option');
         opts.forEach(function(b){
@@ -471,7 +471,7 @@ if (btnCopy) {
     const parcelas = document.getElementById('num_parcelas').value||'';
     const pmt = document.getElementById('pmt').value||'';
     const dv = document.getElementById('data_primeiro_vencimento').value||'';
-    const jp = parseMoneyBR((document.getElementById('juros_prop')?.value||'').toString());
+    const jp = parseMoneyBR(((function(){ var el=document.getElementById('juros_prop'); return el ? (el.value||'') : ''; })()).toString());
     const pmtNum = parseMoneyBR(pmt);
     let dataBR = dv;
     if (dv && dv.indexOf('-')>0) {
@@ -532,11 +532,11 @@ function copyTabelaImagem(){
   const width = Math.min(1000, Math.max(700, document.getElementById('tabela').clientWidth || 800));
   const rowCount = Math.max(1, tbl.querySelectorAll('tbody tr').length);
   const titleH = 34, headerH = 36, rowH = 30, pad = 12;
-  const jp = parseMoneyBR((document.getElementById('juros_prop')?.value||'').toString());
-  const pmtNum = parseMoneyBR((document.getElementById('pmt')?.value||'').toString());
+  const jp = parseMoneyBR(((function(){ var el=document.getElementById('juros_prop'); return el ? (el.value||'') : ''; })()).toString());
+  const pmtNum = parseMoneyBR(((function(){ var el=document.getElementById('pmt'); return el ? (el.value||'') : ''; })()).toString());
   const totalTxt = (function(){
-    const vt = (document.getElementById('total')?.value||'');
-    const jj = (document.getElementById('juros_total')?.value||'');
+    const vt = (function(){ var el=document.getElementById('total'); return el ? (el.value||'') : ''; })();
+    const jj = (function(){ var el=document.getElementById('juros_total'); return el ? (el.value||'') : ''; })();
     return { vt, jj };
   })();
   const footH = jp ? 56 : 0;
@@ -569,8 +569,15 @@ function copyTabelaImagem(){
   rows.forEach((tr, idx)=>{
     y += rowH;
     const tds = tr.querySelectorAll('td');
-    const vals = [tds[0]?.textContent||'', tds[1]?.textContent||'', tds[2]?.textContent||'', tds[3]?.textContent||'', tds[4]?.textContent||'', tds[5]?.textContent||''];
-    const numCell = (tds[0]?.textContent||'').trim();
+    const vals = [
+      (tds[0] ? (tds[0].textContent||'') : ''),
+      (tds[1] ? (tds[1].textContent||'') : ''),
+      (tds[2] ? (tds[2].textContent||'') : ''),
+      (tds[3] ? (tds[3].textContent||'') : ''),
+      (tds[4] ? (tds[4].textContent||'') : ''),
+      (tds[5] ? (tds[5].textContent||'') : '')
+    ];
+    const numCell = ((tds[0] ? (tds[0].textContent||'') : '')).trim();
     if (idx === 0 && numCell === '1') {
       vals[2] = formatBR(pmtNum + (jp||0));
     }
@@ -618,7 +625,21 @@ function copyTabelaImagem(){
     if (!items || items.length===0){ results.innerHTML=''; results.classList.add('hidden'); return; }
     results.innerHTML = items.map(function(it){ var cpf = it.cpf||''; var tel = it.telefone||''; return '<button type="button" data-id="'+it.id+'" data-name="'+(it.nome||'')+'" class="block w-full text-left px-3 py-2 hover:bg-gray-100">'+(it.nome||'')+'<span class="ml-2 text-xs text-gray-500">'+cpf+' '+tel+'</span></button>'; }).join('');
     results.classList.remove('hidden');
-    Array.from(results.querySelectorAll('button[data-id]')).forEach(function(btn){ btn.addEventListener('click', function(){ hidden.value = btn.getAttribute('data-id'); selected.textContent = btn.getAttribute('data-name'); results.classList.add('hidden'); if(clearBtn){ clearBtn.classList.remove('hidden'); } try{ hidden.dispatchEvent(new Event('input')); }catch(e){} }); });
+    var btns = results.querySelectorAll('button[data-id]');
+    for (var i=0; i<btns.length; i++){
+      (function(btn){ btn.addEventListener('click', function(){
+        hidden.value = btn.getAttribute('data-id');
+        selected.textContent = btn.getAttribute('data-name');
+        results.classList.add('hidden');
+        if(clearBtn){ clearBtn.classList.remove('hidden'); }
+        try {
+          var evt;
+          if (typeof Event === 'function') { evt = new Event('input'); }
+          else { evt = document.createEvent('Event'); evt.initEvent('input', true, true); }
+          hidden.dispatchEvent(evt);
+        } catch(e) {}
+      }); })(btns[i]);
+    }
   }
   function clearSel(){ if(hidden){ hidden.value=''; } if(selected){ selected.textContent=''; } if(clearBtn){ clearBtn.classList.add('hidden'); } }
   if (clearBtn) clearBtn.addEventListener('click', clearSel);
@@ -627,8 +648,20 @@ function copyTabelaImagem(){
       clearTimeout(timer);
       var q = input.value.trim();
       if (q.length<2){ results.classList.add('hidden'); return; }
-      timer = setTimeout(async function(){
-        try{ var r = await fetch('/api/clientes/search?q='+encodeURIComponent(q)); var d = await r.json(); render(d||[]); } catch(e){ results.classList.add('hidden'); }
+      timer = setTimeout(function(){
+        try {
+          if (window.fetch) {
+            fetch('/api/clientes/search?q='+encodeURIComponent(q))
+              .then(function(r){ return r.json(); })
+              .then(function(d){ render(d||[]); })
+              .catch(function(){ results.classList.add('hidden'); });
+          } else {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/clientes/search?q='+encodeURIComponent(q), true);
+            xhr.onreadystatechange = function(){ if (xhr.readyState===4){ try{ var d = JSON.parse(xhr.responseText||'[]'); render(d||[]); } catch(e){ results.classList.add('hidden'); } } };
+            xhr.send(null);
+          }
+        } catch(e){ results.classList.add('hidden'); }
       }, 250);
     });
   }
