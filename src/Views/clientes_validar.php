@@ -21,7 +21,13 @@
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openPVGallery(window.pvMap && typeof window.pvMap.frente==='number'? window.pvMap.frente : 0)" />
+            <div class="relative">
+              <img id="pv_thumb_frente" src="<?php echo $urlF; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openPVGallery(window.pvMap && typeof window.pvMap.frente==='number'? window.pvMap.frente : 0)" />
+              <div class="absolute right-2 top-2 flex gap-1">
+                <button type="button" class="px-2 py-1 rounded bg-gray-100" onclick="rotateThumb('frente', -90)">↶</button>
+                <button type="button" class="px-2 py-1 rounded bg-gray-100" onclick="rotateThumb('frente', 90)">↷</button>
+              </div>
+            </div>
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -40,7 +46,13 @@
             </div>
           </div>
         <?php else: ?>
-          <img src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openPVGallery(window.pvMap && typeof window.pvMap.verso==='number'? window.pvMap.verso : 0)" />
+          <div class="relative">
+            <img id="pv_thumb_verso" src="<?php echo $urlV; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openPVGallery(window.pvMap && typeof window.pvMap.verso==='number'? window.pvMap.verso : 0)" />
+            <div class="absolute right-2 top-2 flex gap-1">
+              <button type="button" class="px-2 py-1 rounded bg-gray-100" onclick="rotateThumb('verso', -90)">↶</button>
+              <button type="button" class="px-2 py-1 rounded bg-gray-100" onclick="rotateThumb('verso', 90)">↷</button>
+            </div>
+          </div>
         <?php endif; ?>
       </div>
       <?php endif; ?>
@@ -59,7 +71,13 @@
               </div>
             </div>
           <?php else: ?>
-            <img src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" onclick="openPVGallery(window.pvMap && typeof window.pvMap.selfie==='number'? window.pvMap.selfie : 0)" />
+            <div class="relative">
+              <img id="pv_thumb_selfie" src="<?php echo $urlS; ?>" class="w-full h-56 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openPVGallery(window.pvMap && typeof window.pvMap.selfie==='number'? window.pvMap.selfie : 0)" />
+              <div class="absolute right-2 top-2 flex gap-1">
+                <button type="button" class="px-2 py-1 rounded bg-gray-100" onclick="rotateThumb('selfie', -90)">↶</button>
+                <button type="button" class="px-2 py-1 rounded bg-gray-100" onclick="rotateThumb('selfie', 90)">↷</button>
+              </div>
+            </div>
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -419,8 +437,9 @@
       <?php $extSf = strtolower(pathinfo($c['doc_selfie'], PATHINFO_EXTENSION)); $urlSf = '/arquivo?p=' . rawurlencode($c['doc_selfie']); ?>
       pvMap.selfie = pvDocs.length; pvDocs.push({type:'<?php echo $extSf==='pdf'?'pdf':'image'; ?>', url:'<?php echo $urlSf; ?>'});
     <?php endif; ?>
-    if (!pvDocs.length) { window.pvMap = pvMap; return; }
+    if (!pvDocs.length) { window.pvMap = pvMap; window.pvRotateDegrees = []; return; }
     var pvLb = null; var pvIdx = 0;
+    var pvRotateDegrees = new Array(pvDocs.length).fill(0);
     function pvClose(){ if(pvLb){ pvLb.remove(); pvLb=null; document.removeEventListener('keydown', pvKey); } }
     function pvPrev(){ pvIdx = (pvIdx - 1 + pvDocs.length) % pvDocs.length; pvRender(); }
     function pvNext(){ pvIdx = (pvIdx + 1) % pvDocs.length; pvRender(); }
@@ -442,7 +461,7 @@
         var iframe = document.createElement('iframe'); iframe.src = it.url; iframe.style.width='100%'; iframe.style.height='100%'; iframe.style.border='0'; box.appendChild(iframe);
         contentEl = box;
       } else {
-        var img = document.createElement('img'); img.src = it.url; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; contentEl = img;
+        var img = document.createElement('img'); img.src = it.url; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; img.style.transformOrigin='center center'; img.style.transform='rotate('+(pvRotateDegrees[pvIdx]||0)+'deg)'; contentEl = img;
       }
       var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
       btnClose.addEventListener('click', function(e){ e.stopPropagation(); pvClose(); });
@@ -450,12 +469,18 @@
       btnPrev.addEventListener('click', function(e){ e.stopPropagation(); pvPrev(); });
       var btnNext = document.createElement('button'); btnNext.type='button'; btnNext.setAttribute('aria-label','Próximo'); btnNext.style.position='absolute'; btnNext.style.right='-48px'; btnNext.style.background='#fff'; btnNext.style.color='#000'; btnNext.style.border='none'; btnNext.style.borderRadius='9999px'; btnNext.style.width='40px'; btnNext.style.height='40px'; btnNext.style.cursor='pointer'; btnNext.appendChild(document.createTextNode('›'));
       btnNext.addEventListener('click', function(e){ e.stopPropagation(); pvNext(); });
-      wrap.appendChild(btnClose); wrap.appendChild(btnPrev); wrap.appendChild(contentEl); wrap.appendChild(btnNext);
+      var btnRotL = document.createElement('button'); btnRotL.type='button'; btnRotL.setAttribute('aria-label','Girar à esquerda'); btnRotL.style.position='absolute'; btnRotL.style.bottom='-48px'; btnRotL.style.left='-20px'; btnRotL.style.background='#fff'; btnRotL.style.color='#000'; btnRotL.style.border='none'; btnRotL.style.borderRadius='8px'; btnRotL.style.padding='6px 10px'; btnRotL.style.cursor='pointer'; btnRotL.appendChild(document.createTextNode('↶'));
+      btnRotL.addEventListener('click', function(e){ e.stopPropagation(); pvRotateDegrees[pvIdx] = ((pvRotateDegrees[pvIdx]||0) - 90 + 360) % 360; contentEl.style.transform = 'rotate('+pvRotateDegrees[pvIdx]+'deg)'; });
+      var btnRotR = document.createElement('button'); btnRotR.type='button'; btnRotR.setAttribute('aria-label','Girar à direita'); btnRotR.style.position='absolute'; btnRotR.style.bottom='-48px'; btnRotR.style.left='28px'; btnRotR.style.background='#fff'; btnRotR.style.color='#000'; btnRotR.style.border='none'; btnRotR.style.borderRadius='8px'; btnRotR.style.padding='6px 10px'; btnRotR.style.cursor='pointer'; btnRotR.appendChild(document.createTextNode('↷'));
+      btnRotR.addEventListener('click', function(e){ e.stopPropagation(); pvRotateDegrees[pvIdx] = ((pvRotateDegrees[pvIdx]||0) + 90) % 360; contentEl.style.transform = 'rotate('+pvRotateDegrees[pvIdx]+'deg)'; });
+      wrap.appendChild(btnClose); wrap.appendChild(btnPrev); wrap.appendChild(contentEl); wrap.appendChild(btnNext); if (pvDocs[pvIdx].type==='image') { wrap.appendChild(btnRotL); wrap.appendChild(btnRotR); }
       pvLb.appendChild(wrap);
     }
     window.openPVGallery = function(idx){ pvIdx = (typeof idx==='number' && idx>=0)? idx : 0; pvRender(); document.addEventListener('keydown', pvKey); };
-    window.pvMap = pvMap;
+    window.pvMap = pvMap; window.pvRotateDegrees = pvRotateDegrees;
   })();
+  var thumbRot = { frente:0, verso:0, selfie:0 };
+  function rotateThumb(which, delta){ var el = document.getElementById('pv_thumb_'+which); var cur = thumbRot[which]||0; cur = (cur + delta + 360) % 360; thumbRot[which] = cur; if (el){ el.style.transition='transform 0.2s ease'; el.style.transform='rotate('+cur+'deg)'; } if (window.pvMap && typeof window.pvMap[which]==='number' && Array.isArray(window.pvRotateDegrees)) { window.pvRotateDegrees[ window.pvMap[which] ] = cur; } }
   (function(){
     var holerites = [
       <?php $holArr = json_decode($c['doc_holerites'] ?? '[]', true); if (!is_array($holArr)) $holArr = []; foreach ($holArr as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $u = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $u; ?>'},<?php } endforeach; ?>

@@ -195,10 +195,12 @@
           <div id="cnh_frente_box_frente">
             <input class="w-full" type="file" name="cnh_frente" id="inp_cnh_frente" accept=".pdf,.jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Frente</div>
+            <div id="preview_cnh_frente" class="mt-2"></div>
           </div>
           <div id="cnh_frente_box_unico" class="hidden">
             <input class="w-full" type="file" name="cnh_unico" id="inp_cnh_unico" accept=".pdf,.jpg,.jpeg,.png">
             <div class="text-sm text-gray-600 mt-0.5">Documento Único</div>
+            <div id="preview_cnh_unico" class="mt-2"></div>
           </div>
         </div>
         <div class="space-y-2" id="cnh_verso_cell">
@@ -206,6 +208,7 @@
           <div>
             <input class="w-full" type="file" name="cnh_verso" id="inp_cnh_verso" accept=".pdf,.jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Arquivo Verso</div>
+            <div id="preview_cnh_verso" class="mt-2"></div>
           </div>
         </div>
         <div class="space-y-2">
@@ -213,6 +216,7 @@
           <div>
             <input class="w-full" type="file" name="selfie" accept=".jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Selfie</div>
+            <div id="preview_selfie" class="mt-2"></div>
           </div>
         </div>
         <div class="space-y-2">
@@ -474,5 +478,13 @@
     }
     refreshStatus();
     ['click','change','input'].forEach(function(ev){ document.body.addEventListener(ev, function(e){ if (e && e.target && e.target.id && (/btn_save_|client_id/).test(e.target.id)){ setTimeout(refreshStatus, 200); } }); });
+  })();
+  (function(){
+    var deg = { frente:0, verso:0, unico:0, selfie:0 };
+    function mountPreview(which, file, boxId){ var box = document.getElementById(boxId); if(!box) return; box.innerHTML=''; if(!file){ return; } var type = (file.type||'').toLowerCase(); if (type.indexOf('pdf')>=0){ var d=document.createElement('div'); d.className='text-sm text-gray-600'; d.textContent='PDF selecionado'; box.appendChild(d); return; } var url = URL.createObjectURL(file); var wrap = document.createElement('div'); wrap.style.position='relative'; var img = document.createElement('img'); img.id='novo_thumb_'+which; img.src=url; img.style.maxWidth='240px'; img.style.maxHeight='240px'; img.style.border='1px solid #e5e7eb'; img.style.borderRadius='8px'; img.style.objectFit='cover'; img.style.transformOrigin='center center'; img.style.transform='rotate('+(deg[which]||0)+'deg)'; var ctr = document.createElement('div'); ctr.style.position='absolute'; ctr.style.right='8px'; ctr.style.top='8px'; ctr.style.display='flex'; ctr.style.gap='4px'; var btnL=document.createElement('button'); btnL.type='button'; btnL.textContent='↶'; btnL.style.padding='4px 8px'; btnL.style.background='#f3f4f6'; btnL.style.borderRadius='6px'; btnL.addEventListener('click', function(){ deg[which] = ((deg[which]||0) - 90 + 360) % 360; img.style.transition='transform 0.2s ease'; img.style.transform='rotate('+deg[which]+'deg)'; }); var btnR=document.createElement('button'); btnR.type='button'; btnR.textContent='↷'; btnR.style.padding='4px 8px'; btnR.style.background='#f3f4f6'; btnR.style.borderRadius='6px'; btnR.addEventListener('click', function(){ deg[which] = ((deg[which]||0) + 90) % 360; img.style.transition='transform 0.2s ease'; img.style.transform='rotate('+deg[which]+'deg)'; }); ctr.appendChild(btnL); ctr.appendChild(btnR); wrap.appendChild(img); wrap.appendChild(ctr); box.appendChild(wrap); }
+    var inpF = document.getElementById('inp_cnh_frente'); if (inpF) inpF.addEventListener('change', function(){ mountPreview('frente', inpF.files && inpF.files[0], 'preview_cnh_frente'); });
+    var inpV = document.getElementById('inp_cnh_verso'); if (inpV) inpV.addEventListener('change', function(){ mountPreview('verso', inpV.files && inpV.files[0], 'preview_cnh_verso'); });
+    var inpU = document.getElementById('inp_cnh_unico'); if (inpU) inpU.addEventListener('change', function(){ mountPreview('unico', inpU.files && inpU.files[0], 'preview_cnh_unico'); });
+    var inpS = document.querySelector('input[name=selfie]'); if (inpS) inpS.addEventListener('change', function(){ mountPreview('selfie', inpS.files && inpS.files[0], 'preview_selfie'); });
   })();
 </script>

@@ -151,7 +151,13 @@
             </div>
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>">Abrir tela cheia</a>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
+            <div class="relative inline-block">
+              <img id="ver_thumb_frente" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openLightboxImage('frente','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
+              <div class="absolute right-1 top-1 flex gap-1">
+                <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('frente', -90)">↶</button>
+                <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('frente', 90)">↷</button>
+              </div>
+            </div>
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -166,7 +172,13 @@
             </div>
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>">Abrir tela cheia</a>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>')" />
+            <div class="relative inline-block">
+              <img id="ver_thumb_verso" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openLightboxImage('verso','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>')" />
+              <div class="absolute right-1 top-1 flex gap-1">
+                <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('verso', -90)">↶</button>
+                <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('verso', 90)">↷</button>
+              </div>
+            </div>
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -181,7 +193,13 @@
             </div>
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>">Abrir tela cheia</a>
           <?php else: ?>
-            <img src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" onclick="openLightbox('<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
+            <div class="relative inline-block">
+              <img id="ver_thumb_selfie" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openLightboxImage('selfie','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
+              <div class="absolute right-1 top-1 flex gap-1">
+                <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('selfie', -90)">↶</button>
+                <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('selfie', 90)">↷</button>
+              </div>
+            </div>
           <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -225,6 +243,27 @@
       document.body.appendChild(lb);
     }
     lb.innerHTML = '<div style="position:relative">\n      <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ if(lb){ lb.remove(); lb=null; } })()">×</button>\n      <img src="'+src+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />\n    </div>';
+  }
+  var verThumbDeg = { frente:0, verso:0, selfie:0 };
+  function rotateThumb(which, delta){ var el = document.getElementById('ver_thumb_'+which); var cur = verThumbDeg[which]||0; cur = (cur + delta + 360) % 360; verThumbDeg[which] = cur; if (el){ el.style.transition='transform 0.2s ease'; el.style.transform='rotate('+cur+'deg)'; } }
+  function openLightboxImage(which, src){
+    if (!lb){
+      lb = document.createElement('div');
+      lb.style.position='fixed'; lb.style.inset='0'; lb.style.background='rgba(0,0,0,0.8)'; lb.style.display='flex'; lb.style.alignItems='center'; lb.style.justifyContent='center'; lb.style.zIndex='9999';
+      lb.addEventListener('click', ()=>{ lb.remove(); lb=null; });
+      document.body.appendChild(lb);
+    }
+    lb.innerHTML = '';
+    var wrap = document.createElement('div'); wrap.style.position='relative'; wrap.addEventListener('click', function(e){ e.stopPropagation(); });
+    var img = document.createElement('img'); img.src = src; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; img.style.transformOrigin='center center'; img.style.transform='rotate('+(verThumbDeg[which]||0)+'deg)';
+    var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
+    btnClose.addEventListener('click', function(e){ e.stopPropagation(); if(lb){ lb.remove(); lb=null; } });
+    var btnL = document.createElement('button'); btnL.type='button'; btnL.setAttribute('aria-label','Girar à esquerda'); btnL.style.position='absolute'; btnL.style.bottom='-48px'; btnL.style.left='-20px'; btnL.style.background='#fff'; btnL.style.color='#000'; btnL.style.border='none'; btnL.style.borderRadius='8px'; btnL.style.padding='6px 10px'; btnL.style.cursor='pointer'; btnL.appendChild(document.createTextNode('↶'));
+    btnL.addEventListener('click', function(e){ e.stopPropagation(); verThumbDeg[which] = ((verThumbDeg[which]||0) - 90 + 360) % 360; img.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; var el = document.getElementById('ver_thumb_'+which); if (el) el.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; });
+    var btnR = document.createElement('button'); btnR.type='button'; btnR.setAttribute('aria-label','Girar à direita'); btnR.style.position='absolute'; btnR.style.bottom='-48px'; btnR.style.left='28px'; btnR.style.background='#fff'; btnR.style.color='#000'; btnR.style.border='none'; btnR.style.borderRadius='8px'; btnR.style.padding='6px 10px'; btnR.style.cursor='pointer'; btnR.appendChild(document.createTextNode('↷'));
+    btnR.addEventListener('click', function(e){ e.stopPropagation(); verThumbDeg[which] = ((verThumbDeg[which]||0) + 90) % 360; img.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; var el = document.getElementById('ver_thumb_'+which); if (el) el.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; });
+    wrap.appendChild(btnClose); wrap.appendChild(img); wrap.appendChild(btnL); wrap.appendChild(btnR);
+    lb.appendChild(wrap);
   }
   function openDocLightbox(url){
     if (!lb){
