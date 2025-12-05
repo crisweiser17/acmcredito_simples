@@ -89,17 +89,27 @@ class CreditScoreService {
     $p6079 = ConfigRepo::get('score_decisao_60_79_percent', null);
     $p4059 = ConfigRepo::get('score_decisao_40_59_percent', null);
     $pMen40 = ConfigRepo::get('score_decisao_menor40_percent', null);
+    $calcProp = function(float $sc, float $low, float $up, float $cfg): float {
+      if ($up <= $low) return 0.0;
+      $pos = max(0.0, min(1.0, ($sc - $low) / ($up - $low)));
+      if ($cfg >= 0.0) return $pos * $cfg;
+      return (1.0 - $pos) * $cfg;
+    };
     if ($score >= (80 + $his)) {
-      $percent = ($p80100 !== null) ? (float)$p80100 : (float)ConfigRepo::get('score_decisao_80_100_aumento_max_percent','20');
+      $cfg = ($p80100 !== null) ? (float)$p80100 : (float)ConfigRepo::get('score_decisao_80_100_aumento_max_percent','20');
+      $percent = $calcProp((float)$score, 80.0, 100.0, $cfg);
     }
     elseif ($score >= (60 + $his)) {
-      $percent = ($p6079 !== null) ? (float)$p6079 : (float)ConfigRepo::get('score_decisao_60_79_reducao_percent','10') * -1.0;
+      $cfg = ($p6079 !== null) ? (float)$p6079 : ((float)ConfigRepo::get('score_decisao_60_79_reducao_percent','10') * -1.0);
+      $percent = $calcProp((float)$score, 60.0, 79.0, $cfg);
     }
     elseif ($score >= (40 + $his)) {
-      $percent = ($p4059 !== null) ? (float)$p4059 : (float)ConfigRepo::get('score_decisao_40_59_reduzir_min_percent','10') * -1.0;
+      $cfg = ($p4059 !== null) ? (float)$p4059 : ((float)ConfigRepo::get('score_decisao_40_59_reduzir_min_percent','10') * -1.0);
+      $percent = $calcProp((float)$score, 40.0, 59.0, $cfg);
     }
     else {
-      $percent = ($pMen40 !== null) ? (float)$pMen40 : (float)ConfigRepo::get('score_decisao_menor40_reduzir_min_percent','20') * -1.0;
+      $cfg = ($pMen40 !== null) ? (float)$pMen40 : ((float)ConfigRepo::get('score_decisao_menor40_reduzir_min_percent','20') * -1.0);
+      $percent = $calcProp((float)$score, 0.0, 39.0, $cfg);
     }
     if ($percent > 0) { $acao = 'aumentar'; }
     elseif ($percent < 0) { $acao = 'reduzir'; }

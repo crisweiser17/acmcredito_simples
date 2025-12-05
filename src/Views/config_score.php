@@ -82,7 +82,7 @@ $histerese = \App\Helpers\ConfigRepo::get('score_histerese_pontos','3');
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Decisão por Faixa</div>
-      <div class="text-sm text-gray-700">Use valores positivos para <strong>aumentar</strong>, negativos para <strong>reduzir</strong> e zero para <strong>manter</strong>. O ajuste (%) será aplicado sobre o valor base do próximo empréstimo.</div>
+      <div class="text-sm text-gray-700">Use valores positivos para <strong>aumentar</strong>, negativos para <strong>reduzir</strong> e zero para <strong>manter</strong>. O ajuste (%) é <strong>proporcional dentro da faixa</strong>: no limite inferior da faixa aplica‑se 0% e no limite superior aplica‑se o valor informado.</div>
       <div class="grid md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm mb-1">80–100: aumento máx (%)</label>
