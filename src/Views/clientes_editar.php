@@ -435,7 +435,18 @@
       lb.addEventListener('click', ()=>{ lb.remove(); lb=null; });
       document.body.appendChild(lb);
     }
-    lb.innerHTML = '<img src="'+src+'" style="max-width:90%;max-height:90%;border-radius:8px" />';
+    lb.innerHTML = '';
+    var wrap = document.createElement('div'); wrap.style.position='relative'; wrap.addEventListener('click', function(e){ e.stopPropagation(); });
+    var img = document.createElement('img'); img.src = src; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; img.style.transformOrigin='center center'; img.style.transform='rotate(0deg)';
+    var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
+    btnClose.addEventListener('click', function(e){ e.stopPropagation(); if(lb){ lb.remove(); lb=null; } });
+    var deg = 0; function setDeg(d){ deg=d; img.style.transform='rotate('+deg+'deg)'; }
+    var btnL = document.createElement('button'); btnL.type='button'; btnL.setAttribute('aria-label','Girar à esquerda'); btnL.style.position='absolute'; btnL.style.bottom='-48px'; btnL.style.left='-20px'; btnL.style.background='#fff'; btnL.style.color='#000'; btnL.style.border='none'; btnL.style.borderRadius='8px'; btnL.style.padding='6px 10px'; btnL.style.cursor='pointer'; btnL.appendChild(document.createTextNode('↶'));
+    btnL.addEventListener('click', function(e){ e.stopPropagation(); setDeg(((deg-90)+360)%360); });
+    var btnR = document.createElement('button'); btnR.type='button'; btnR.setAttribute('aria-label','Girar à direita'); btnR.style.position='absolute'; btnR.style.bottom='-48px'; btnR.style.left='28px'; btnR.style.background='#fff'; btnR.style.color='#000'; btnR.style.border='none'; btnR.style.borderRadius='8px'; btnR.style.padding='6px 10px'; btnR.style.cursor='pointer'; btnR.appendChild(document.createTextNode('↷'));
+    btnR.addEventListener('click', function(e){ e.stopPropagation(); setDeg((deg+90)%360); });
+    wrap.appendChild(btnClose); wrap.appendChild(img); wrap.appendChild(btnL); wrap.appendChild(btnR);
+    lb.appendChild(wrap);
   }
   var edThumbDeg = { frente:0, verso:0, selfie:0 };
   function rotateThumb(which, delta){ var el = document.getElementById('ed_thumb_'+which); var cur = edThumbDeg[which]||0; cur = (cur + delta + 360) % 360; edThumbDeg[which] = cur; if (el){ el.style.transition='transform 0.2s ease'; el.style.transform='rotate('+cur+'deg)'; } }

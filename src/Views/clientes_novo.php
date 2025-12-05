@@ -224,6 +224,7 @@
           <div>
             <input class="w-full" type="file" name="holerites[]" id="inp_holerites" multiple accept=".pdf,.jpg,.jpeg,.png" required>
             <div class="text-sm text-gray-600 mt-0.5">Máximo de 5 arquivos. Envie os 3 mais recentes</div>
+            <div id="preview_holerites" class="mt-2 grid md:grid-cols-3 gap-2"></div>
           </div>
         </div>
       </div>
@@ -318,6 +319,10 @@
         hol.value = '';
       }
     });
+  })();
+  (function(){
+    var hol = document.getElementById('inp_holerites'); var box = document.getElementById('preview_holerites'); if (!hol || !box) return;
+    hol.addEventListener('change', function(){ box.innerHTML=''; var files = Array.prototype.slice.call(hol.files||[]); files.forEach(function(file){ var type=(file.type||'').toLowerCase(); if (type.indexOf('pdf')>=0){ var d=document.createElement('div'); d.className='text-sm text-gray-600'; d.textContent='PDF selecionado'; box.appendChild(d); return; } var url = URL.createObjectURL(file); var wrap=document.createElement('div'); wrap.style.position='relative'; var img=document.createElement('img'); img.src=url; img.style.width='100%'; img.style.height='160px'; img.style.objectFit='cover'; img.style.border='1px solid #e5e7eb'; img.style.borderRadius='8px'; img.style.transformOrigin='center center'; var deg=0; img.style.transform='rotate('+deg+'deg)'; var ctr=document.createElement('div'); ctr.style.position='absolute'; ctr.style.right='8px'; ctr.style.top='8px'; ctr.style.display='flex'; ctr.style.gap='4px'; var btnL=document.createElement('button'); btnL.type='button'; btnL.textContent='↶'; btnL.style.padding='4px 8px'; btnL.style.background='#f3f4f6'; btnL.style.borderRadius='6px'; btnL.addEventListener('click', function(){ deg=((deg-90)+360)%360; img.style.transition='transform 0.2s ease'; img.style.transform='rotate('+deg+'deg)'; }); var btnR=document.createElement('button'); btnR.type='button'; btnR.textContent='↷'; btnR.style.padding='4px 8px'; btnR.style.background='#f3f4f6'; btnR.style.borderRadius='6px'; btnR.addEventListener('click', function(){ deg=(deg+90)%360; img.style.transition='transform 0.2s ease'; img.style.transform='rotate('+deg+'deg)'; }); ctr.appendChild(btnL); ctr.appendChild(btnR); wrap.appendChild(img); wrap.appendChild(ctr); box.appendChild(wrap); }); });
   })();
   document.getElementById('buscarCep').addEventListener('click', async function(){
     const cep = document.getElementById('cep').value.replace(/\D/g,'');

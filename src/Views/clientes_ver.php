@@ -280,7 +280,7 @@
     var holerites = [
       <?php foreach ($hol as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $url = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $url; ?>'},<?php } endforeach; ?>
     ];
-    var holIdx = 0;
+    var holIdx = 0; var holRotateDegrees = new Array(holerites.length).fill(0);
     function closeLb(){ if(lb){ lb.remove(); lb=null; document.removeEventListener('keydown', holKey); } }
     function prev(){ holIdx = (holIdx - 1 + holerites.length) % holerites.length; render(); }
     function next(){ holIdx = (holIdx + 1) % holerites.length; render(); }
@@ -297,7 +297,7 @@
         var iframe = document.createElement('iframe'); iframe.src = it.url; iframe.style.width='100%'; iframe.style.height='100%'; iframe.style.border='0'; box.appendChild(iframe);
         contentEl = box;
       } else {
-        var img = document.createElement('img'); img.src = it.url; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; contentEl = img;
+        var img = document.createElement('img'); img.src = it.url; img.style.maxWidth='90vw'; img.style.maxHeight='90vh'; img.style.borderRadius='8px'; img.style.transformOrigin='center center'; img.style.transform='rotate('+(holRotateDegrees[holIdx]||0)+'deg)'; contentEl = img;
       }
       var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
       btnClose.addEventListener('click', function(e){ e.stopPropagation(); closeLb(); });
@@ -306,6 +306,13 @@
       var btnNext = document.createElement('button'); btnNext.type='button'; btnNext.setAttribute('aria-label','Próximo'); btnNext.style.position='absolute'; btnNext.style.right='-48px'; btnNext.style.background='#fff'; btnNext.style.color='#000'; btnNext.style.border='none'; btnNext.style.borderRadius='9999px'; btnNext.style.width='40px'; btnNext.style.height='40px'; btnNext.style.cursor='pointer'; btnNext.appendChild(document.createTextNode('›'));
       btnNext.addEventListener('click', function(e){ e.stopPropagation(); next(); });
       wrap.appendChild(btnClose); wrap.appendChild(btnPrev); wrap.appendChild(contentEl); wrap.appendChild(btnNext);
+      if (it.type==='image') {
+        var btnRotL = document.createElement('button'); btnRotL.type='button'; btnRotL.setAttribute('aria-label','Girar à esquerda'); btnRotL.style.position='absolute'; btnRotL.style.bottom='-48px'; btnRotL.style.left='-20px'; btnRotL.style.background='#fff'; btnRotL.style.color='#000'; btnRotL.style.border='none'; btnRotL.style.borderRadius='8px'; btnRotL.style.padding='6px 10px'; btnRotL.style.cursor='pointer'; btnRotL.appendChild(document.createTextNode('↶'));
+        btnRotL.addEventListener('click', function(e){ e.stopPropagation(); holRotateDegrees[holIdx] = ((holRotateDegrees[holIdx]||0) - 90 + 360) % 360; contentEl.style.transform = 'rotate('+holRotateDegrees[holIdx]+'deg)'; });
+        var btnRotR = document.createElement('button'); btnRotR.type='button'; btnRotR.setAttribute('aria-label','Girar à direita'); btnRotR.style.position='absolute'; btnRotR.style.bottom='-48px'; btnRotR.style.left='28px'; btnRotR.style.background='#fff'; btnRotR.style.color='#000'; btnRotR.style.border='none'; btnRotR.style.borderRadius='8px'; btnRotR.style.padding='6px 10px'; btnRotR.style.cursor='pointer'; btnRotR.appendChild(document.createTextNode('↷'));
+        btnRotR.addEventListener('click', function(e){ e.stopPropagation(); holRotateDegrees[holIdx] = ((holRotateDegrees[holIdx]||0) + 90) % 360; contentEl.style.transform = 'rotate('+holRotateDegrees[holIdx]+'deg)'; });
+        wrap.appendChild(btnRotL); wrap.appendChild(btnRotR);
+      }
       lb.appendChild(wrap);
     }
     window.openHoleriteGallery = function(idx){ holIdx = idx||0; render(); document.addEventListener('keydown', holKey); };
