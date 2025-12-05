@@ -52,7 +52,7 @@ $saved = isset($_GET['saved']);
         <p class="text-sm text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_nome'] ?? ''); ?></p>
       </div>
       <nav>
-        <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/admin/install' || $path==='/usuarios'); ?>
+        <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/config/score' || $path==='/admin/install' || $path==='/usuarios'); ?>
         
         <div>
           <button type="button" data-target="menu-clientes" aria-expanded="<?php echo $openCli?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">
@@ -94,6 +94,7 @@ $saved = isset($_GET['saved']);
             <?php if (isset($_SESSION['user_id'])): ?>
               <a href="/relatorios/financeiro" class="block px-6 py-2 hover:bg-gray-800">Financeiro</a>
             <?php endif; ?>
+            <a href="/relatorios/score" class="block px-6 py-2 hover:bg-gray-800">Score</a>
             <a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a>
             <a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a>
             <?php if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1): ?>
@@ -112,6 +113,7 @@ $saved = isset($_GET['saved']);
           </button>
           <div id="menu-config" class="<?php echo $openCfg?'block':'hidden'; ?>">
             <a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a>
+            <a href="/config/score" class="block px-6 py-2 hover:bg-gray-800">Score</a>
             <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
             <a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a>
           </div>

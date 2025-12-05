@@ -633,4 +633,77 @@ use App\Database\Connection;
     $content = __DIR__ . '/../Views/relatorios_aguardando_financiamento.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function score(): void {
+    $pdo = Connection::get();
+    $q = trim($_GET['q'] ?? '');
+    $periodo = trim($_GET['periodo'] ?? '');
+    $ini = trim($_GET['data_ini'] ?? '');
+    $fim = trim($_GET['data_fim'] ?? '');
+    if ($periodo !== '' && $periodo !== 'custom') {
+      $today = date('Y-m-d');
+      if ($periodo === 'hoje') { $ini=$today; $fim=$today; }
+      elseif ($periodo === 'ultimos7') { $ini=date('Y-m-d', strtotime('-6 days')); $fim=$today; }
+      elseif ($periodo === 'ultimos30') { $ini=date('Y-m-d', strtotime('-29 days')); $fim=$today; }
+      elseif ($periodo === 'semana_atual') { $ini=date('Y-m-d', strtotime('monday this week')); $fim=date('Y-m-d', strtotime('sunday this week')); }
+      elseif ($periodo === 'mes_atual') { $ini=date('Y-m-01'); $fim=date('Y-m-t'); }
+    }
+    $limit = (int)($_GET['limit'] ?? 50); if ($limit <= 0 || $limit > 200) { $limit = 50; }
+    $offset = (int)($_GET['offset'] ?? 0); if ($offset < 0) { $offset = 0; }
+    $subLast = '(SELECT COALESCE(MAX(COALESCE(l.transferencia_data, l.created_at)), c.created_at) FROM loans l WHERE l.client_id=c.id AND l.deleted_at IS NULL)';
+    $sql = 'SELECT c.id, c.nome, c.cpf, '.$subLast.' AS last_dt FROM clients c WHERE c.deleted_at IS NULL';
+    $params = [];
+    if ($q !== '') {
+      $cpfNorm = preg_replace('/\D/', '', $q);
+      $sql .= ' AND (c.nome LIKE :q OR REPLACE(REPLACE(REPLACE(cpf, ".", ""), "-", ""), " ", "") = :cpf)';
+      $params['q'] = '%'.$q.'%'; $params['cpf'] = $cpfNorm;
+    }
+    if ($ini !== '' && $fim !== '') { $sql .= ' AND DATE('.$subLast.') BETWEEN :ini AND :fim'; $params['ini']=$ini; $params['fim']=$fim; }
+    elseif ($ini !== '') { $sql .= ' AND DATE('.$subLast.') >= :ini'; $params['ini']=$ini; }
+    elseif ($fim !== '') { $sql .= ' AND DATE('.$subLast.') <= :fim'; $params['fim']=$fim; }
+    $sql .= ' ORDER BY last_dt DESC, c.nome ASC LIMIT '.(int)$limit.' OFFSET '.(int)$offset;
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll();
+    $lista = [];
+    foreach ($rows as $r) {
+      try {
+        $calc = \App\Services\CreditScoreService::computeForClient((int)$r['id']);
+      } catch (\Throwable $e) { $calc = ['score'=>0,'acao'=>'manter','percentual'=>0,'valor_base'=>0,'valor_proximo'=>0,'drilldown'=>[]]; }
+      $rendaStmt = $pdo->prepare('SELECT renda_liquida, renda_mensal FROM clients WHERE id=:id');
+      $rendaStmt->execute(['id'=>(int)$r['id']]);
+      $cli = $rendaStmt->fetch();
+      $renda = (float)($cli['renda_liquida'] ?? 0.0); if ($renda <= 0) { $renda = (float)($cli['renda_mensal'] ?? 0.0); }
+      $loanStmt = $pdo->prepare('SELECT valor_parcela FROM loans WHERE client_id=:id AND deleted_at IS NULL ORDER BY COALESCE(transferencia_data, created_at) DESC LIMIT 1');
+      $loanStmt->execute(['id'=>(int)$r['id']]);
+      $loan = $loanStmt->fetch();
+      $vpmt = (float)($loan['valor_parcela'] ?? 0.0);
+      $ratio = ($renda>0 && $vpmt>0) ? (($vpmt/$renda)*100.0) : 0.0;
+      $lista[] = [
+        'id' => (int)$r['id'],
+        'nome' => (string)$r['nome'],
+        'cpf' => (string)$r['cpf'],
+        'score' => (int)($calc['score'] ?? 0),
+        'acao' => (string)($calc['acao'] ?? 'manter'),
+        'percentual' => (float)($calc['percentual'] ?? 0),
+        'valor_base' => (float)($calc['valor_base'] ?? 0),
+        'valor_proximo' => (float)($calc['valor_proximo'] ?? 0),
+        'parcela_renda_ratio' => $ratio,
+        'parcela_renda_fields' => ['parcela'=>$vpmt, 'renda'=>$renda],
+        'drilldown' => $calc['drilldown'] ?? [],
+      ];
+    }
+    $title = 'Relatório de Score';
+    $content = __DIR__ . '/../Views/relatorios_score.php';
+    $data = ['lista'=>$lista, 'q'=>$q, 'limit'=>$limit, 'offset'=>$offset, 'periodo'=>$periodo, 'data_ini'=>$ini, 'data_fim'=>$fim];
+    include __DIR__ . '/../Views/layout.php';
+  }
+  public static function scoreApiCliente(int $id): void {
+    header('Content-Type: application/json');
+    try {
+      $res = \App\Services\CreditScoreService::computeForClient($id);
+      echo json_encode(['ok'=>true,'data'=>$res]);
+    } catch (\Throwable $e) {
+      echo json_encode(['ok'=>false,'error'=>'score_compute_failed']);
+    }
+  }
 }

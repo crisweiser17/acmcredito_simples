@@ -143,4 +143,35 @@ class SettingsController {
     $content = __DIR__ . '/../Views/config.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function score(): void {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $getNum = function(string $name, string $def = '0') { $v = trim($_POST[$name] ?? ''); return $v !== '' ? $v : $def; };
+      \App\Helpers\ConfigRepo::set('score_pontos_em_dia', $getNum('score_pontos_em_dia','2'), 'Score pontos: em dia');
+      \App\Helpers\ConfigRepo::set('score_pontos_dpd_1_7', $getNum('score_pontos_dpd_1_7','0.5'), 'Score pontos: 1–7 dias');
+      \App\Helpers\ConfigRepo::set('score_pontos_dpd_8_30', $getNum('score_pontos_dpd_8_30','-1'), 'Score pontos: 8–30 dias');
+      \App\Helpers\ConfigRepo::set('score_pontos_dpd_31_60', $getNum('score_pontos_dpd_31_60','-3'), 'Score pontos: 31–60 dias');
+      \App\Helpers\ConfigRepo::set('score_pontos_dpd_61p', $getNum('score_pontos_dpd_61p','-5'), 'Score pontos: 61+ dias');
+      \App\Helpers\ConfigRepo::set('score_peso_parcela_1_2', $getNum('score_peso_parcela_1_2','1.5'), 'Score peso: parcelas 1 e 2');
+      \App\Helpers\ConfigRepo::set('score_peso_ciclo_ultimo', $getNum('score_peso_ciclo_ultimo','3'), 'Score peso: último ciclo');
+      \App\Helpers\ConfigRepo::set('score_peso_ciclo_anterior', $getNum('score_peso_ciclo_anterior','1.5'), 'Score peso: ciclo anterior');
+      \App\Helpers\ConfigRepo::set('score_bonus_ciclo_perfeito', $getNum('score_bonus_ciclo_perfeito','12'), 'Score bônus: ciclo perfeito');
+      \App\Helpers\ConfigRepo::set('score_penalidade_ciclo_31_60', $getNum('score_penalidade_ciclo_31_60','-12'), 'Score penalidade: 31–60 dias');
+      \App\Helpers\ConfigRepo::set('score_penalidade_ciclo_61p', $getNum('score_penalidade_ciclo_61p','-20'), 'Score penalidade: 61+ dias');
+      \App\Helpers\ConfigRepo::set('score_decisao_80_100_aumento_max_percent', $getNum('score_decisao_80_100_aumento_max_percent','20'), 'Decisão: aumento máx 80–100');
+      \App\Helpers\ConfigRepo::set('score_decisao_60_79_reducao_percent', $getNum('score_decisao_60_79_reducao_percent','10'), 'Decisão: redução 60–79');
+      \App\Helpers\ConfigRepo::set('score_decisao_40_59_reduzir_min_percent', $getNum('score_decisao_40_59_reduzir_min_percent','10'), 'Decisão: reduzir min 40–59');
+      \App\Helpers\ConfigRepo::set('score_decisao_40_59_reduzir_max_percent', $getNum('score_decisao_40_59_reduzir_max_percent','30'), 'Decisão: reduzir max 40–59');
+      \App\Helpers\ConfigRepo::set('score_decisao_menor40_reduzir_min_percent', $getNum('score_decisao_menor40_reduzir_min_percent','20'), 'Decisão: reduzir min <40');
+      \App\Helpers\ConfigRepo::set('score_decisao_menor40_reduzir_max_percent', $getNum('score_decisao_menor40_reduzir_max_percent','50'), 'Decisão: reduzir max <40');
+      \App\Helpers\ConfigRepo::set('score_renda_ratio_aumento_max_percent', $getNum('score_renda_ratio_aumento_max_percent','25'), 'Score: ratio parcela/renda para aumento');
+      \App\Helpers\ConfigRepo::set('score_renda_ratio_manter_limite_percent', $getNum('score_renda_ratio_manter_limite_percent','35'), 'Score: ratio parcela/renda limite para manter');
+      \App\Helpers\ConfigRepo::set('score_limite_aumento_percent_por_ciclo_max', $getNum('score_limite_aumento_percent_por_ciclo_max','20'), 'Governança: limite aumento por ciclo');
+      \App\Helpers\ConfigRepo::set('score_histerese_pontos', $getNum('score_histerese_pontos','3'), 'Governança: histerese');
+      header('Location: /config/score?saved=1');
+      exit;
+    }
+    $title = 'Configurações de Score';
+    $content = __DIR__ . '/../Views/config_score.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
 }

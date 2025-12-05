@@ -42,6 +42,10 @@
           <button type="button" id="btn_planos" class="px-3 py-2 rounded bg-gray-200">+</button>
         </div>
         <div class="text-sm text-gray-600 mt-0.5">Valor do Empréstimo (R$)</div>
+        <div id="score_sug_box" class="text-xs text-gray-700 mt-1 hidden">
+          <span id="score_sug_label"></span>
+          <button type="button" id="score_sug_use" class="ml-2 px-2 py-1 rounded bg-gray-200">Usar</button>
+        </div>
       </div>
       <div class="flex items-start gap-2">
         <div>
@@ -328,7 +332,7 @@ function toggleModo(){
 document.querySelectorAll('input[name="modo_calculo"]').forEach(function(r){ r.addEventListener('change', function(){ toggleModo(); recommendByParcela(); }); });
   toggleModo();
   (function(){ var t=document.getElementById('data_base_toggle'); var b=document.getElementById('data_base_box'); if(t&&b){ function upd(){ if(t.checked){ b.classList.remove('hidden'); } else { b.classList.add('hidden'); } } t.addEventListener('change', function(){ upd(); recalc(); }); upd(); } })();
-// initialize display of pro-rata zero date
+  // initialize display of pro-rata zero date
 (function(){
   let base = getBaseDate();
   const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
@@ -629,5 +633,14 @@ function copyTabelaImagem(){
     });
   }
   document.addEventListener('click', function(e){ if (results && !results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
+})();
+// Score suggestion integration
+(function(){
+  async function fetchScore(id){ try{ var r=await fetch('/api/score/'+id); var d=await r.json(); return d&&d.ok?d.data:null; }catch(e){ return null; } }
+  function fmtBR(n){ return 'R$ ' + new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}).format(n||0); }
+  async function updateScoreSug(){ var cidEl=document.getElementById('client_id'); var box=document.getElementById('score_sug_box'); var label=document.getElementById('score_sug_label'); var useBtn=document.getElementById('score_sug_use'); var cid=parseInt(cidEl.value||'0',10); if (!box||!label) return; if(!cid){ box.classList.add('hidden'); label.textContent=''; return; } var s=await fetchScore(cid); if(!s){ box.classList.add('hidden'); label.textContent=''; return; } var ac = s.acao||'manter'; var pct = (s.percentual||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); var vp = s.valor_proximo||0; label.textContent = 'Sugestão pelo Score: '+fmtBR(vp)+' ('+(ac==='aumentar'?'Aumentar':(ac==='reduzir'?'Reduzir':'Manter'))+' '+pct+'%)'; box.classList.remove('hidden'); if (useBtn) { useBtn.onclick = function(){ var vi=document.getElementById('valor_principal'); if (vi){ vi.value = fmtBR(vp); recalc(); } }; }
+  }
+  var cidEl=document.getElementById('client_id'); if (cidEl){ ['change','input'].forEach(function(evt){ cidEl.addEventListener(evt, updateScoreSug); }); }
+  updateScoreSug();
 })();
 </script>

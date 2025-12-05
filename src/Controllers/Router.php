@@ -31,6 +31,14 @@ class Router {
       \App\Controllers\SettingsController::handle();
       return;
     }
+    if ($path === '/config/score') {
+      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) {
+        header('Location: /');
+        return;
+      }
+      \App\Controllers\SettingsController::score();
+      return;
+    }
     if ($path === '/usuarios') {
       \App\Controllers\UsersController::handle();
       return;
@@ -177,6 +185,14 @@ class Router {
     }
     if ($path === '/relatorios/parcelas') {
       \App\Controllers\ReportsController::parcelas();
+      return;
+    }
+    if ($path === '/relatorios/score') {
+      \App\Controllers\ReportsController::score();
+      return;
+    }
+    if (preg_match('#^/api/score/(\d+)$#', $path, $m)) {
+      \App\Controllers\ReportsController::scoreApiCliente((int)$m[1]);
       return;
     }
     if ($path === '/relatorios/logs') {
