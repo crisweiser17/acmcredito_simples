@@ -53,15 +53,15 @@
       </thead>
       <tbody>
         <?php foreach ($lista as $row): ?>
-          <?php $acaoLabel = $row['acao']==='aumentar'?'Aumentar':($row['acao']==='reduzir'?'Reduzir':'Manter'); ?>
+          <?php $acaoLabel = $row['acao']==='aumentar'?'Aumentar':($row['acao']==='reduzir'?'Reduzir':($row['acao']==='nao_emprestar'?'Não emprestar':'Manter')); ?>
           <tr class="border-t">
             <td class="px-4 py-2"><a class="text-blue-700 hover:underline" href="/clientes/<?php echo (int)$row['id']; ?>/ver"><?php echo htmlspecialchars($row['nome']); ?></a></td>
             <td class="px-4 py-2"><?php echo htmlspecialchars($row['cpf']); ?></td>
             <td class="px-4 py-2 font-semibold"><?php echo (int)$row['score']; ?></td>
             <td class="px-4 py-2"><?php echo htmlspecialchars($acaoLabel); ?><?php if (!empty($row['no_payments'])): ?> <span class="ml-2 inline-block px-2 py-0.5 rounded border border-yellow-300 bg-yellow-50 text-yellow-700 text-xs">Sem histórico de pagamento</span><?php endif; ?></td>
-            <td class="px-4 py-2"><?php echo number_format((float)$row['percentual'], 2, ',', '.'); ?>%</td>
+            <td class="px-4 py-2"><?php echo ($row['acao']==='nao_emprestar') ? '—' : (number_format((float)$row['percentual'], 2, ',', '.').'%' ); ?></td>
             <td class="px-4 py-2"><?php echo fmtMoney($row['valor_base']); ?></td>
-            <td class="px-4 py-2 font-semibold"><?php echo fmtMoney($row['valor_proximo']); ?></td>
+            <td class="px-4 py-2 font-semibold"><?php echo ($row['acao']==='nao_emprestar') ? '—' : fmtMoney($row['valor_proximo']); ?></td>
             <td class="px-4 py-2"><?php $pr=$row['parcela_renda_fields']??['parcela'=>0,'renda'=>0]; $ratio=(float)($row['parcela_renda_ratio']??0); echo number_format($ratio,2,',','.').'%'; ?> <span class="text-xs text-gray-500">(<?php echo fmtMoney($pr['parcela']??0); ?> / <?php echo fmtMoney($pr['renda']??0); ?>)</span></td>
             <td class="px-4 py-2">
               <button type="button" class="px-3 py-1 rounded bg-gray-100" data-open="drill_<?php echo (int)$row['id']; ?>"><i class="fa fa-eye" aria-hidden="true"></i></button>

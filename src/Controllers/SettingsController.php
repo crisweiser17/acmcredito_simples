@@ -163,10 +163,10 @@ class SettingsController {
       \App\Helpers\ConfigRepo::set('score_decisao_40_59_reduzir_max_percent', $getNum('score_decisao_40_59_reduzir_max_percent','30'), 'Decisão: reduzir max 40–59');
       \App\Helpers\ConfigRepo::set('score_decisao_menor40_reduzir_min_percent', $getNum('score_decisao_menor40_reduzir_min_percent','20'), 'Decisão: reduzir min <40');
       \App\Helpers\ConfigRepo::set('score_decisao_menor40_reduzir_max_percent', $getNum('score_decisao_menor40_reduzir_max_percent','50'), 'Decisão: reduzir max <40');
-      \App\Helpers\ConfigRepo::set('score_decisao_80_100_percent', $getNum('score_decisao_80_100_percent','20'), 'Decisão faixa 80–100: ajuste (%)');
+      \App\Helpers\ConfigRepo::set('score_decisao_80_100_percent', $getNum('score_decisao_80_100_percent','30'), 'Decisão faixa 80–100: ajuste (%)');
       \App\Helpers\ConfigRepo::set('score_decisao_60_79_percent', $getNum('score_decisao_60_79_percent','0'), 'Decisão faixa 60–79: ajuste (%)');
-      \App\Helpers\ConfigRepo::set('score_decisao_40_59_percent', $getNum('score_decisao_40_59_percent','-10'), 'Decisão faixa 40–59: ajuste (%)');
-      \App\Helpers\ConfigRepo::set('score_decisao_menor40_percent', $getNum('score_decisao_menor40_percent','-20'), 'Decisão faixa <40: ajuste (%)');
+      \App\Helpers\ConfigRepo::set('score_decisao_40_59_percent', $getNum('score_decisao_40_59_percent','-20'), 'Decisão faixa 40–59: ajuste (%)');
+      \App\Helpers\ConfigRepo::set('score_decisao_menor40_percent', $getNum('score_decisao_menor40_percent','-100'), 'Decisão faixa <40: ajuste (%)');
       \App\Helpers\ConfigRepo::set('score_renda_ratio_aumento_max_percent', $getNum('score_renda_ratio_aumento_max_percent','25'), 'Score: ratio parcela/renda para aumento');
       \App\Helpers\ConfigRepo::set('score_renda_ratio_manter_limite_percent', $getNum('score_renda_ratio_manter_limite_percent','35'), 'Score: ratio parcela/renda limite para manter');
       \App\Helpers\ConfigRepo::set('score_limite_aumento_percent_por_ciclo_max', $getNum('score_limite_aumento_percent_por_ciclo_max','20'), 'Governança: limite aumento por ciclo');

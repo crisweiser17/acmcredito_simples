@@ -83,32 +83,8 @@ $histerese = \App\Helpers\ConfigRepo::get('score_histerese_pontos','3');
     <div class="space-y-4">
       <div class="text-lg font-semibold">Decisão por Faixa</div>
       <div class="text-sm text-gray-700">Use valores positivos para <strong>aumentar</strong>, negativos para <strong>reduzir</strong> e zero para <strong>manter</strong>. O ajuste (%) é <strong>proporcional dentro da faixa</strong>: no limite inferior da faixa aplica‑se 0% e no limite superior aplica‑se o valor informado.</div>
+      <?php $p80100 = \App\Helpers\ConfigRepo::get('score_decisao_80_100_percent','30'); $p6079 = \App\Helpers\ConfigRepo::get('score_decisao_60_79_percent','0'); $p4059 = \App\Helpers\ConfigRepo::get('score_decisao_40_59_percent','-20'); $pMen40 = \App\Helpers\ConfigRepo::get('score_decisao_menor40_percent','-100'); ?>
       <div class="grid md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm mb-1">80–100: aumento máx (%)</label>
-          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_80_100_aumento_max_percent" value="<?php echo htmlspecialchars($dec80100); ?>">
-        </div>
-        <div>
-          <label class="block text-sm mb-1">60–79: redução (%)</label>
-          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_60_79_reducao_percent" value="<?php echo htmlspecialchars($dec6079); ?>">
-        </div>
-        <div>
-          <label class="block text-sm mb-1">40–59: reduzir mín (%)</label>
-          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_40_59_reduzir_min_percent" value="<?php echo htmlspecialchars($dec4059Min); ?>">
-        </div>
-        <div>
-          <label class="block text-sm mb-1">40–59: reduzir máx (%)</label>
-          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_40_59_reduzir_max_percent" value="<?php echo htmlspecialchars($dec4059Max); ?>">
-        </div>
-        <div>
-          <label class="block text-sm mb-1"><40: reduzir mín (%)</label>
-          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_menor40_reduzir_min_percent" value="<?php echo htmlspecialchars($decMenor40Min); ?>">
-        </div>
-        <div>
-          <label class="block text-sm mb-1"><40: reduzir máx (%)</label>
-          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_menor40_reduzir_max_percent" value="<?php echo htmlspecialchars($decMenor40Max); ?>">
-        </div>
-        <?php $p80100 = \App\Helpers\ConfigRepo::get('score_decisao_80_100_percent','20'); $p6079 = \App\Helpers\ConfigRepo::get('score_decisao_60_79_percent','0'); $p4059 = \App\Helpers\ConfigRepo::get('score_decisao_40_59_percent','-10'); $pMen40 = \App\Helpers\ConfigRepo::get('score_decisao_menor40_percent','-20'); ?>
         <div>
           <label class="block text-sm mb-1">80–100: ajuste (%)</label>
           <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_80_100_percent" value="<?php echo htmlspecialchars($p80100); ?>">
@@ -126,6 +102,7 @@ $histerese = \App\Helpers\ConfigRepo::get('score_histerese_pontos','3');
           <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_menor40_percent" value="<?php echo htmlspecialchars($pMen40); ?>">
         </div>
       </div>
+      
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Capacidade e Governança</div>
