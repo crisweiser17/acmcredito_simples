@@ -47,7 +47,7 @@
             <td class="px-3 py-2 border"><?php echo (int)$u['id']; ?></td>
             <td class="px-3 py-2 border"><?php echo htmlspecialchars($u['username']); ?></td>
             <td class="px-3 py-2 border"><?php echo htmlspecialchars($u['nome']); ?></td>
-            <td class="px-3 py-2 border"><?php echo htmlspecialchars($u['created_at']); ?></td>
+            <td class="px-3 py-2 border"><?php echo !empty($u['created_at'])?date('d/m/Y H:i', strtotime($u['created_at'])):''; ?></td>
             <?php if ($role === 'superadmin'): ?>
             <td class="px-3 py-2 border">
               <form method="post" class="flex items-center gap-2">

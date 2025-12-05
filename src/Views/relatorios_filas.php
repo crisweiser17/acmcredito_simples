@@ -74,8 +74,8 @@
               </form>
             </td>
             <td class="px-2 py-2 text-xs text-red-300"><?php echo htmlspecialchars($r['last_error'] ?? ''); ?></td>
-            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['created_at'] ?? ''); ?></td>
-            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['processed_at'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo !empty($r['created_at'])?date('d/m/Y H:i', strtotime($r['created_at'])):''; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo !empty($r['processed_at'])?date('d/m/Y H:i', strtotime($r['processed_at'])):''; ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -154,8 +154,8 @@
             <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['ip_origem'] ?? ''); ?></td>
             <td class="px-2 py-2 text-xs"><?php echo (int)$w['tentativas']; ?></td>
             <td class="px-2 py-2 text-xs text-red-600"><?php echo htmlspecialchars(substr($w['erro'] ?? '', 0, 50)); ?></td>
-            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['created_at'] ?? ''); ?></td>
-            <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($w['processado_em'] ?? ''); ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo !empty($w['created_at'])?date('d/m/Y H:i', strtotime($w['created_at'])):''; ?></td>
+            <td class="px-2 py-2 text-xs"><?php echo !empty($w['processado_em'])?date('d/m/Y H:i', strtotime($w['processado_em'])):''; ?></td>
             <td class="px-2 py-2 text-xs"><details><summary class="cursor-pointer text-royal">Ver</summary><pre class="mt-2 p-2 bg-gray-50 rounded text-xs max-w-[60ch] overflow-auto"><?php echo htmlspecialchars($w['payload'] ?? ''); ?></pre></details></td>
           </tr>
         <?php endforeach; ?>
@@ -183,7 +183,7 @@
               <?php foreach ($runs as $r): ?>
                 <tr class="border-t">
                   <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['run_id'] ?? ''); ?></td>
-                  <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($r['created_at'] ?? ''); ?></td>
+                  <td class="px-2 py-2 text-xs"><?php echo !empty($r['created_at'])?date('d/m/Y H:i', strtotime($r['created_at'])):''; ?></td>
                   <td class="px-2 py-2 text-xs"><a class="text-royal" href="/relatorios/filas?tab=logs&run=<?php echo urlencode($r['run_id'] ?? ''); ?>">Ver detalhes</a></td>
                 </tr>
               <?php endforeach; ?>
@@ -207,7 +207,7 @@
                   <td class="px-2 py-2 text-xs">#<?php echo (int)($l['queue_id'] ?? 0); ?></td>
                   <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars(($l['action'] ?? '') . (($l['note'] ?? '')?(' — '.$l['note']):'')); ?></td>
                   <td class="px-2 py-2 text-xs"><?php echo (int)($l['http_code'] ?? 0); ?></td>
-                  <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($l['created_at'] ?? ''); ?></td>
+                  <td class="px-2 py-2 text-xs"><?php echo !empty($l['created_at'])?date('d/m/Y H:i', strtotime($l['created_at'])):''; ?></td>
                   <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['request_json'] ?? ''); ?></pre></td>
                   <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['response_json'] ?? ''); ?></pre></td>
                 </tr>
@@ -236,7 +236,7 @@
                 <td class="px-2 py-2 text-xs">#<?php echo (int)($l['queue_id'] ?? 0); ?></td>
                 <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars(($l['action'] ?? '') . (($l['note'] ?? '')?(' — '.$l['note']):'')); ?></td>
                 <td class="px-2 py-2 text-xs"><?php echo (int)($l['http_code'] ?? 0); ?></td>
-                <td class="px-2 py-2 text-xs"><?php echo htmlspecialchars($l['created_at'] ?? ''); ?></td>
+                <td class="px-2 py-2 text-xs"><?php echo !empty($l['created_at'])?date('d/m/Y H:i', strtotime($l['created_at'])):''; ?></td>
                 <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['request_json'] ?? ''); ?></pre></td>
                 <td class="px-2 py-2 text-xs align-top"><pre class="whitespace-pre-wrap break-words max-w-[60ch]"><?php echo htmlspecialchars($l['response_json'] ?? ''); ?></pre></td>
               </tr>
