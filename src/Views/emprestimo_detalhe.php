@@ -35,7 +35,7 @@
       Juros proporcional: <span class="font-medium">R$ <?php echo number_format((float)($l['juros_proporcional_primeiro_mes'] ?? 0),2,',','.'); ?></span>
     </div>
   </div>
-  <?php $st = $l['status']; $active = 1; if ($st==='aguardando_transferencia') $active=2; if ($st==='aguardando_boletos' || $st==='concluido') $active=3; $done1 = ($st!=='calculado'); $done2 = ($st==='aguardando_transferencia' || !empty($l['transferencia_em']) || $st==='aguardando_boletos' || $st==='concluido'); $done3 = (!empty($l['boletos_gerados']) || $st==='concluido'); $gate2Disabled = !$done1; $gate3Disabled = !$done2; $gate1Disabled = $done2; $canCancelContrato = (!empty($l['contrato_assinado_em']) && empty($l['transferencia_em'])); ?>
+  <?php $st = $l['status']; $active = 1; if ($st==='aguardando_transferencia') $active=2; if ($st==='aguardando_boletos' || $st==='concluido' || $st==='ativo') $active=3; $done1 = ($st!=='calculado'); $done2 = (!empty($l['transferencia_em']) || $st==='aguardando_boletos' || $st==='concluido' || $st==='ativo'); $done3 = (!empty($l['boletos_gerados']) || $st==='concluido'); $gate2Disabled = !$done1; $gate3Disabled = !$done2; $gate1Disabled = $done2; $canCancelContrato = (!empty($l['contrato_assinado_em']) && empty($l['transferencia_em'])); ?>
   <div class="mt-4">
     <div class="flex items-center">
       <div class="flex items-center gap-2">

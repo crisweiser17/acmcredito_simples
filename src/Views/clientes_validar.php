@@ -1,16 +1,9 @@
 <?php $c = $client; ?>
 <div class="space-y-8">
-  <h2 class="text-2xl font-semibold">Validação do Cliente - <a class="text-blue-600 hover:underline" href="/clientes/<?php echo (int)($c['id'] ?? 0); ?>/ver"><?php echo htmlspecialchars((string)($c['nome'] ?? '')); ?></a></h2>
-  <div class="space-y-4">
+  <h2 class="text-2xl font-semibold">KYC + Análise de Renda - <a class="text-blue-600 hover:underline" href="/clientes/<?php echo (int)($c['id'] ?? 0); ?>/ver"><?php echo htmlspecialchars((string)($c['nome'] ?? '')); ?></a></h2>
+  <div class="space-y-4 border border-gray-200 rounded p-[25px]">
     <div class="flex items-start justify-between">
       <div class="text-lg font-semibold">Prova de Vida</div>
-      <div class="flex flex-col items-end">
-        <span class="px-2 py-1 rounded text-white <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':($c['prova_vida_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['prova_vida_status']); ?></span>
-        <?php if (in_array((string)($c['prova_vida_status'] ?? ''), ['aprovado','reprovado'], true)): ?>
-          <?php $pvAt = $c['prova_vida_data'] ?? null; $pvFmt = $pvAt ? date('d/m/Y H:i', strtotime($pvAt)) : ''; $pvUserId = (int)($c['prova_vida_user_id'] ?? 0); $pvUserNome = ''; if ($pvUserId>0) { try { $pp = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp->execute(['id'=>$pvUserId]); $pvUserNome = (string)($pp->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
-          <div class="text-xs text-gray-600 mt-1"><?php echo htmlspecialchars($pvUserNome ?: ''); ?><?php echo $pvFmt? ' • '.htmlspecialchars($pvFmt) : ''; ?></div>
-        <?php endif; ?>
-      </div>
     </div>
     <div class="grid gap-6 <?php echo !empty($c['doc_cnh_verso']) ? 'md:grid-cols-3' : 'md:grid-cols-2'; ?>">
       <div class="space-y-4">
@@ -73,34 +66,40 @@
     </div>
     
     <div class="border rounded bg-gray-900 p-[25px]">
-      <div class="flex gap-2">
-        <form method="post">
-          <input type="hidden" name="action" value="aprovar_prova">
-          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Prova de Vida</button>
-        </form>
-        <form method="post" class="flex gap-2">
-          <input type="hidden" name="action" value="reprovar_prova">
-          <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
-          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
-        </form>
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex gap-2">
+          <form method="post" class="flex gap-2">
+            <input type="hidden" name="action" value="aprovar_prova">
+            <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+            <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Prova de Vida</button>
+          </form>
+          <form method="post" class="flex gap-2">
+            <input type="hidden" name="action" value="reprovar_prova">
+            <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+            <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+          </form>
+        </div>
+        <div class="flex flex-col items-end">
+          <?php $pvStatus = (string)($c['prova_vida_status'] ?? 'pendente'); $pvColor = $pvStatus==='aprovado'?'bg-green-600':($pvStatus==='reprovado'?'bg-red-600':'bg-gray-600'); $pvAt = $c['prova_vida_data'] ?? null; $pvFmt = $pvAt ? date('d/m/Y H:i', strtotime($pvAt)) : ''; $pvUserId = (int)($c['prova_vida_user_id'] ?? 0); $pvUserNome = ''; if ($pvUserId>0) { try { $pp = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp->execute(['id'=>$pvUserId]); $pvUserNome = (string)($pp->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
+          <span class="px-2 py-1 rounded text-white <?php echo $pvColor; ?>"><?php echo ucfirst($pvStatus); ?></span>
+          <?php if (in_array($pvStatus, ['aprovado','reprovado'], true)): ?>
+            <div class="text-xs <?php echo $pvStatus==='aprovado'?'text-green-400':'text-red-400'; ?> mt-1"><?php echo htmlspecialchars($pvUserNome ?: ''); ?><?php echo $pvFmt? ' • '.htmlspecialchars($pvFmt) : ''; ?></div>
+            <?php $pvMot = trim((string)($c['prova_vida_motivo'] ?? '')); if ($pvMot !== ''): ?>
+              <div class="text-sm mt-1 <?php echo $pvStatus==='aprovado'?'text-green-400':'text-red-400'; ?>">Motivo: <?php echo htmlspecialchars($pvMot); ?></div>
+            <?php endif; ?>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>
   <div class="border-t border-gray-200 my-6"></div>
-  <div class="space-y-4">
+  <div class="space-y-4 border border-gray-200 rounded p-[25px]">
     <div class="flex items-start justify-between">
       <div class="text-lg font-semibold">Consulta CPF</div>
-      <div class="flex flex-col items-end">
-        <span class="px-2 py-1 rounded text-white <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':($c['cpf_check_status']==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($c['cpf_check_status']); ?></span>
-        <?php if (in_array((string)($c['cpf_check_status'] ?? ''), ['aprovado','reprovado'], true)): ?>
-          <?php $cpAt = $c['cpf_check_data'] ?? null; $cpFmt = $cpAt ? date('d/m/Y H:i', strtotime($cpAt)) : ''; $cpUserId = (int)($c['cpf_check_user_id'] ?? 0); $cpUserNome = ''; if ($cpUserId>0) { try { $pp2 = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp2->execute(['id'=>$cpUserId]); $cpUserNome = (string)($pp2->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
-          <div class="text-xs text-gray-600 mt-1"><?php echo htmlspecialchars($cpUserNome ?: ''); ?><?php echo $cpFmt? ' • '.htmlspecialchars($cpFmt) : ''; ?></div>
-        <?php endif; ?>
-      </div>
     </div>
     <div class="space-y-3">
       <?php $dn = !empty($c['data_nascimento']) ? date('d/m/Y', strtotime($c['data_nascimento'])) : ''; ?>
-      <div class="grid md:grid-cols-3 gap-3 items-end">
+      <div class="grid md:grid-cols-5 gap-3 items-end">
         <div>
           <label class="text-sm text-gray-600">Nome</label>
           <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($c['nome'] ?? ''); ?>" readonly>
@@ -113,17 +112,20 @@
           <label class="text-sm text-gray-600">CPF</label>
           <input class="border rounded px-3 py-2 w-full" value="<?php echo htmlspecialchars($c['cpf'] ?? ''); ?>" readonly>
         </div>
-      </div>
-      <div class="flex items-center gap-3">
+        
+          <div class="md:col-span-2 flex items-center gap-4">
         <form method="post" id="cpf-consulta-form" class="flex gap-2">
           <input type="hidden" name="action" value="consultar_cpf_api">
-          <button class="btn-primary px-4 py-2 rounded" type="submit">Consultar CPF na Receita Federal</button>
+          <button class="btn-primary px-4 py-2 rounded" type="submit">Consultar CPF</button>
         </form>
         <?php $lastAtRaw = $cpf_last['checked_at'] ?? null; $lastAtFmt = $lastAtRaw ? date('d/m/Y H:i', strtotime($lastAtRaw)) : null; $isOld = false; if ($lastAtRaw) { $isOld = (time() - strtotime($lastAtRaw)) > (30*24*60*60); } ?>
         <?php if ($lastAtFmt): ?><span class="text-sm text-gray-600">Última consulta: <?php echo htmlspecialchars($lastAtFmt); ?></span><?php endif; ?>
         <?php if ($isOld): ?><span class="text-sm text-red-600">Sugestão: realizar nova consulta</span><?php endif; ?>
         <span id="cpf-consulta-status" class="text-sm text-gray-400"></span>
       </div>
+        
+      </div>
+      
     </div>
     <div class="space-y-2">
       <?php if (!empty($cpf_last)): ?>
@@ -175,38 +177,44 @@
       <?php endif; ?>
     </div>
     <div class="border rounded bg-gray-900 p-[25px]">
-      <div class="flex gap-2">
-        <form method="post">
-          <input type="hidden" name="action" value="aprovar_cpf">
-          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Consulta CPF</button>
-        </form>
-        <form method="post" class="flex gap-2">
-          <input type="hidden" name="action" value="reprovar_cpf">
-          <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
-          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
-        </form>
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex gap-2">
+          <form method="post" class="flex gap-2">
+            <input type="hidden" name="action" value="aprovar_cpf">
+            <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+            <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Consulta CPF</button>
+          </form>
+          <form method="post" class="flex gap-2">
+            <input type="hidden" name="action" value="reprovar_cpf">
+            <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+            <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+          </form>
+        </div>
+        <div class="flex flex-col items-end">
+          <?php $cpStatus = (string)($c['cpf_check_status'] ?? 'pendente'); $cpColor = $cpStatus==='aprovado'?'bg-green-600':($cpStatus==='reprovado'?'bg-red-600':'bg-gray-600'); $cpAt = $c['cpf_check_data'] ?? null; $cpFmt = $cpAt ? date('d/m/Y H:i', strtotime($cpAt)) : ''; $cpUserId = (int)($c['cpf_check_user_id'] ?? 0); $cpUserNome = ''; if ($cpUserId>0) { try { $pp2 = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp2->execute(['id'=>$cpUserId]); $cpUserNome = (string)($pp2->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
+          <span class="px-2 py-1 rounded text-white <?php echo $cpColor; ?>"><?php echo ucfirst($cpStatus); ?></span>
+          <?php if (in_array($cpStatus, ['aprovado','reprovado'], true)): ?>
+            <div class="text-xs <?php echo $cpStatus==='aprovado'?'text-green-400':'text-red-400'; ?> mt-1"><?php echo htmlspecialchars($cpUserNome ?: ''); ?><?php echo $cpFmt? ' • '.htmlspecialchars($cpFmt) : ''; ?></div>
+            <?php $cpMot = trim((string)($c['cpf_check_motivo'] ?? '')); if ($cpMot !== ''): ?>
+              <div class="text-sm mt-1 <?php echo $cpStatus==='aprovado'?'text-green-400':'text-red-400'; ?>">Motivo: <?php echo htmlspecialchars($cpMot); ?></div>
+            <?php endif; ?>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>
   <div class="border-t border-gray-200 my-6"></div>
-  <div class="space-y-4">
+  <div class="space-y-4 border border-gray-200 rounded p-[25px]">
     <?php $critStatus = trim((string)($c['criterios_status'] ?? 'pendente')); ?>
     <div class="flex items-start justify-between">
       <div class="text-lg font-semibold">Critérios de Renda</div>
-      <div class="flex flex-col items-end">
-        <span class="px-2 py-1 rounded text-white <?php echo $critStatus==='aprovado'?'bg-green-600':($critStatus==='reprovado'?'bg-red-600':'bg-gray-600'); ?>"><?php echo ucfirst($critStatus); ?></span>
-        <?php if (in_array($critStatus, ['aprovado','reprovado'], true)): ?>
-          <?php $crAt = $c['criterios_data'] ?? null; $crFmt = $crAt ? date('d/m/Y H:i', strtotime($crAt)) : ''; $crUserId = (int)($c['criterios_user_id'] ?? 0); $crUserNome = ''; if ($crUserId>0) { try { $pp3 = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp3->execute(['id'=>$crUserId]); $crUserNome = (string)($pp3->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
-          <div class="text-xs text-gray-600 mt-1"><?php echo htmlspecialchars($crUserNome ?: ''); ?><?php echo $crFmt? ' • '.htmlspecialchars($crFmt) : ''; ?></div>
-        <?php endif; ?>
-      </div>
     </div>
     <div class="space-y-3">
       <?php $critPct = (float)(\App\Helpers\ConfigRepo::get('criterios_percentual_parcela_max','20')); ?>
       <?php $critTempo = (string)(\App\Helpers\ConfigRepo::get('criterios_tempo_minimo_trabalho','de 1 a 2 anos')); ?>
-      <?php $rendaVal = (float)($c['renda_mensal'] ?? 0); $rendaFmt = 'R$ '.number_format($rendaVal,2,',','.'); $maxParc = $rendaVal>0? number_format($rendaVal*($critPct/100.0),2,',','.') : '0,00'; $tt = trim((string)($c['tempo_trabalho'] ?? '')); ?>
+      <?php $rendaVal = (float)($c['renda_mensal'] ?? 0); $liquidaVal = (float)($c['renda_liquida'] ?? 0); $rendaFmt = 'R$ '.number_format($rendaVal,2,',','.'); $baseRenda = $liquidaVal>0? $liquidaVal : $rendaVal; $maxParc = $baseRenda>0? number_format($baseRenda*($critPct/100.0),2,',','.') : '0,00'; $tt = trim((string)($c['tempo_trabalho'] ?? '')); ?>
       <?php $rank = ['menos de 6 meses'=>0,'até 1 ano'=>1,'de 1 a 2 anos'=>2,'de 3 a 5 anos'=>3,'mais de 5 anos'=>4]; $minRank = $rank[$critTempo] ?? 2; $curRank = $rank[$tt] ?? -1; $sugNegar = ($curRank >= 0 && $curRank < $minRank); ?>
-      <div class="grid md:grid-cols-3 gap-3 items-end">
+      <div class="grid md:grid-cols-4 gap-3 items-end">
         <div>
           <label class="text-sm text-gray-600">Renda Mensal</label>
           <div class="relative">
@@ -217,6 +225,17 @@
               </button>
             <?php endif; ?>
           </div>
+        </div>
+        <div>
+          <label class="text-sm text-red-600">Renda Líquida</label>
+          <form method="post">
+            <input type="hidden" name="action" value="salvar_renda_liquida">
+            <div class="relative">
+              <?php $liqFmt = $liquidaVal>0 ? ('R$ '.number_format($liquidaVal,2,',','.')) : ''; ?>
+              <input class="border rounded px-3 py-2 w-full pr-20" name="renda_liquida" id="renda_liquida" value="<?php echo htmlspecialchars($liqFmt); ?>" placeholder="R$ 0,00">
+              <button type="submit" class="px-3 py-1 rounded bg-gray-200 text-gray-800" style="position:absolute; right:8px; top:50%; transform: translateY(-50%); z-index:10">Salvar</button>
+            </div>
+          </form>
         </div>
         <div>
           <label class="text-sm text-gray-600">Parcela Máxima (<?php echo htmlspecialchars((string)$critPct); ?>%)</label>
@@ -235,22 +254,35 @@
       <?php endif; ?>
     </div>
     <div class="border rounded bg-gray-900 p-[25px]">
-      <div class="flex gap-2">
-        <form method="post" class="flex gap-2 items-center">
-          <input type="hidden" name="action" value="aprovar_criterios">
-          <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo" required>
-          <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Critérios de Renda</button>
-        </form>
-        <form method="post">
-          <input type="hidden" name="action" value="reprovar_criterios">
-          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
-        </form>
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex gap-2">
+          <form method="post" class="flex gap-2 items-center">
+            <input type="hidden" name="action" value="aprovar_criterios">
+            <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo" required>
+            <button class="px-4 py-2 rounded bg-green-600 text-white" type="submit">Aprovar Critérios de Renda</button>
+          </form>
+          <form method="post" class="flex gap-2 items-center">
+            <input type="hidden" name="action" value="reprovar_criterios">
+            <input class="border rounded px-3 py-2" name="motivo" placeholder="Motivo">
+            <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Reprovar</button>
+          </form>
+        </div>
+        <div class="flex flex-col items-end">
+          <?php $crStatus = (string)($c['criterios_status'] ?? 'pendente'); $crColor = $crStatus==='aprovado'?'bg-green-600':($crStatus==='reprovado'?'bg-red-600':'bg-gray-600'); $crAt = $c['criterios_data'] ?? null; $crFmt = $crAt ? date('d/m/Y H:i', strtotime($crAt)) : ''; $crUserId = (int)($c['criterios_user_id'] ?? 0); $crUserNome = ''; if ($crUserId>0) { try { $pp3 = \App\Database\Connection::get()->prepare('SELECT nome FROM users WHERE id=:id'); $pp3->execute(['id'=>$crUserId]); $crUserNome = (string)($pp3->fetchColumn() ?: ''); } catch (\Throwable $e) {} } ?>
+          <span class="px-2 py-1 rounded text-white <?php echo $crColor; ?>"><?php echo ucfirst($crStatus); ?></span>
+          <?php if (in_array($crStatus, ['aprovado','reprovado'], true)): ?>
+            <div class="text-xs <?php echo $crStatus==='aprovado'?'text-green-400':'text-red-400'; ?> mt-1"><?php echo htmlspecialchars($crUserNome ?: ''); ?><?php echo $crFmt? ' • '.htmlspecialchars($crFmt) : ''; ?></div>
+            <?php $crMot = trim((string)($c['criterios_motivo'] ?? '')); if ($crMot !== ''): ?>
+              <div class="text-sm mt-1 <?php echo $crStatus==='aprovado'?'text-green-400':'text-red-400'; ?>">Motivo: <?php echo htmlspecialchars($crMot); ?></div>
+            <?php endif; ?>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>
   <div class="border-t border-gray-200 my-6"></div>
   <?php $refs = json_decode($c['referencias'] ?? '[]', true); if (!is_array($refs)) $refs = []; ?>
-  <div class="space-y-4">
+  <div class="space-y-4 border border-gray-200 rounded p-[25px]">
     <div class="flex items-center justify-between">
       <div class="text-lg font-semibold">Referências</div>
       <?php
@@ -327,15 +359,15 @@
     <div class="font-semibold mb-3">Checklist Obrigatorio de Aprovação</div>
     <div class="flex gap-6 items-center text-base">
       <div class="flex items-center gap-3">
-        <span class="inline-block w-4 h-4 rounded-full <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
+        <span class="inline-block w-4 h-4 rounded-full <?php echo $c['prova_vida_status']==='aprovado'?'bg-green-600':($c['prova_vida_status']==='reprovado'?'bg-red-600':'bg-gray-400'); ?>"></span>
         <span>Prova de Vida</span>
       </div>
       <div class="flex items-center gap-3">
-        <span class="inline-block w-4 h-4 rounded-full <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':'bg-gray-400'; ?>"></span>
+        <span class="inline-block w-4 h-4 rounded-full <?php echo $c['cpf_check_status']==='aprovado'?'bg-green-600':($c['cpf_check_status']==='reprovado'?'bg-red-600':'bg-gray-400'); ?>"></span>
         <span>Consulta CPF</span>
       </div>
       <div class="flex items-center gap-3">
-        <span class="inline-block w-4 h-4 rounded-full <?php echo ($critStatus==='aprovado')?'bg-green-600':'bg-gray-400'; ?>"></span>
+        <span class="inline-block w-4 h-4 rounded-full <?php echo ($critStatus==='aprovado')?'bg-green-600':(($critStatus==='reprovado')?'bg-red-600':'bg-gray-400'); ?>"></span>
         <span>Critérios de Renda</span>
       </div>
     </div>

@@ -510,30 +510,41 @@ class ClientesController {
       if (!isset($refs[$i]['token']) || !preg_match('/^[a-f0-9]{64}$/', (string)($refs[$i]['token'] ?? ''))) { $refs[$i]['token'] = bin2hex(random_bytes(32)); $changedRefs = true; }
     }
     if ($changedRefs) { $pdo->prepare('UPDATE clients SET referencias=:r WHERE id=:id')->execute(['r'=>json_encode($refs), 'id'=>$id]); $client['referencias'] = json_encode($refs); }
-    try { $hasCrit = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch(); if (!$hasCrit) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); } } catch (\Throwable $e) {}
+    try {
+      $hasCrit = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_status'")->fetch();
+      if (!$hasCrit) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_status ENUM('pendente','aprovado','reprovado') DEFAULT 'pendente', ADD COLUMN criterios_data DATETIME NULL, ADD COLUMN criterios_user_id INT NULL"); }
+      $hasPvMot = $pdo->query("SHOW COLUMNS FROM clients LIKE 'prova_vida_motivo'")->fetch();
+      if (!$hasPvMot) { $pdo->exec("ALTER TABLE clients ADD COLUMN prova_vida_motivo TEXT NULL"); }
+      $hasCpfMot = $pdo->query("SHOW COLUMNS FROM clients LIKE 'cpf_check_motivo'")->fetch();
+      if (!$hasCpfMot) { $pdo->exec("ALTER TABLE clients ADD COLUMN cpf_check_motivo TEXT NULL"); }
+      $hasCrMot = $pdo->query("SHOW COLUMNS FROM clients LIKE 'criterios_motivo'")->fetch();
+      if (!$hasCrMot) { $pdo->exec("ALTER TABLE clients ADD COLUMN criterios_motivo TEXT NULL"); }
+    } catch (\Throwable $e) {}
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (isset($_POST['action']) && $_POST['action'] === 'aprovar_prova') {
-        $pdo->prepare("UPDATE clients SET prova_vida_status='aprovado', prova_vida_data=NOW(), prova_vida_user_id=:u WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'id'=>$id]);
+        $motivo = trim($_POST['motivo'] ?? '');
+        $pdo->prepare("UPDATE clients SET prova_vida_status='aprovado', prova_vida_data=NOW(), prova_vida_user_id=:u, prova_vida_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo!==''?$motivo:null,'id'=>$id]);
         Audit::log('aprovar_prova_vida','clients',$id,null);
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
       if (isset($_POST['action']) && $_POST['action'] === 'reprovar_prova') {
         $motivo = trim($_POST['motivo'] ?? '');
-        $pdo->prepare("UPDATE clients SET prova_vida_status='reprovado', prova_vida_data=NOW(), prova_vida_user_id=:u, observacoes=CONCAT(IFNULL(observacoes,''),' ',:m) WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo,'id'=>$id]);
+        $pdo->prepare("UPDATE clients SET prova_vida_status='reprovado', prova_vida_data=NOW(), prova_vida_user_id=:u, prova_vida_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo!==''?$motivo:null,'id'=>$id]);
         Audit::log('reprovar_prova_vida','clients',$id,$motivo);
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
       if (isset($_POST['action']) && $_POST['action'] === 'aprovar_cpf') {
-        $pdo->prepare("UPDATE clients SET cpf_check_status='aprovado', cpf_check_data=NOW(), cpf_check_user_id=:u WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'id'=>$id]);
+        $motivo = trim($_POST['motivo'] ?? '');
+        $pdo->prepare("UPDATE clients SET cpf_check_status='aprovado', cpf_check_data=NOW(), cpf_check_user_id=:u, cpf_check_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo!==''?$motivo:null,'id'=>$id]);
         Audit::log('aprovar_cpf','clients',$id,null);
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
       if (isset($_POST['action']) && $_POST['action'] === 'reprovar_cpf') {
         $motivo = trim($_POST['motivo'] ?? '');
-        $pdo->prepare("UPDATE clients SET cpf_check_status='reprovado', cpf_check_data=NOW(), cpf_check_user_id=:u, observacoes=CONCAT(IFNULL(observacoes,''),' ',:m) WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo,'id'=>$id]);
+        $pdo->prepare("UPDATE clients SET cpf_check_status='reprovado', cpf_check_data=NOW(), cpf_check_user_id=:u, cpf_check_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo!==''?$motivo:null,'id'=>$id]);
         Audit::log('reprovar_cpf','clients',$id,$motivo);
         header('Location: /clientes/'.$id.'/validar');
         exit;
@@ -599,14 +610,30 @@ class ClientesController {
       if (isset($_POST['action']) && $_POST['action'] === 'aprovar_criterios') {
         $motivo = trim($_POST['motivo'] ?? '');
         if ($motivo === '') { $_SESSION['toast'] = 'Informe o motivo para aprovar os critérios de empréstimo.'; header('Location: /clientes/'.$id.'/validar'); exit; }
-        $pdo->prepare("UPDATE clients SET criterios_status='aprovado', criterios_data=NOW(), criterios_user_id=:u, observacoes=CONCAT(IFNULL(observacoes,''),' ',:m) WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo,'id'=>$id]);
+        $obrigar = ConfigRepo::get('criterios_obrigar_renda_liquida', 'nao');
+        if ($obrigar === 'sim') {
+          $st = $pdo->prepare('SELECT renda_liquida FROM clients WHERE id=:id');
+          $st->execute(['id'=>$id]);
+          $liquida = $st->fetchColumn();
+          if ($liquida === null || (float)$liquida <= 0) { $_SESSION['toast'] = 'Renda líquida obrigatória para aprovar os critérios.'; header('Location: /clientes/'.$id.'/validar'); exit; }
+        }
+        $pdo->prepare("UPDATE clients SET criterios_status='aprovado', criterios_data=NOW(), criterios_user_id=:u, criterios_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo,'id'=>$id]);
         Audit::log('aprovar_criterios','clients',$id,$motivo);
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
       if (isset($_POST['action']) && $_POST['action'] === 'reprovar_criterios') {
-        $pdo->prepare("UPDATE clients SET criterios_status='reprovado', criterios_data=NOW(), criterios_user_id=:u WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'id'=>$id]);
+        $motivo = trim($_POST['motivo'] ?? '');
+        $pdo->prepare("UPDATE clients SET criterios_status='reprovado', criterios_data=NOW(), criterios_user_id=:u, criterios_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo!==''?$motivo:null,'id'=>$id]);
         Audit::log('reprovar_criterios','clients',$id,null);
+        header('Location: /clientes/'.$id.'/validar');
+        exit;
+      }
+      if (isset($_POST['action']) && $_POST['action'] === 'salvar_renda_liquida') {
+        $valor = self::parseRenda($_POST['renda_liquida'] ?? '0');
+        $pdo->prepare('UPDATE clients SET renda_liquida = :v WHERE id = :id')->execute(['v'=>$valor>0?$valor:null, 'id'=>$id]);
+        Audit::log('salvar_renda_liquida','clients',$id,'valor='.$valor);
+        $_SESSION['toast'] = 'Renda líquida salva';
         header('Location: /clientes/'.$id.'/validar');
         exit;
       }
@@ -1238,7 +1265,7 @@ class ClientesController {
   }
   public static function buscarPorId(int $id): void {
     $pdo = Connection::get();
-    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone, renda_mensal, tempo_trabalho, is_draft, cadastro_publico FROM clients WHERE id=:id');
+    $stmt = $pdo->prepare('SELECT id, nome, cpf, telefone, renda_mensal, renda_liquida, tempo_trabalho, is_draft, cadastro_publico FROM clients WHERE id=:id');
     $stmt->execute(['id'=>$id]);
     $row = $stmt->fetch();
     header('Content-Type: application/json');

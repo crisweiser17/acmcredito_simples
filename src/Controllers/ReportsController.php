@@ -573,24 +573,33 @@ use App\Database\Connection;
       if ($acao === 'financiar') {
         $loanId = (int)($_POST['loan_id'] ?? 0);
         $data = trim($_POST['transferencia_data'] ?? date('Y-m-d'));
+        $statusSel = trim($_POST['status_select'] ?? 'aguardando_boletos');
+        if (!in_array($statusSel, ['aguardando_transferencia','aguardando_boletos'], true)) { $statusSel = 'aguardando_boletos'; }
         $stmtL = $pdo->prepare('SELECT l.*, c.id AS cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
         $stmtL->execute(['id'=>$loanId]);
         $l = $stmtL->fetch();
         if ($l) {
-          $path = null;
-          if (!empty($_FILES['comprovante']['name'])) {
-            try { $path = \App\Helpers\Upload::save($_FILES['comprovante'], (int)$l['cid'], 'comprovantes'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','loans',$loanId,$e->getMessage()); }
+          if ($statusSel === 'aguardando_transferencia') {
+            $pdo->prepare('UPDATE loans SET transferencia_valor=NULL, transferencia_data=NULL, transferencia_comprovante_path=NULL, transferencia_user_id=NULL, transferencia_em=NULL, status=\'aguardando_transferencia\' WHERE id=:id')
+                ->execute(['id'=>$loanId]);
+            try { \App\Helpers\Audit::log('transferencia_status_pendente_relatorio','loans',$loanId,null); } catch (\Throwable $e) {}
+            $_SESSION['toast'] = 'Empréstimo marcado como pendente';
+          } else {
+            $path = null;
+            if (!empty($_FILES['comprovante']['name'])) {
+              try { $path = \App\Helpers\Upload::save($_FILES['comprovante'], (int)$l['cid'], 'comprovantes'); } catch (\Throwable $e) { \App\Helpers\Audit::log('upload_error','loans',$loanId,$e->getMessage()); }
+            }
+            $pdo->prepare('UPDATE loans SET transferencia_valor=:v, transferencia_data=:d, transferencia_comprovante_path=:p, transferencia_user_id=:u, transferencia_em=NOW(), status=\'aguardando_boletos\' WHERE id=:id')
+                ->execute([
+                  'v'=>$l['valor_principal'],
+                  'd'=>$data,
+                  'p'=>$path,
+                  'u'=>$_SESSION['user_id'] ?? null,
+                  'id'=>$loanId
+                ]);
+            try { \App\Helpers\Audit::log('transferencia_fundos_relatorio','loans',$loanId,null); } catch (\Throwable $e) {}
+            $_SESSION['toast'] = 'Empréstimo marcado como financiado';
           }
-          $pdo->prepare('UPDATE loans SET transferencia_valor=:v, transferencia_data=:d, transferencia_comprovante_path=:p, transferencia_user_id=:u, transferencia_em=NOW(), status=\'aguardando_boletos\' WHERE id=:id')
-              ->execute([
-                'v'=>$l['valor_principal'],
-                'd'=>$data,
-                'p'=>$path,
-                'u'=>$_SESSION['user_id'] ?? null,
-                'id'=>$loanId
-              ]);
-          try { \App\Helpers\Audit::log('transferencia_fundos_relatorio','loans',$loanId,null); } catch (\Throwable $e) {}
-          $_SESSION['toast'] = 'Empréstimo marcado como financiado';
         }
         $qs = $_SERVER['QUERY_STRING'] ?? '';
         header('Location: /relatorios/aguardando-financiamento' . ($qs ? ('?'.$qs) : ''));
