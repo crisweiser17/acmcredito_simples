@@ -34,6 +34,7 @@ class CreditScoreService {
     $sum = 0.0;
     $drill = [];
     $travadoPor61p = false;
+    $totalPagas = 0;
     foreach ($cycles as $i => $c) {
       $pesoCiclo = $i === 0 ? $pesoUlt : ($i === 1 ? $pesoAnt : 1.0);
       $has31_60 = false; $has61p = false; $has8_30 = false; $cicloPerfeito = true;
@@ -45,6 +46,7 @@ class CreditScoreService {
         $pago = (string)($p['pago_em'] ?? '');
         if ($st === 'pago') {
           $dpd = max(0, (int)self::diffDays($pago, $venc));
+          $totalPagas++;
         } elseif ($st === 'vencido') {
           $dpd = (int)self::diffDays(date('Y-m-d'), $venc);
         } else {
@@ -56,6 +58,7 @@ class CreditScoreService {
         elseif ($dpd >= 8 && $dpd <= 30) { $pt = $pontos['d8_30']; $has8_30 = true; $cicloPerfeito = false; }
         elseif ($dpd >= 31 && $dpd <= 60) { $pt = $pontos['d31_60']; $has31_60 = true; $cicloPerfeito = false; }
         elseif ($dpd > 60) { $pt = $pontos['d61p']; $has61p = true; $cicloPerfeito = false; }
+        if (!($st === 'pago' && $dpd === 0)) { $cicloPerfeito = false; }
         $pesoParcela = ((int)($p['numero_parcela'] ?? 0) <= 2) ? $pesoParcela12 : 1.0;
         $parcSum += ($pt * $pesoParcela);
         $cycleDrill[] = [
@@ -86,6 +89,7 @@ class CreditScoreService {
     elseif ($score >= (60 + $his)) { $acao = 'manter'; $percent = 0.0; $reduc = (float)ConfigRepo::get('score_decisao_60_79_reducao_percent','10'); if (self::hasDelayEarly($drill)) { $acao = 'reduzir'; $percent = -$reduc; } }
     elseif ($score >= (40 + $his)) { $acao = 'reduzir'; $min = (float)ConfigRepo::get('score_decisao_40_59_reduzir_min_percent','10'); $max = (float)ConfigRepo::get('score_decisao_40_59_reduzir_max_percent','30'); $percent = -$min; }
     else { $acao = 'reduzir'; $min = (float)ConfigRepo::get('score_decisao_menor40_reduzir_min_percent','20'); $percent = -$min; }
+    if ($totalPagas === 0) { $acao = 'manter'; $percent = 0.0; }
     if ($travadoPor61p && $acao === 'aumentar') { $acao = 'manter'; $percent = 0.0; }
     if ($renda > 0 && $valorParcela > 0) {
       $ratio = ($valorParcela / $renda) * 100.0;
