@@ -35,6 +35,7 @@ class CreditScoreService {
     $drill = [];
     $travadoPor61p = false;
     $totalPagas = 0;
+    $totalVencidas = 0;
     foreach ($cycles as $i => $c) {
       $pesoCiclo = $i === 0 ? $pesoUlt : ($i === 1 ? $pesoAnt : 1.0);
       $has31_60 = false; $has61p = false; $has8_30 = false; $cicloPerfeito = true;
@@ -49,6 +50,7 @@ class CreditScoreService {
           $totalPagas++;
         } elseif ($st === 'vencido') {
           $dpd = (int)self::diffDays(date('Y-m-d'), $venc);
+          $totalVencidas++;
         } else {
           $dpd = 0;
         }
@@ -144,6 +146,7 @@ class CreditScoreService {
       'valor_proximo' => $valorProx,
       'drilldown' => $drill,
       'no_payments' => ($totalPagas === 0),
+      'no_history' => ($totalPagas === 0 && $totalVencidas === 0),
     ];
   }
   private static function diffDays(string $a, string $b): int {

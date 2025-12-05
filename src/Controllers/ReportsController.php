@@ -691,6 +691,7 @@ use App\Database\Connection;
         'parcela_renda_fields' => ['parcela'=>$vpmt, 'renda'=>$renda],
         'drilldown' => $calc['drilldown'] ?? [],
         'no_payments' => (bool)($calc['no_payments'] ?? false),
+        'no_history' => (bool)($calc['no_history'] ?? false),
       ];
     }
     $title = 'Relatório de Score';
