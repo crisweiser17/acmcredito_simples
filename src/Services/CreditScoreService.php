@@ -85,10 +85,25 @@ class CreditScoreService {
     $ratioAum = (float)ConfigRepo::get('score_renda_ratio_aumento_max_percent','25');
     $ratioManter = (float)ConfigRepo::get('score_renda_ratio_manter_limite_percent','35');
     $acao = 'manter'; $percent = 0.0;
-    if ($score >= (80 + $his)) { $acao = 'aumentar'; $percent = (float)ConfigRepo::get('score_decisao_80_100_aumento_max_percent','20'); }
-    elseif ($score >= (60 + $his)) { $acao = 'manter'; $percent = 0.0; $reduc = (float)ConfigRepo::get('score_decisao_60_79_reducao_percent','10'); if (self::hasDelayEarly($drill)) { $acao = 'reduzir'; $percent = -$reduc; } }
-    elseif ($score >= (40 + $his)) { $acao = 'reduzir'; $min = (float)ConfigRepo::get('score_decisao_40_59_reduzir_min_percent','10'); $max = (float)ConfigRepo::get('score_decisao_40_59_reduzir_max_percent','30'); $percent = -$min; }
-    else { $acao = 'reduzir'; $min = (float)ConfigRepo::get('score_decisao_menor40_reduzir_min_percent','20'); $percent = -$min; }
+    $p80100 = ConfigRepo::get('score_decisao_80_100_percent', null);
+    $p6079 = ConfigRepo::get('score_decisao_60_79_percent', null);
+    $p4059 = ConfigRepo::get('score_decisao_40_59_percent', null);
+    $pMen40 = ConfigRepo::get('score_decisao_menor40_percent', null);
+    if ($score >= (80 + $his)) {
+      $percent = ($p80100 !== null) ? (float)$p80100 : (float)ConfigRepo::get('score_decisao_80_100_aumento_max_percent','20');
+    }
+    elseif ($score >= (60 + $his)) {
+      $percent = ($p6079 !== null) ? (float)$p6079 : (float)ConfigRepo::get('score_decisao_60_79_reducao_percent','10') * -1.0;
+    }
+    elseif ($score >= (40 + $his)) {
+      $percent = ($p4059 !== null) ? (float)$p4059 : (float)ConfigRepo::get('score_decisao_40_59_reduzir_min_percent','10') * -1.0;
+    }
+    else {
+      $percent = ($pMen40 !== null) ? (float)$pMen40 : (float)ConfigRepo::get('score_decisao_menor40_reduzir_min_percent','20') * -1.0;
+    }
+    if ($percent > 0) { $acao = 'aumentar'; }
+    elseif ($percent < 0) { $acao = 'reduzir'; }
+    else { $acao = 'manter'; }
     if ($totalPagas === 0) { $acao = 'manter'; $percent = 0.0; }
     if ($travadoPor61p && $acao === 'aumentar') { $acao = 'manter'; $percent = 0.0; }
     if ($renda > 0 && $valorParcela > 0) {
@@ -105,6 +120,7 @@ class CreditScoreService {
       'valor_base' => $valorBase,
       'valor_proximo' => $valorProx,
       'drilldown' => $drill,
+      'no_payments' => ($totalPagas === 0),
     ];
   }
   private static function diffDays(string $a, string $b): int {

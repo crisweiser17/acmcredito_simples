@@ -649,8 +649,8 @@ use App\Database\Connection;
     }
     $limit = (int)($_GET['limit'] ?? 50); if ($limit <= 0 || $limit > 200) { $limit = 50; }
     $offset = (int)($_GET['offset'] ?? 0); if ($offset < 0) { $offset = 0; }
-    $subLast = '(SELECT COALESCE(MAX(COALESCE(l.transferencia_data, l.created_at)), c.created_at) FROM loans l WHERE l.client_id=c.id AND l.deleted_at IS NULL)';
-    $sql = 'SELECT c.id, c.nome, c.cpf, '.$subLast.' AS last_dt FROM clients c WHERE c.deleted_at IS NULL';
+    $subLast = '(SELECT COALESCE(MAX(COALESCE(l.transferencia_data, l.created_at)), c.created_at) FROM loans l WHERE l.client_id=c.id AND l.deleted_at IS NULL AND l.status IN (\'aguardando_transferencia\',\'aguardando_boletos\',\'ativo\'))';
+    $sql = 'SELECT c.id, c.nome, c.cpf, '.$subLast.' AS last_dt FROM clients c WHERE c.deleted_at IS NULL AND EXISTS (SELECT 1 FROM loans lx WHERE lx.client_id=c.id AND lx.deleted_at IS NULL AND lx.status IN (\'aguardando_transferencia\',\'aguardando_boletos\',\'ativo\'))';
     $params = [];
     if ($q !== '') {
       $cpfNorm = preg_replace('/\D/', '', $q);
@@ -690,6 +690,7 @@ use App\Database\Connection;
         'parcela_renda_ratio' => $ratio,
         'parcela_renda_fields' => ['parcela'=>$vpmt, 'renda'=>$renda],
         'drilldown' => $calc['drilldown'] ?? [],
+        'no_payments' => (bool)($calc['no_payments'] ?? false),
       ];
     }
     $title = 'Relatório de Score';

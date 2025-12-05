@@ -82,6 +82,7 @@ $histerese = \App\Helpers\ConfigRepo::get('score_histerese_pontos','3');
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Decisão por Faixa</div>
+      <div class="text-sm text-gray-700">Use valores positivos para <strong>aumentar</strong>, negativos para <strong>reduzir</strong> e zero para <strong>manter</strong>. O ajuste (%) será aplicado sobre o valor base do próximo empréstimo.</div>
       <div class="grid md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm mb-1">80–100: aumento máx (%)</label>
@@ -106,6 +107,23 @@ $histerese = \App\Helpers\ConfigRepo::get('score_histerese_pontos','3');
         <div>
           <label class="block text-sm mb-1"><40: reduzir máx (%)</label>
           <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_menor40_reduzir_max_percent" value="<?php echo htmlspecialchars($decMenor40Max); ?>">
+        </div>
+        <?php $p80100 = \App\Helpers\ConfigRepo::get('score_decisao_80_100_percent','20'); $p6079 = \App\Helpers\ConfigRepo::get('score_decisao_60_79_percent','0'); $p4059 = \App\Helpers\ConfigRepo::get('score_decisao_40_59_percent','-10'); $pMen40 = \App\Helpers\ConfigRepo::get('score_decisao_menor40_percent','-20'); ?>
+        <div>
+          <label class="block text-sm mb-1">80–100: ajuste (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_80_100_percent" value="<?php echo htmlspecialchars($p80100); ?>">
+        </div>
+        <div>
+          <label class="block text-sm mb-1">60–79: ajuste (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_60_79_percent" value="<?php echo htmlspecialchars($p6079); ?>">
+        </div>
+        <div>
+          <label class="block text-sm mb-1">40–59: ajuste (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_40_59_percent" value="<?php echo htmlspecialchars($p4059); ?>">
+        </div>
+        <div>
+          <label class="block text-sm mb-1"><40: ajuste (%)</label>
+          <input class="w-full border rounded px-3 py-2" type="number" step="0.01" name="score_decisao_menor40_percent" value="<?php echo htmlspecialchars($pMen40); ?>">
         </div>
       </div>
     </div>

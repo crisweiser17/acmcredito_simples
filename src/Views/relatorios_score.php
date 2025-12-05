@@ -58,7 +58,7 @@
             <td class="px-4 py-2"><a class="text-blue-700 hover:underline" href="/clientes/<?php echo (int)$row['id']; ?>/ver"><?php echo htmlspecialchars($row['nome']); ?></a></td>
             <td class="px-4 py-2"><?php echo htmlspecialchars($row['cpf']); ?></td>
             <td class="px-4 py-2 font-semibold"><?php echo (int)$row['score']; ?></td>
-            <td class="px-4 py-2"><?php echo htmlspecialchars($acaoLabel); ?></td>
+            <td class="px-4 py-2"><?php echo htmlspecialchars($acaoLabel); ?><?php if (!empty($row['no_payments'])): ?> <span class="ml-2 inline-block px-2 py-0.5 rounded border border-yellow-300 bg-yellow-50 text-yellow-700 text-xs">Sem histórico de pagamento</span><?php endif; ?></td>
             <td class="px-4 py-2"><?php echo number_format((float)$row['percentual'], 2, ',', '.'); ?>%</td>
             <td class="px-4 py-2"><?php echo fmtMoney($row['valor_base']); ?></td>
             <td class="px-4 py-2 font-semibold"><?php echo fmtMoney($row['valor_proximo']); ?></td>
@@ -66,6 +66,7 @@
             <td class="px-4 py-2">
               <button type="button" class="px-3 py-1 rounded bg-gray-100" data-open="drill_<?php echo (int)$row['id']; ?>"><i class="fa fa-eye" aria-hidden="true"></i></button>
               <input type="hidden" id="drill_<?php echo (int)$row['id']; ?>" value='<?php echo json_encode($row['drilldown']); ?>'>
+              <input type="hidden" id="drill_meta_<?php echo (int)$row['id']; ?>" value='<?php echo json_encode(['no_payments'=>!empty($row['no_payments'])]); ?>'>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -86,8 +87,9 @@
 (function(){
   function parseJSON(s){ try{ return JSON.parse(s||'[]'); }catch(e){ return []; } }
   function fmt(n){ return (n||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-  function build(drill){ var html=''; if(!Array.isArray(drill)) return '<div>Sem dados</div>'; drill.forEach(function(c){ html+='<div class="space-y-2">'; html+='<div class="text-sm font-semibold">Empréstimo #'+(c.loan_id||'')+' · Peso ciclo '+(c.peso_ciclo||1)+'</div>'; html+='<div class="text-xs">Bônus '+fmt(c.bonus||0)+' · Penalidade '+fmt(c.penalidade||0)+'</div>'; html+='<div class="border rounded overflow-x-auto">'; html+='<table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="text-left px-3 py-1">Parcela</th><th class="text-left px-3 py-1">Vencimento</th><th class="text-left px-3 py-1">Status</th><th class="text-left px-3 py-1">DPD</th><th class="text-left px-3 py-1">Pontos</th><th class="text-left px-3 py-1">Peso</th></tr></thead><tbody>'; (c.parcelas||[]).forEach(function(p){ html+='<tr class="border-t"><td class="px-3 py-1">'+(p.numero||'')+'</td><td class="px-3 py-1">'+(p.vencimento||'')+'</td><td class="px-3 py-1">'+(p.status||'')+'</td><td class="px-3 py-1">'+(p.dpd||0)+'</td><td class="px-3 py-1">'+fmt(p.pontos||0)+'</td><td class="px-3 py-1">'+fmt(p.peso||1)+'</td></tr>'; }); html+='</tbody></table></div>'; html+='</div>'; }); return html; }
+  function build(drill, meta){ var html=''; if(meta&&meta.no_payments){ html+='<div class="px-3 py-2 rounded border border-yellow-300 bg-yellow-50 text-yellow-700 text-sm">Sem histórico de pagamento até o momento</div>'; }
+    if(!Array.isArray(drill)) return html+'<div>Sem dados</div>'; drill.forEach(function(c){ html+='<div class="space-y-2">'; html+='<div class="text-sm font-semibold">Empréstimo #'+(c.loan_id||'')+' · Peso ciclo '+(c.peso_ciclo||1)+'</div>'; html+='<div class="text-xs">Bônus '+fmt(c.bonus||0)+' · Penalidade '+fmt(c.penalidade||0)+'</div>'; html+='<div class="border rounded overflow-x-auto">'; html+='<table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="text-left px-3 py-1">Parcela</th><th class="text-left px-3 py-1">Vencimento</th><th class="text-left px-3 py-1">Status</th><th class="text-left px-3 py-1">DPD</th><th class="text-left px-3 py-1">Pontos</th><th class="text-left px-3 py-1">Peso</th></tr></thead><tbody>'; (c.parcelas||[]).forEach(function(p){ html+='<tr class="border-t"><td class="px-3 py-1">'+(p.numero||'')+'</td><td class="px-3 py-1">'+(p.vencimento||'')+'</td><td class="px-3 py-1">'+(p.status||'')+'</td><td class="px-3 py-1">'+(p.dpd||0)+'</td><td class="px-3 py-1">'+fmt(p.pontos||0)+'</td><td class="px-3 py-1">'+fmt(p.peso||1)+'</td></tr>'; }); html+='</tbody></table></div>'; html+='</div>'; }); return html; }
   var modal = document.getElementById('modal'); var body = document.getElementById('modal_body'); var close = document.getElementById('modal_close'); if(close){ close.addEventListener('click', function(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }); }
-  Array.from(document.querySelectorAll('button[data-open]')).forEach(function(btn){ btn.addEventListener('click', function(){ var id = btn.getAttribute('data-open'); var el = document.getElementById(id); var drill = parseJSON(el?el.value:'[]'); body.innerHTML = build(drill); modal.classList.remove('hidden'); modal.classList.add('flex'); }); });
+  Array.from(document.querySelectorAll('button[data-open]')).forEach(function(btn){ btn.addEventListener('click', function(){ var id = btn.getAttribute('data-open'); var el = document.getElementById(id); var em = document.getElementById('drill_meta_'+id.replace('drill_','')); var drill = parseJSON(el?el.value:'[]'); var meta = parseJSON(em?em.value:'{}'); body.innerHTML = build(drill, meta); modal.classList.remove('hidden'); modal.classList.add('flex'); }); });
 })();
 </script>
