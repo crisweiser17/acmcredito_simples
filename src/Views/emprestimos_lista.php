@@ -91,8 +91,8 @@
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" title="Abrir" aria-label="Abrir">
                 <i class="fa fa-eye text-[14px]" aria-hidden="true"></i>
               </a>
-              <?php $canEdit = ($l['status']==='aguardando_assinatura'); ?>
-              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 <?php echo $canEdit ? '' : 'opacity-50 pointer-events-none'; ?>" <?php echo $canEdit ? ('href="/emprestimos/'.(int)$l['id'].'" onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');"') : ''; ?> title="<?php echo $canEdit ? 'Editar' : 'Editar (desabilitado)'; ?>" aria-label="<?php echo $canEdit ? 'Editar' : 'Editar (desabilitado)'; ?>">
+              <?php $canEdit = ($l['status']==='calculado' || $l['status']==='aguardando_assinatura'); ?>
+              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 <?php echo $canEdit ? '' : 'opacity-50 pointer-events-none'; ?>" <?php if ($canEdit) { echo 'href="/emprestimos/'.(int)$l['id'].'/editar"'; if ($l['status']==='aguardando_assinatura') { echo ' onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');"'; } } ?> title="<?php echo $canEdit ? 'Editar' : 'Editar (desabilitado)'; ?>" aria-label="<?php echo $canEdit ? 'Editar' : 'Editar (desabilitado)'; ?>">
                 <i class="fa fa-pencil text-[14px]" aria-hidden="true"></i>
               </a>
               <?php $uid = (int)($_SESSION['user_id'] ?? 0); $canDel = \App\Helpers\Permissions::can($uid, 'loans_delete'); if ($canDel): ?>
@@ -145,7 +145,7 @@
         params.set('ajax', '1');
         fetch('/emprestimos?'+params.toString(), {headers:{'Accept':'application/json'}})
           .then(function(r){ return r.json(); })
-          .then(function(j){ var tb = document.getElementById('loan_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(l){ var canEdit = (String(l.status||'')==='aguardando_assinatura'); out += '<tr>'+
+          .then(function(j){ var tb = document.getElementById('loan_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(l){ var st = String(l.status||''); var canEdit = (st==='calculado' || st==='aguardando_assinatura'); out += '<tr>'+
             '<td class="border px-2 py-1">'+(l.id||'')+'</td>'+
             '<td class="border px-2 py-1 break-words"><a class="text-blue-700 underline uppercase" href="/clientes/'+(l.cid||'')+'/ver">'+(l.nome? String(l.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtMoney(l.valor_principal)+'</td>'+
@@ -158,7 +158,7 @@
             '<td class="border px-2 py-1">'+
               '<div class="flex items-center gap-0.5">'+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/'+(l.id||'')+'" title="Abrir" aria-label="Abrir"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
-                ('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 '+(canEdit?'':('opacity-50 pointer-events-none'))+'" '+(canEdit?('href="/emprestimos/'+(l.id||'')+'" onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');"'):'')+' title="'+(canEdit?'Editar':'Editar (desabilitado)')+'" aria-label="'+(canEdit?'Editar':'Editar (desabilitado)')+'"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>')+
+                ('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 '+(canEdit?'':('opacity-50 pointer-events-none'))+'" '+(canEdit?('href="/emprestimos/'+(l.id||'')+'/editar"'+(st==='aguardando_assinatura'?' onclick="return confirm(\"Editar irá invalidar o link de assinatura atual. Prosseguir?\")"':'')):'')+' title="'+(canEdit?'Editar':'Editar (desabilitado)')+'" aria-label="'+(canEdit?'Editar':'Editar (desabilitado)')+'"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>')+
                 (CAN_DELETE_LOAN?('<form method="post" action="/emprestimos/'+(l.id||'')+'" style="display:inline" onsubmit="return confirm(\'Excluir este empréstimo?\');"><input type="hidden" name="acao" value="excluir"><button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button></form>'):(
                   '<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded opacity-50 pointer-events-none" title="Excluir (desabilitado)" aria-label="Excluir (desabilitado)"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button>'
                 ))+

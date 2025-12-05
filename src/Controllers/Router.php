@@ -74,6 +74,10 @@ class Router {
       \App\Controllers\LoansController::contratoELink((int)$m[1]);
       return;
     }
+    if (preg_match('#^/emprestimos/(\\d+)/editar$#', $path, $m)) {
+      \App\Controllers\LoansController::editar((int)$m[1]);
+      return;
+    }
     if (preg_match('#^/emprestimos/(\d+)/gerar-link$#', $path, $m)) {
       \App\Controllers\LoansController::gerarLink((int)$m[1]);
       return;

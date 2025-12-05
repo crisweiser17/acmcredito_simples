@@ -7,7 +7,8 @@
   <?php if (empty($clients)): ?>
     <div class="rounded border border-yellow-200 bg-yellow-50 text-yellow-700 px-4 py-3">Nenhum cliente aprovado disponível</div>
   <?php endif; ?>
-  <form method="post" class="grid md:grid-cols-2 gap-8">
+  <?php $isEdit = isset($loan) && is_array($loan) && !empty($loan['id']); $editId = $isEdit ? (int)$loan['id'] : 0; ?>
+  <form method="post" class="grid md:grid-cols-2 gap-8" action="<?php echo $isEdit?('/emprestimos/'.$editId.'/editar'):'/emprestimos/calculadora'; ?>">
     <div class="space-y-4 border rounded p-4">
       <div class="text-lg font-semibold">Dados</div>
       <div class="grid md:grid-cols-3 gap-3 items-end">
@@ -24,21 +25,21 @@
         </div>
       </div>
       <div>
-        <?php $preselectedClientId = (int)($_GET['client_id'] ?? 0); $preselectedName = ''; $preselectedCpf = ''; foreach (($clients ?? []) as $cl){ if ((int)$cl['id'] === $preselectedClientId){ $preselectedName = (string)$cl['nome']; $preselectedCpf = (string)$cl['cpf']; break; } } ?>
+        <?php $preselectedClientId = $isEdit ? (int)$loan['client_id'] : (int)($_GET['client_id'] ?? 0); $preselectedName = ''; $preselectedCpf = ''; if ($isEdit){ $preselectedName = (string)($loan['nome'] ?? ''); $preselectedCpf = (string)($loan['cpf'] ?? ''); } else { foreach (($clients ?? []) as $cl){ if ((int)$cl['id'] === $preselectedClientId){ $preselectedName = (string)$cl['nome']; $preselectedCpf = (string)$cl['cpf']; break; } } } ?>
         <div class="relative">
-          <input class="w-full border rounded px-3 py-2" id="cliente_search" placeholder="Buscar cliente por nome ou CPF">
+          <input class="w-full border rounded px-3 py-2" id="cliente_search" placeholder="Buscar cliente por nome ou CPF" <?php echo $isEdit?'disabled':''; ?>>
           <input type="hidden" name="client_id" id="client_id" value="<?php echo $preselectedClientId>0?(int)$preselectedClientId:''; ?>" required>
           <div id="cliente_results" class="absolute bg-white border rounded shadow hidden w-full max-h-56 overflow-auto z-10"></div>
           <div class="mt-1 flex items-center gap-2">
             <div id="cliente_selected" class="text-sm text-gray-700"><?php echo $preselectedName!==''?htmlspecialchars($preselectedName):''; ?></div>
-            <button type="button" id="cliente_clear" class="px-2 py-1 rounded bg-gray-200 <?php echo $preselectedClientId>0?'':'hidden'; ?>">Remover</button>
+            <button type="button" id="cliente_clear" class="px-2 py-1 rounded bg-gray-200 <?php echo ($preselectedClientId>0 && !$isEdit)?'':'hidden'; ?>">Remover</button>
           </div>
         </div>
         <div class="text-sm text-gray-600 mt-0.5">Cliente</div>
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <input class="border rounded px-3 py-2 w-full" name="valor_principal" id="valor_principal" placeholder="Valor do Empréstimo (R$)" required>
+          <input class="border rounded px-3 py-2 w-full" name="valor_principal" id="valor_principal" placeholder="Valor do Empréstimo (R$)" value="<?php echo $isEdit?('R$ '.number_format((float)$loan['valor_principal'],2,',','.')):''; ?>" required>
           <button type="button" id="btn_planos" class="px-3 py-2 rounded bg-gray-200">+</button>
         </div>
         <div class="text-sm text-gray-600 mt-0.5">Valor do Empréstimo (R$)</div>
@@ -51,22 +52,23 @@
         <div>
         <select class="border rounded px-3 py-2 w-36" name="num_parcelas" id="num_parcelas" required>
           <option value="">Selecione</option>
-          <option value="1">1x</option>
-          <option value="2">2x</option>
-          <option value="3">3x</option>
-          <option value="4">4x</option>
-          <option value="5">5x</option>
-          <option value="6">6x</option>
-          <option value="7">7x</option>
-          <option value="8">8x</option>
-          <option value="9">9x</option>
-          <option value="10">10x</option>
+          <?php $npSel = $isEdit ? (int)$loan['num_parcelas'] : 0; ?>
+          <option value="1" <?php echo $npSel===1?'selected':''; ?>>1x</option>
+          <option value="2" <?php echo $npSel===2?'selected':''; ?>>2x</option>
+          <option value="3" <?php echo $npSel===3?'selected':''; ?>>3x</option>
+          <option value="4" <?php echo $npSel===4?'selected':''; ?>>4x</option>
+          <option value="5" <?php echo $npSel===5?'selected':''; ?>>5x</option>
+          <option value="6" <?php echo $npSel===6?'selected':''; ?>>6x</option>
+          <option value="7" <?php echo $npSel===7?'selected':''; ?>>7x</option>
+          <option value="8" <?php echo $npSel===8?'selected':''; ?>>8x</option>
+          <option value="9" <?php echo $npSel===9?'selected':''; ?>>9x</option>
+          <option value="10" <?php echo $npSel===10?'selected':''; ?>>10x</option>
         </select>
         <div class="text-sm text-gray-600 mt-0.5">Parcelas</div>
         </div>
         <div>
           <div class="flex items-center gap-2">
-          <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo htmlspecialchars($taxaDefault); ?>" required>
+          <input class="border rounded px-3 py-2 w-24" name="taxa_juros_mensal" id="taxa_juros_mensal" placeholder="Taxa de Juros Mensal" value="<?php echo $isEdit?htmlspecialchars($loan['taxa_juros_mensal']):htmlspecialchars($taxaDefault); ?>" required>
             <div class="inline-flex items-center gap-1">
               <button type="button" id="btn_taxa_dec" class="px-2 py-1 rounded bg-gray-200" title="-0,5%">-0,5</button>
               <button type="button" id="btn_taxa_inc" class="px-2 py-1 rounded bg-gray-200" title="+0,5%">+0,5</button>
@@ -77,7 +79,7 @@
         </div>
       </div>
       <div>
-        <input class="w-full border rounded px-3 py-2" type="date" name="data_primeiro_vencimento" id="data_primeiro_vencimento" required>
+        <input class="w-full border rounded px-3 py-2" type="date" name="data_primeiro_vencimento" id="data_primeiro_vencimento" value="<?php echo $isEdit?htmlspecialchars($loan['data_primeiro_vencimento']):''; ?>" required>
         <div class="text-sm text-gray-600 mt-0.5">Primeiro Vencimento</div>
         <div class="text-xs text-gray-500 mt-1">Data do 1º pagamento para pró‑rata zero = <button type="button" id="pr_zero_btn" class="underline"><span id="pr_zero_date"></span></button></div>
       </div>
@@ -92,7 +94,11 @@
       </div>
       <?php endif; ?>
       <div class="flex gap-3 pt-2">
-        <button class="btn-primary px-4 py-2 rounded" type="submit">Gerar Solicitação de Empréstimo</button>
+        <?php if ($isEdit): ?>
+          <button class="px-4 py-2 rounded bg-red-600 text-white" type="submit">Atualizar Solicitação de Empréstimo</button>
+        <?php else: ?>
+          <button class="btn-primary px-4 py-2 rounded" type="submit">Gerar Solicitação de Empréstimo</button>
+        <?php endif; ?>
       </div>
     </div>
     <div class="space-y-4 border rounded p-4">

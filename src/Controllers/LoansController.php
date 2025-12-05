@@ -228,6 +228,75 @@ class LoansController {
     $content = __DIR__ . '/../Views/emprestimo_detalhe.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function editar(int $id): void {
+    $pdo = Connection::get();
+    $stmt = $pdo->prepare('SELECT l.*, c.nome, c.cpf, c.id as cid FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.id=:id');
+    $stmt->execute(['id'=>$id]);
+    $loan = $stmt->fetch();
+    if (!$loan) { header('Location:/emprestimos'); return; }
+    $st = (string)($loan['status'] ?? '');
+    if (!in_array($st, ['calculado','aguardando_assinatura'], true)) { header('Location:/emprestimos/'.$id); return; }
+    $taxaDefault = ConfigRepo::get('taxa_juros_padrao_mensal', '2.5');
+    $clients = $pdo->query("SELECT id, nome, cpf FROM clients WHERE (deleted_at IS NULL) AND (is_draft = 0) AND prova_vida_status='aprovado' AND cpf_check_status='aprovado' AND criterios_status='aprovado' ORDER BY nome")->fetchAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $valor = self::parseMoney($_POST['valor_principal'] ?? 0);
+      if ($valor > 5000) { $valor = 5000; }
+      $parcelas = (int)($_POST['num_parcelas'] ?? 0);
+      $taxa = self::parsePercent($_POST['taxa_juros_mensal'] ?? (string)$taxaDefault);
+      $primeiro = $_POST['data_primeiro_vencimento'] ?? null;
+      $dataBase = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id']===1 && !empty($_POST['data_base_custom'])) ? ($_POST['data_base'] ?? null) : null;
+      if ($valor > 0 && $parcelas > 0 && $primeiro) {
+        $calc = self::calcularPrice($valor, $parcelas, $taxa, $primeiro, $dataBase);
+        $pdo->prepare('UPDATE loans SET valor_principal=:vp, num_parcelas=:np, taxa_juros_mensal=:tj, valor_parcela=:pmt, valor_total=:vt, total_juros=:tjtotal, data_primeiro_vencimento=:dv, dias_primeiro_periodo=:dias, juros_proporcional_primeiro_mes=:jprop, cet_percentual=:cet WHERE id=:id')
+            ->execute([
+              'vp'=>$valor,
+              'np'=>$parcelas,
+              'tj'=>$taxa,
+              'pmt'=>$calc['PMT'],
+              'vt'=>$calc['valorTotal'],
+              'tjtotal'=>$calc['totalJuros'],
+              'dv'=>$primeiro,
+              'dias'=>$calc['diasPrimeiroPeriodo'],
+              'jprop'=>$calc['jurosProp'],
+              'cet'=>$calc['cetAnual'],
+              'id'=>$id
+            ]);
+        if ($dataBase) {
+          try { $pdo->exec("ALTER TABLE loans ADD COLUMN data_base DATE NULL"); } catch (\Throwable $e) {}
+          try { $pdo->prepare('UPDATE loans SET data_base=:db WHERE id=:id')->execute(['db'=>$dataBase,'id'=>$id]); } catch (\Throwable $e) {}
+        }
+        $pdo->prepare('DELETE FROM loan_parcelas WHERE loan_id=:id')->execute(['id'=>$id]);
+        $saldo = $valor;
+        $dt = new \DateTime($primeiro);
+        for ($n=1; $n<=$parcelas; $n++) {
+          $juros = $saldo * ($taxa/100);
+          $amort = $calc['PMT'] - $juros;
+          $saldo = max(0, $saldo - $amort);
+          $pdo->prepare('INSERT INTO loan_parcelas (loan_id, numero_parcela, valor, data_vencimento, juros_embutido, amortizacao, saldo_devedor, status) VALUES (:loan,:num,:valor,:venc,:juros,:amort,:saldo,"pendente")')
+              ->execute([
+                'loan' => $id,
+                'num' => $n,
+                'valor' => $n===1 ? ($calc['PMT'] + $calc['jurosProp']) : $calc['PMT'],
+                'venc' => $dt->format('Y-m-d'),
+                'juros' => $juros,
+                'amort' => $amort,
+                'saldo' => $saldo
+              ]);
+          $dt->modify('+1 month');
+        }
+        if ($st === 'aguardando_assinatura') {
+          $pdo->prepare('UPDATE loans SET contrato_token=NULL, status=\'calculado\' WHERE id=:id')->execute(['id'=>$id]);
+        }
+        Audit::log('update_loan','loans',$id,null);
+        $_SESSION['toast'] = 'Empréstimo atualizado';
+        header('Location:/emprestimos/'.$id);
+        return;
+      }
+    }
+    $title = 'Calculadora de Empréstimos';
+    $content = __DIR__ . '/../Views/emprestimos_calculadora.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
   public static function lista(): void {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');
