@@ -178,4 +178,27 @@ class SettingsController {
     $content = __DIR__ . '/../Views/config_score.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function superadmin(): void {
+    if ((int)($_SESSION['user_id'] ?? 0) !== 1) { header('Location: /'); return; }
+    $pdo = \App\Database\Connection::get();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $users = $pdo->query('SELECT id, nome, username FROM users ORDER BY id')->fetchAll();
+      foreach ($users as $u) {
+        $uid = (int)($u['id'] ?? 0);
+        if ($uid <= 0) continue;
+        $pages = $_POST['pages_'.$uid] ?? [];
+        $actions = $_POST['actions_'.$uid] ?? [];
+        $pagesJson = json_encode(array_values(array_filter(array_map('strval', (array)$pages))));
+        $actionsJson = json_encode(array_values(array_filter(array_map('strval', (array)$actions))));
+        \App\Helpers\ConfigRepo::set('perm_pages_'.$uid, $pagesJson ?: '[]', 'Permissões: páginas do usuário #'.$uid);
+        \App\Helpers\ConfigRepo::set('perm_actions_'.$uid, $actionsJson ?: '[]', 'Permissões: ações do usuário #'.$uid);
+      }
+      header('Location: /config/superadmin?saved=1');
+      exit;
+    }
+    $users = $pdo->query('SELECT id, nome, username, role FROM users ORDER BY id')->fetchAll();
+    $title = 'Super Admin';
+    $content = __DIR__ . '/../Views/config_superadmin.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
 }

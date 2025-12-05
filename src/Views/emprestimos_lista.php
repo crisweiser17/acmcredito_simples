@@ -96,12 +96,14 @@
                   <i class="fa fa-pencil text-[14px]" aria-hidden="true"></i>
                 </a>
               <?php endif; ?>
-              <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" style="display:inline" onsubmit="return confirm('Excluir este empréstimo?');">
-                <input type="hidden" name="acao" value="excluir">
-                <button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c">
-                  <i class="fa fa-trash text-[14px]" aria-hidden="true"></i>
-                </button>
-              </form>
+              <?php $uid = (int)($_SESSION['user_id'] ?? 0); $canDel = \App\Helpers\Permissions::can($uid, 'loans_delete'); if ($canDel): ?>
+                <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" style="display:inline" onsubmit="return confirm('Excluir este empréstimo?');">
+                  <input type="hidden" name="acao" value="excluir">
+                  <button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c">
+                    <i class="fa fa-trash text-[14px]" aria-hidden="true"></i>
+                  </button>
+                </form>
+              <?php endif; ?>
             </div>
           </td>
         </tr>

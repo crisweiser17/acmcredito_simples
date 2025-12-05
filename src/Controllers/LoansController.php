@@ -131,6 +131,12 @@ class LoansController {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $acao = $_POST['acao'] ?? '';
       if ($acao === 'excluir') {
+        $uid = (int)($_SESSION['user_id'] ?? 0);
+        if (!\App\Helpers\Permissions::can($uid, 'loans_delete')) {
+          $_SESSION['toast'] = 'Sem permissão para excluir empréstimos';
+          header('Location: /emprestimos/' . $id);
+          return;
+        }
         try { $pdo->exec("CREATE TABLE IF NOT EXISTS loans_archive LIKE loans"); } catch (\Throwable $e) {}
         try { $pdo->exec("CREATE TABLE IF NOT EXISTS loan_parcelas_archive LIKE loan_parcelas"); } catch (\Throwable $e) {}
         try {

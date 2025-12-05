@@ -114,6 +114,7 @@ $saved = isset($_GET['saved']);
           <div id="menu-config" class="<?php echo $openCfg?'block':'hidden'; ?>">
             <a href="/config" class="block px-6 py-2 hover:bg-gray-800">Configurações</a>
             <a href="/config/score" class="block px-6 py-2 hover:bg-gray-800">Score</a>
+            <a href="/config/superadmin" class="block px-6 py-2 hover:bg-gray-800">Super Admin</a>
             <a href="/admin/install" class="block px-6 py-2 hover:bg-gray-800">Instalação</a>
             <a href="/usuarios" class="block px-6 py-2 hover:bg-gray-800">Usuários</a>
           </div>

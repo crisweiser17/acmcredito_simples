@@ -10,6 +10,17 @@ class Router {
       header('Location: /login');
       return;
     }
+    if (!self::isPublic($path) && isset($_SESSION['user_id'])) {
+      $uid = (int)$_SESSION['user_id'];
+      $adminPages = ['/config','/config/score','/config/superadmin','/admin/install','/usuarios'];
+      if ($uid !== 1) {
+        if (in_array($path, $adminPages, true)) {
+          $allowedList = \App\Helpers\Permissions::pagesAllowed($uid);
+          if (!in_array($path, $allowedList, true)) { header('Location: /'); return; }
+        }
+        if (!\App\Helpers\Permissions::canAccessPage($uid, $path)) { header('Location: /'); return; }
+      }
+    }
     if (preg_match('#^/uploads/#', $path)) {
       $_GET['p'] = $path;
       \App\Controllers\FileController::serve();
@@ -37,6 +48,11 @@ class Router {
         return;
       }
       \App\Controllers\SettingsController::score();
+      return;
+    }
+    if ($path === '/config/superadmin') {
+      if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1) { header('Location: /'); return; }
+      \App\Controllers\SettingsController::superadmin();
       return;
     }
     if ($path === '/usuarios') {
