@@ -537,6 +537,15 @@ class ClientesController {
       }
       if (isset($_POST['action']) && $_POST['action'] === 'aprovar_cpf') {
         $motivo = trim($_POST['motivo'] ?? '');
+        $obrigarCpf = ConfigRepo::get('criterios_obrigar_consultar_cpf', 'nao');
+        if ($obrigarCpf === 'sim') {
+          $st = $pdo->prepare('SELECT checked_at FROM cpf_checks WHERE client_id=:id ORDER BY checked_at DESC, id DESC LIMIT 1');
+          $st->execute(['id'=>$id]);
+          $last = $st->fetchColumn();
+          $okRecent = false;
+          if ($last) { $okRecent = (time() - strtotime($last)) <= (30*24*60*60); }
+          if (!$okRecent) { $_SESSION['toast'] = 'Obrigatório consultar o CPF (últimos 30 dias) antes de aprovar.'; header('Location: /clientes/'.$id.'/validar'); exit; }
+        }
         $pdo->prepare("UPDATE clients SET cpf_check_status='aprovado', cpf_check_data=NOW(), cpf_check_user_id=:u, cpf_check_motivo=:m WHERE id=:id")->execute(['u'=>$_SESSION['user_id'],'m'=>$motivo!==''?$motivo:null,'id'=>$id]);
         Audit::log('aprovar_cpf','clients',$id,null);
         header('Location: /clientes/'.$id.'/validar');

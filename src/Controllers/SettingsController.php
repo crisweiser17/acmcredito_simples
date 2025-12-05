@@ -134,6 +134,8 @@ class SettingsController {
       if ($critTempo !== '') { ConfigRepo::set('criterios_tempo_minimo_trabalho', $critTempo, 'Tempo mínimo de trabalho para pré-aprovação'); }
       $obrigar = isset($_POST['criterios_obrigar_renda_liquida']) ? 'sim' : 'nao';
       ConfigRepo::set('criterios_obrigar_renda_liquida', $obrigar, 'Obrigar renda líquida na aprovação');
+      $obrigarCpf = isset($_POST['criterios_obrigar_consultar_cpf']) ? 'sim' : 'nao';
+      ConfigRepo::set('criterios_obrigar_consultar_cpf', $obrigarCpf, 'Obrigar consulta CPF (<30 dias) para aprovação');
       header('Location: /config?saved=1');
       exit;
     }

@@ -216,6 +216,7 @@ $production = readEnvFile('.env.production');
       <?php $critPct = \App\Helpers\ConfigRepo::get('criterios_percentual_parcela_max', '20'); ?>
       <?php $critTempo = \App\Helpers\ConfigRepo::get('criterios_tempo_minimo_trabalho', 'de 1 a 2 anos'); ?>
       <?php $obrigarRendaLiq = \App\Helpers\ConfigRepo::get('criterios_obrigar_renda_liquida', 'nao'); ?>
+      <?php $obrigarConsultarCpf = \App\Helpers\ConfigRepo::get('criterios_obrigar_consultar_cpf', 'nao'); ?>
       <div class="grid md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm mb-1">Percentual sugerido para parcela máxima (%)</label>
@@ -234,6 +235,7 @@ $production = readEnvFile('.env.production');
         </div>
       </div>
       <label class="inline-flex items-center gap-2 mt-2"><input type="checkbox" name="criterios_obrigar_renda_liquida" <?php echo $obrigarRendaLiq==='sim'?'checked':''; ?>><span>Obrigar campo Renda Líquida</span></label>
+      <br><label class="inline-flex items-center gap-2 mt-2"><input type="checkbox" name="criterios_obrigar_consultar_cpf" <?php echo $obrigarConsultarCpf==='sim'?'checked':''; ?>><span>Obrigar Consultar CPF</span></label>
     </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Integração com Boletos - Lytex</div>
