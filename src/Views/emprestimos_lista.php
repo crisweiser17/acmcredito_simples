@@ -8,7 +8,7 @@
   <form method="get" class="flex flex-wrap items-end gap-3">
     <div class="flex-1 min-w-[240px]">
       <div class="text-xs text-gray-500 mb-1">Buscar</div>
-      <input class="w-full border rounded px-3 py-2" name="q" placeholder="Cliente ou ID" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+      <input class="w-full border rounded px-3 py-2" name="q" placeholder="Cliente, CPF ou ID" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
     </div>
     <div class="w-48">
       <div class="text-xs text-gray-500 mb-1">Período</div>

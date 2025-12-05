@@ -21,7 +21,28 @@ class UsersController {
             if (!$exists->fetch()) {
               $stmt = $pdo->prepare('INSERT INTO users (username, password, nome) VALUES (:u, :p, :n)');
               $stmt->execute(['u'=>$username,'p'=>password_hash($senha, PASSWORD_DEFAULT),'n'=>$nome]);
-              \App\Helpers\Audit::log('create','users', (int)$pdo->lastInsertId(), $username);
+              $newId = (int)$pdo->lastInsertId();
+              \App\Helpers\Audit::log('create','users', $newId, $username);
+              try {
+                $defaultPages = [
+                  '/',
+                  '/clientes',
+                  '/clientes/novo',
+                  '/emprestimos',
+                  '/emprestimos/calculadora',
+                  '/relatorios/parcelas',
+                  '/relatorios/score',
+                  '/relatorios/logs',
+                  '/relatorios/financeiro',
+                  '/relatorios/aguardando-financiamento',
+                  '/relatorios/filas',
+                  '/relatorios/emprestimos-apagados',
+                  '/config',
+                  '/config/score',
+                  '/usuarios'
+                ];
+                \App\Helpers\ConfigRepo::set('perm_pages_' . $newId, json_encode($defaultPages), 'permissoes_padrao_usuario');
+              } catch (\Throwable $e) {}
             }
           } catch (\Throwable $e) {}
         }

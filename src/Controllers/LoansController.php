@@ -245,7 +245,13 @@ class LoansController {
     $status = trim($_GET['status'] ?? '');
     $baseSql = 'FROM loans l JOIN clients c ON c.id=l.client_id WHERE 1=1';
     $params = [];
-    if ($q !== '') { $baseSql .= ' AND (c.nome LIKE :q OR l.id = :id)'; $params['q'] = '%'.$q.'%'; $params['id'] = ctype_digit($q)?(int)$q:0; }
+    if ($q !== '') {
+      $cpfNorm = preg_replace('/\D/', '', $q);
+      $baseSql .= ' AND (c.nome LIKE :q OR l.id = :id OR REPLACE(REPLACE(REPLACE(c.cpf, ".", ""), "-", ""), " ", "") = :cpf)';
+      $params['q'] = '%'.$q.'%';
+      $params['id'] = ctype_digit($q)?(int)$q:0;
+      $params['cpf'] = $cpfNorm;
+    }
     if ($cid > 0) { $baseSql .= ' AND l.client_id = :cid'; $params['cid'] = $cid; }
     if ($ini !== '') { $baseSql .= ' AND DATE(l.created_at) >= :ini'; $params['ini'] = $ini; }
     if ($fim !== '') { $baseSql .= ' AND DATE(l.created_at) <= :fim'; $params['fim'] = $fim; }
