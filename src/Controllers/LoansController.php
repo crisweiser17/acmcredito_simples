@@ -297,6 +297,34 @@ class LoansController {
     $content = __DIR__ . '/../Views/emprestimos_calculadora.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function apiClienteEmprestimos(int $cid): void {
+    $pdo = Connection::get();
+    try { $pdo->exec("ALTER TABLE loans MODIFY COLUMN status ENUM('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','cancelado','concluido') DEFAULT 'calculado'"); } catch (\Throwable $e) {}
+    $stmt = $pdo->prepare("SELECT l.id, l.valor_principal, l.status, l.created_at, c.nome FROM loans l JOIN clients c ON c.id=l.client_id WHERE l.client_id=:cid AND l.status IN ('calculado','aguardando_contrato','aguardando_assinatura','aguardando_transferencia','aguardando_boletos','ativo','concluido') ORDER BY l.created_at DESC LIMIT 1");
+    $stmt->execute(['cid'=>$cid]);
+    $row = $stmt->fetch();
+    if ($row) {
+      $loanId = (int)$row['id'];
+      $paid = 0;
+      $saldo = (float)$row['valor_principal'];
+      try {
+        $pc = $pdo->prepare("SELECT COUNT(*) AS c FROM loan_parcelas WHERE loan_id=:lid AND status='pago'");
+        $pc->execute(['lid'=>$loanId]);
+        $paid = (int)($pc->fetch()['c'] ?? 0);
+        if ($paid > 0) {
+          $sp = $pdo->prepare("SELECT saldo_devedor FROM loan_parcelas WHERE loan_id=:lid AND numero_parcela=:num LIMIT 1");
+          $sp->execute(['lid'=>$loanId,'num'=>$paid]);
+          $srow = $sp->fetch();
+          if ($srow && isset($srow['saldo_devedor'])) { $saldo = (float)$srow['saldo_devedor']; }
+        }
+      } catch (\Throwable $e) {}
+      $row['has_paid_parcela'] = ($paid > 0);
+      $row['paid_count'] = $paid;
+      $row['saldo_devedor_atual'] = $saldo;
+    }
+    header('Content-Type: application/json');
+    echo json_encode($row ?: null);
+  }
   public static function lista(): void {
     $pdo = Connection::get();
     $q = trim($_GET['q'] ?? '');

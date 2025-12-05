@@ -36,6 +36,7 @@
           </div>
         </div>
         <div class="text-sm text-gray-600 mt-0.5">Cliente</div>
+        <div id="cliente_alert" class="mt-2 hidden"></div>
       </div>
       <div>
         <div class="flex items-center gap-2">
@@ -638,6 +639,7 @@ function copyTabelaImagem(){
         selected.textContent = btn.getAttribute('data-name');
         results.classList.add('hidden');
         if(clearBtn){ clearBtn.classList.remove('hidden'); }
+        showClientLoanAlert(parseInt(hidden.value||'0',10));
         try {
           var evt;
           if (typeof Event === 'function') { evt = new Event('input'); }
@@ -672,12 +674,15 @@ function copyTabelaImagem(){
     });
   }
   document.addEventListener('click', function(e){ if (results && !results.contains(e.target) && e.target!==input){ results.classList.add('hidden'); }});
+  async function showClientLoanAlert(cid){ var box=document.getElementById('cliente_alert'); if(!box){return;} if(!cid){ box.classList.add('hidden'); box.innerHTML=''; return; } try{ var r=await fetch('/api/clientes/'+cid+'/emprestimos'); var d=await r.json(); if(d && d.status){ var nome = (selected && selected.textContent) ? selected.textContent.trim() : (d.nome||'Cliente'); var valor = parseFloat(d.valor_principal||0); var valorTxt = 'R$ '+ new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}).format(valor); var st = String(d.status||''); var cls = 'border border-yellow-200 bg-yellow-50 text-yellow-700'; if(st==='ativo'){ cls='border border-green-200 bg-green-50 text-green-700'; } else if(st==='cancelado'){ cls='border border-gray-200 bg-gray-50 text-gray-700'; } else if(st==='concluido'){ cls='border border-gray-200 bg-gray-50 text-gray-700'; } else if(st==='aguardando_assinatura'){ cls='border border-orange-200 bg-orange-50 text-orange-700'; } else if(st==='aguardando_transferencia'){ cls='border border-blue-200 bg-blue-50 text-blue-700'; } else if(st==='aguardando_boletos'){ cls='border border-black bg-black text-white'; } var pagos = parseInt(d.paid_count||'0',10); var saldo = parseFloat(d.saldo_devedor_atual||valor); var saldoTxt = 'R$ '+ new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}).format(saldo); box.className = cls + ' px-4 py-3 rounded'; box.innerHTML = 'O cliente '+ (nome||'') +' já tem um empréstimo de '+valorTxt+' no status '+ st +'.<br>Parcelas pagas: '+pagos+' • Saldo devedor: '+saldoTxt; box.classList.remove('hidden'); } else { box.classList.add('hidden'); box.innerHTML=''; } } catch(e){ box.classList.add('hidden'); box.innerHTML=''; }
+  }
+  (function(){ var hid=document.getElementById('client_id'); if(hid && parseInt(hid.value||'0',10)>0){ showClientLoanAlert(parseInt(hid.value||'0',10)); } })();
 })();
 // Score suggestion integration
 (function(){
   async function fetchScore(id){ try{ var r=await fetch('/api/score/'+id); var d=await r.json(); return d&&d.ok?d.data:null; }catch(e){ return null; } }
   function fmtBR(n){ return 'R$ ' + new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}).format(n||0); }
-  async function updateScoreSug(){ var cidEl=document.getElementById('client_id'); var box=document.getElementById('score_sug_box'); var label=document.getElementById('score_sug_label'); var useBtn=document.getElementById('score_sug_use'); var cid=parseInt(cidEl.value||'0',10); if (!box||!label) return; if(!cid){ box.classList.add('hidden'); label.textContent=''; return; } var s=await fetchScore(cid); if(!s){ box.classList.add('hidden'); label.textContent=''; return; } var ac = s.acao||'manter'; var pct = (s.percentual||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); var vp = s.valor_proximo||0; if (ac === 'nao_emprestar') { label.textContent = 'Sugestão pelo Score: Não emprestar'; box.classList.remove('hidden'); if (useBtn) { useBtn.classList.add('hidden'); useBtn.onclick = null; } return; } label.textContent = 'Sugestão pelo Score: '+fmtBR(vp)+' ('+(ac==='aumentar'?'Aumentar':(ac==='reduzir'?'Reduzir':'Manter'))+' '+pct+'%)'; box.classList.remove('hidden'); if (useBtn) { useBtn.classList.remove('hidden'); useBtn.onclick = function(){ var vi=document.getElementById('valor_principal'); if (vi){ vi.value = fmtBR(vp); recalc(); } }; }
+  async function updateScoreSug(){ var cidEl=document.getElementById('client_id'); var box=document.getElementById('score_sug_box'); var label=document.getElementById('score_sug_label'); var useBtn=document.getElementById('score_sug_use'); var cid=parseInt(cidEl.value||'0',10); if (!box||!label) return; if(!cid){ box.classList.add('hidden'); label.textContent=''; return; } try { var r=await fetch('/api/clientes/'+cid+'/emprestimos'); var info=await r.json(); var paid = parseInt((info && info.paid_count)!=null ? info.paid_count : '0',10); if(!info || paid<=0){ box.classList.add('hidden'); label.textContent=''; if(useBtn){ useBtn.classList.add('hidden'); useBtn.onclick=null; } return; } } catch(e){ box.classList.add('hidden'); label.textContent=''; if(useBtn){ useBtn.classList.add('hidden'); useBtn.onclick=null; } return; } var s=await fetchScore(cid); if(!s){ box.classList.add('hidden'); label.textContent=''; if(useBtn){ useBtn.classList.add('hidden'); useBtn.onclick=null; } return; } var ac = s.acao||'manter'; var pct = (s.percentual||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); var vp = s.valor_proximo||0; if (ac === 'nao_emprestar') { label.textContent = 'Sugestão pelo Score: Não emprestar'; box.classList.remove('hidden'); if (useBtn) { useBtn.classList.add('hidden'); useBtn.onclick = null; } return; } label.textContent = 'Sugestão pelo Score: '+fmtBR(vp)+' ('+(ac==='aumentar'?'Aumentar':(ac==='reduzir'?'Reduzir':'Manter'))+' '+pct+'%)'; box.classList.remove('hidden'); if (useBtn) { useBtn.classList.remove('hidden'); useBtn.onclick = function(){ var vi=document.getElementById('valor_principal'); if (vi){ vi.value = fmtBR(vp); recalc(); } }; }
   }
   var cidEl=document.getElementById('client_id'); if (cidEl){ ['change','input'].forEach(function(evt){ cidEl.addEventListener(evt, updateScoreSug); }); }
   updateScoreSug();
