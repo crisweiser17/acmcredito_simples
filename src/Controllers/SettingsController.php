@@ -102,6 +102,10 @@ class SettingsController {
       if ($empresaEmail !== '') { ConfigRepo::set('empresa_email', $empresaEmail, 'Email da Empresa'); }
       if ($empresaTelefone !== '') { ConfigRepo::set('empresa_telefone', $empresaTelefone, 'Telefone da Empresa'); }
       if ($empresaEndereco !== '') { ConfigRepo::set('empresa_endereco', $empresaEndereco, 'Endereço da Empresa'); }
+      $cadUrl = trim($_POST['cadastro_publico_url'] ?? '');
+      $payInfo = trim($_POST['pagamentos_info'] ?? '');
+      if ($cadUrl !== '') { ConfigRepo::set('cadastro_publico_url', $cadUrl, 'URL pública de cadastro'); }
+      if ($payInfo !== '') { ConfigRepo::set('pagamentos_info', $payInfo, 'Informações para Pagamentos'); }
       $pl1v = trim($_POST['plano1_valor'] ?? '');
       $pl1n = trim($_POST['plano1_parcelas'] ?? '');
       $pl2v = trim($_POST['plano2_valor'] ?? '');

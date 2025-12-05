@@ -15,6 +15,7 @@ $pages = [
   '/relatorios/aguardando-financiamento' => 'Relatórios: Aguardando Financiamento',
   '/relatorios/filas' => 'Relatórios: Filas',
   '/relatorios/emprestimos-apagados' => 'Relatórios: Empréstimos Apagados',
+  '/dashboard' => 'Dashboard',
   // Administrativas (sempre superadmin)
   '/config' => 'Configurações',
   '/config/score' => 'Configurações de Score',

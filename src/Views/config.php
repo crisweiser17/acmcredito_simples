@@ -78,8 +78,8 @@ $production = readEnvFile('.env.production');
         <div class="mt-2 text-red-700">Erro: <?php echo htmlspecialchars($saldoErr); ?></div>
       <?php endif; ?>
     </div>
-    <div class="space-y-4">
-      <div class="text-lg font-semibold">Info da Empresa</div>
+  <div class="space-y-4">
+    <div class="text-lg font-semibold">Info da Empresa</div>
       <?php $empresaRazao = \App\Helpers\ConfigRepo::get('empresa_razao_social', 'ACM Empresa Simples de Crédito'); ?>
       <?php $empresaFantasia = \App\Helpers\ConfigRepo::get('empresa_nome_fantasia', ''); ?>
       <?php $empresaCnpj = \App\Helpers\ConfigRepo::get('empresa_cnpj', '00.000.000/0001-00'); ?>
@@ -92,8 +92,18 @@ $production = readEnvFile('.env.production');
       <input class="w-full border rounded px-3 py-2" type="email" name="empresa_email" placeholder="Email" value="<?php echo htmlspecialchars($empresaEmail); ?>">
       <input class="w-full border rounded px-3 py-2" name="empresa_telefone" placeholder="Telefone" value="<?php echo htmlspecialchars($empresaTelefone); ?>">
       <input class="w-full border rounded px-3 py-2" name="empresa_endereco" placeholder="Endereço" value="<?php echo htmlspecialchars($empresaEndereco); ?>">
-      <div class="text-xs text-gray-500">Essas informações serão utilizadas em contratos, mensagens e demais telas.</div>
-    </div>
+    <div class="text-xs text-gray-500">Essas informações serão utilizadas em contratos, mensagens e demais telas.</div>
+  </div>
+  <div class="space-y-4">
+    <div class="text-lg font-semibold">Links e Pagamentos</div>
+    <?php $cadUrl = \App\Helpers\ConfigRepo::get('cadastro_publico_url', ''); ?>
+    <?php $payInfo = \App\Helpers\ConfigRepo::get('pagamentos_info', ''); ?>
+    <label class="block text-sm mb-1">URL da página pública de cadastro</label>
+    <input class="w-full border rounded px-3 py-2" name="cadastro_publico_url" placeholder="https://seusite.com/cadastro" value="<?php echo htmlspecialchars($cadUrl); ?>">
+    <label class="block text-sm mb-1 mt-3">Informações para Pagamentos (PIX/TED)</label>
+    <textarea class="w-full border rounded px-3 py-2 h-32" name="pagamentos_info" placeholder="Chave PIX: ...\nBanco: ...\nAgência: ...\nConta: ...\nFavorecido: ..."><?php echo htmlspecialchars($payInfo); ?></textarea>
+    <div class="text-xs text-gray-500">O conteúdo acima será exibido no Dashboard.</div>
+  </div>
     <div class="space-y-4">
       <div class="text-lg font-semibold">Planos Pré-definidos</div>
       <?php $pl1v = \App\Helpers\ConfigRepo::get('plano1_valor','500'); $pl1n = \App\Helpers\ConfigRepo::get('plano1_parcelas','3'); ?>

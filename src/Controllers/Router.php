@@ -198,6 +198,7 @@ class Router {
       \App\Controllers\ReportsController::financeiro();
       return;
     }
+    if ($path === '/dashboard') { \App\Controllers\HomeController::handle(); return; }
     if ($path === '/relatorios/financeiro/export-csv') {
       \App\Controllers\ReportsController::financeiroExportCsv();
       return;

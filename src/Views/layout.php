@@ -53,6 +53,9 @@ $saved = isset($_GET['saved']);
       </div>
       <nav>
         <?php $openCli = strpos($path,'/clientes')===0; $openEmp = strpos($path,'/emprestimos')===0; $openCfg = ($path==='/config' || $path==='/config/score' || $path==='/config/superadmin' || $path==='/admin/install' || $path==='/usuarios'); ?>
+        <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/dashboard')): ?>
+          <a href="/dashboard" class="block px-6 py-2 hover:bg-gray-800">Dashboard</a>
+        <?php endif; ?>
         
         <div>
           <button type="button" data-target="menu-clientes" aria-expanded="<?php echo $openCli?'true':'false'; ?>" class="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800">

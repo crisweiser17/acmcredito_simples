@@ -28,15 +28,23 @@
       </div>
     </form>
   </div>
-  <?php $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http'; $host = $_SERVER['HTTP_HOST'] ?? 'localhost'; $cadastro = $scheme.'://'.$host.'/cadastro'; ?>
+  <?php $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http'; $host = $_SERVER['HTTP_HOST'] ?? 'localhost'; $defaultCadastro = $scheme.'://'.$host.'/cadastro'; $cadastro = \App\Helpers\ConfigRepo::get('cadastro_publico_url', $defaultCadastro) ?: $defaultCadastro; $payInfo = \App\Helpers\ConfigRepo::get('pagamentos_info', ''); ?>
   <div class="rounded border border-gray-200 p-4 flex items-center justify-between">
     <div>
       <div class="text-sm text-gray-600">Página pública de cadastro</div>
-      <div><a class="text-blue-700 underline" href="/cadastro" target="_blank">Abrir página de cadastro</a></div>
+      <div><a class="text-blue-700 underline" href="<?php echo htmlspecialchars($cadastro); ?>" target="_blank">Abrir página de cadastro</a></div>
     </div>
     <div>
       <button type="button" class="px-3 py-2 rounded bg-gray-100" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($cadastro); ?>')" title="Copiar link">Copiar link</button>
     </div>
+  </div>
+  <div class="rounded border border-gray-200 p-4">
+    <div class="text-sm font-semibold mb-2">Informação para Pagamentos</div>
+    <?php if ($payInfo !== ''): ?>
+      <pre class="whitespace-pre-wrap text-sm text-gray-800"><?php echo htmlspecialchars($payInfo); ?></pre>
+    <?php else: ?>
+      <div class="text-sm text-gray-500">Configurar em Configurações → Links e Pagamentos</div>
+    <?php endif; ?>
   </div>
   <script>
     (function(){
@@ -47,51 +55,5 @@
       if (sel){ upd(); sel.addEventListener('change', upd); }
     })();
   </script>
-  <?php $filtered = (($m['periodo'] ?? 'total') !== 'total'); ?>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Total Clientes <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold"><?php echo (int)$m['clients']; ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Empréstimos <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold"><?php echo (int)$m['loans']; ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Valor total liberado <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['valorLiberado'],2,',','.'); ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Valor de repagamento <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['valorRepagamento'],2,',','.'); ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Inadimplência (R$) <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['inadValor'],2,',','.'); ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Inadimplência (%) <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold"><?php echo number_format((float)$m['inadPercent'],2,',','.'); ?>%</div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Lucro Bruto <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['lucroBruto'],2,',','.'); ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Lucro Bruto (%) <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold"><?php echo number_format((float)$m['lucroBrutoPercent'],2,',','.'); ?>%</div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">Sugestão de PDD (10%) <?php if ($filtered): ?><span class="inline-block align-middle w-2 h-2 bg-orange-400 rounded-full" title="Filtrado"></span><?php endif; ?></div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['pddSugestao'],2,',','.'); ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">A receber (Mês atual)</div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['receberMesAtual'],2,',','.'); ?></div>
-    </div>
-    <div class="p-4 bg-white border rounded">
-      <div class="text-sm text-gray-600">A receber (Próximo mês)</div>
-      <div class="text-2xl font-bold">R$ <?php echo number_format((float)$m['receberProximoMes'],2,',','.'); ?></div>
-    </div>
-  </div>
+  
 </div>
