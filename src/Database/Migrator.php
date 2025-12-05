@@ -66,7 +66,7 @@ class Migrator {
       if (!$colDb) { $pdo->exec("ALTER TABLE loans ADD COLUMN data_base DATE NULL"); }
     } catch (\Throwable $e) {}
     $cols = $pdo->query("SHOW COLUMNS FROM clients")->fetchAll();
-    $haveIndicador = false; $haveReferencias = false; $haveCriterios = false; $haveCadastroPublico = false; $haveDraft = false; $havePixTipo = false; $havePixChave = false; $haveCadastroToken = false; $haveRendaLiquida = false;
+    $haveIndicador = false; $haveReferencias = false; $haveCriterios = false; $haveCadastroPublico = false; $haveDraft = false; $havePixTipo = false; $havePixChave = false; $haveCadastroToken = false; $haveRendaLiquida = false; $haveRotFrente=false; $haveRotVerso=false; $haveRotSelfie=false; $haveRotHol=false;
     foreach ($cols as $col) {
       $f = ($col['Field'] ?? '');
       if ($f === 'indicado_por_id') { $haveIndicador = true; }
@@ -78,6 +78,10 @@ class Migrator {
       if ($f === 'pix_chave') { $havePixChave = true; }
       if ($f === 'cadastro_token') { $haveCadastroToken = true; }
       if ($f === 'renda_liquida') { $haveRendaLiquida = true; }
+      if ($f === 'doc_cnh_frente_rot') { $haveRotFrente = true; }
+      if ($f === 'doc_cnh_verso_rot') { $haveRotVerso = true; }
+      if ($f === 'doc_selfie_rot') { $haveRotSelfie = true; }
+      if ($f === 'doc_holerites_rot') { $haveRotHol = true; }
     }
     if (!$haveIndicador) { $pdo->exec("ALTER TABLE clients ADD COLUMN indicado_por_id INT NULL, ADD INDEX idx_indicado (indicado_por_id)"); }
     if (!$haveReferencias) { $pdo->exec("ALTER TABLE clients ADD COLUMN referencias JSON NULL"); }
@@ -88,6 +92,10 @@ class Migrator {
     if (!$havePixChave) { $pdo->exec("ALTER TABLE clients ADD COLUMN pix_chave VARCHAR(255) NULL AFTER pix_tipo"); }
     if (!$haveCadastroToken) { $pdo->exec("ALTER TABLE clients ADD COLUMN cadastro_token VARCHAR(64) NULL, ADD UNIQUE KEY uniq_cadastro_token (cadastro_token)"); }
     if (!$haveRendaLiquida) { $pdo->exec("ALTER TABLE clients ADD COLUMN renda_liquida DECIMAL(10,2) NULL"); }
+    if (!$haveRotFrente) { $pdo->exec("ALTER TABLE clients ADD COLUMN doc_cnh_frente_rot INT DEFAULT 0"); }
+    if (!$haveRotVerso) { $pdo->exec("ALTER TABLE clients ADD COLUMN doc_cnh_verso_rot INT DEFAULT 0"); }
+    if (!$haveRotSelfie) { $pdo->exec("ALTER TABLE clients ADD COLUMN doc_selfie_rot INT DEFAULT 0"); }
+    if (!$haveRotHol) { $pdo->exec("ALTER TABLE clients ADD COLUMN doc_holerites_rot JSON NULL"); }
     $usersCount = $pdo->query("SELECT COUNT(*) AS c FROM users")->fetch();
     if ((int)($usersCount['c'] ?? 0) === 0) {
       $ins = $pdo->prepare('INSERT INTO users (username, password, nome) VALUES (:u, :p, :n)');

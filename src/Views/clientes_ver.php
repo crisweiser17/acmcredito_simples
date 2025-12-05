@@ -152,7 +152,7 @@
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>">Abrir tela cheia</a>
           <?php else: ?>
             <div class="relative inline-block">
-              <img id="ver_thumb_frente" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openLightboxImage('frente','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
+              <img id="ver_thumb_frente" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center;transform:rotate(<?php echo (int)($c['doc_cnh_frente_rot'] ?? 0); ?>deg)" onclick="openLightboxImage('frente','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_frente']))); ?>')" />
               <div class="absolute right-1 top-1 flex gap-1">
                 <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('frente', -90)">↶</button>
                 <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('frente', 90)">↷</button>
@@ -173,7 +173,7 @@
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>">Abrir tela cheia</a>
           <?php else: ?>
             <div class="relative inline-block">
-              <img id="ver_thumb_verso" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openLightboxImage('verso','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>')" />
+              <img id="ver_thumb_verso" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center;transform:rotate(<?php echo (int)($c['doc_cnh_verso_rot'] ?? 0); ?>deg)" onclick="openLightboxImage('verso','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_cnh_verso']))); ?>')" />
               <div class="absolute right-1 top-1 flex gap-1">
                 <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('verso', -90)">↶</button>
                 <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('verso', 90)">↷</button>
@@ -194,7 +194,7 @@
             <a class="btn-primary px-3 py-2 rounded" target="_blank" href="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>">Abrir tela cheia</a>
           <?php else: ?>
             <div class="relative inline-block">
-              <img id="ver_thumb_selfie" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center" onclick="openLightboxImage('selfie','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
+              <img id="ver_thumb_selfie" src="<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>" class="w-32 h-32 object-cover border rounded cursor-zoom-in" style="transform-origin:center center;transform:rotate(<?php echo (int)($c['doc_selfie_rot'] ?? 0); ?>deg)" onclick="openLightboxImage('selfie','<?php echo implode('/', array_map('rawurlencode', explode('/', $c['doc_selfie']))); ?>')" />
               <div class="absolute right-1 top-1 flex gap-1">
                 <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('selfie', -90)">↶</button>
                 <button type="button" class="px-1 py-0.5 rounded bg-gray-100" onclick="rotateThumb('selfie', 90)">↷</button>
@@ -244,7 +244,7 @@
     }
     lb.innerHTML = '<div style="position:relative">\n      <button type="button" aria-label="Fechar" style="position:absolute;top:-28px;right:-28px;background:#fff;color:#000;border:none;border-radius:9999px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="(function(){ if(lb){ lb.remove(); lb=null; } })()">×</button>\n      <img src="'+src+'" style="max-width:90vw;max-height:90vh;border-radius:8px" />\n    </div>';
   }
-  var verThumbDeg = { frente:0, verso:0, selfie:0 };
+  var verThumbDeg = { frente:<?php echo (int)($c['doc_cnh_frente_rot'] ?? 0); ?>, verso:<?php echo (int)($c['doc_cnh_verso_rot'] ?? 0); ?>, selfie:<?php echo (int)($c['doc_selfie_rot'] ?? 0); ?> };
   function rotateThumb(which, delta){ var el = document.getElementById('ver_thumb_'+which); var cur = verThumbDeg[which]||0; cur = (cur + delta + 360) % 360; verThumbDeg[which] = cur; if (el){ el.style.transition='transform 0.2s ease'; el.style.transform='rotate('+cur+'deg)'; } }
   function openLightboxImage(which, src){
     if (!lb){
@@ -259,9 +259,9 @@
     var btnClose = document.createElement('button'); btnClose.type='button'; btnClose.setAttribute('aria-label','Fechar'); btnClose.style.position='absolute'; btnClose.style.top='-28px'; btnClose.style.right='-28px'; btnClose.style.background='#fff'; btnClose.style.color='#000'; btnClose.style.border='none'; btnClose.style.borderRadius='9999px'; btnClose.style.width='32px'; btnClose.style.height='32px'; btnClose.style.cursor='pointer'; btnClose.appendChild(document.createTextNode('×'));
     btnClose.addEventListener('click', function(e){ e.stopPropagation(); if(lb){ lb.remove(); lb=null; } });
     var btnL = document.createElement('button'); btnL.type='button'; btnL.setAttribute('aria-label','Girar à esquerda'); btnL.style.position='absolute'; btnL.style.bottom='-48px'; btnL.style.left='-20px'; btnL.style.background='#fff'; btnL.style.color='#000'; btnL.style.border='none'; btnL.style.borderRadius='8px'; btnL.style.padding='6px 10px'; btnL.style.cursor='pointer'; btnL.appendChild(document.createTextNode('↶'));
-    btnL.addEventListener('click', function(e){ e.stopPropagation(); verThumbDeg[which] = ((verThumbDeg[which]||0) - 90 + 360) % 360; img.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; var el = document.getElementById('ver_thumb_'+which); if (el) el.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; });
+    btnL.addEventListener('click', function(e){ e.stopPropagation(); verThumbDeg[which] = ((verThumbDeg[which]||0) - 90 + 360) % 360; img.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; var el = document.getElementById('ver_thumb_'+which); if (el) el.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; try{ var fd=new FormData(); fd.append('client_id','<?php echo (int)$c['id']; ?>'); fd.append('tipo',which); fd.append('degrees',verThumbDeg[which]); fetch('/api/documentos/rotate',{method:'POST',body:fd}); }catch(e){} });
     var btnR = document.createElement('button'); btnR.type='button'; btnR.setAttribute('aria-label','Girar à direita'); btnR.style.position='absolute'; btnR.style.bottom='-48px'; btnR.style.left='28px'; btnR.style.background='#fff'; btnR.style.color='#000'; btnR.style.border='none'; btnR.style.borderRadius='8px'; btnR.style.padding='6px 10px'; btnR.style.cursor='pointer'; btnR.appendChild(document.createTextNode('↷'));
-    btnR.addEventListener('click', function(e){ e.stopPropagation(); verThumbDeg[which] = ((verThumbDeg[which]||0) + 90) % 360; img.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; var el = document.getElementById('ver_thumb_'+which); if (el) el.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; });
+    btnR.addEventListener('click', function(e){ e.stopPropagation(); verThumbDeg[which] = ((verThumbDeg[which]||0) + 90) % 360; img.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; var el = document.getElementById('ver_thumb_'+which); if (el) el.style.transform = 'rotate('+verThumbDeg[which]+'deg)'; try{ var fd=new FormData(); fd.append('client_id','<?php echo (int)$c['id']; ?>'); fd.append('tipo',which); fd.append('degrees',verThumbDeg[which]); fetch('/api/documentos/rotate',{method:'POST',body:fd}); }catch(e){} });
     wrap.appendChild(btnClose); wrap.appendChild(img); wrap.appendChild(btnL); wrap.appendChild(btnR);
     lb.appendChild(wrap);
   }
@@ -280,7 +280,8 @@
     var holerites = [
       <?php foreach ($hol as $h): $exth = strtolower(pathinfo($h, PATHINFO_EXTENSION)); if ($exth === 'pdf') { ?>{type:'pdf',url:'/arquivo?p=<?php echo rawurlencode($h); ?>'},<?php } else { $url = implode('/', array_map('rawurlencode', explode('/', $h))); ?>{type:'image',url:'<?php echo $url; ?>'},<?php } endforeach; ?>
     ];
-    var holIdx = 0; var holRotateDegrees = new Array(holerites.length).fill(0);
+    var holIdx = 0; var holRotateDegrees = (function(){ try { return JSON.parse('<?php echo json_encode(json_decode($c['doc_holerites_rot'] ?? '[]', true) ?: []); ?>'); } catch(e){ return []; } })();
+    while (holRotateDegrees.length < holerites.length) holRotateDegrees.push(0);
     function closeLb(){ if(lb){ lb.remove(); lb=null; document.removeEventListener('keydown', holKey); } }
     function prev(){ holIdx = (holIdx - 1 + holerites.length) % holerites.length; render(); }
     function next(){ holIdx = (holIdx + 1) % holerites.length; render(); }
@@ -308,9 +309,9 @@
       wrap.appendChild(btnClose); wrap.appendChild(btnPrev); wrap.appendChild(contentEl); wrap.appendChild(btnNext);
       if (it.type==='image') {
         var btnRotL = document.createElement('button'); btnRotL.type='button'; btnRotL.setAttribute('aria-label','Girar à esquerda'); btnRotL.style.position='absolute'; btnRotL.style.bottom='-48px'; btnRotL.style.left='-20px'; btnRotL.style.background='#fff'; btnRotL.style.color='#000'; btnRotL.style.border='none'; btnRotL.style.borderRadius='8px'; btnRotL.style.padding='6px 10px'; btnRotL.style.cursor='pointer'; btnRotL.appendChild(document.createTextNode('↶'));
-        btnRotL.addEventListener('click', function(e){ e.stopPropagation(); holRotateDegrees[holIdx] = ((holRotateDegrees[holIdx]||0) - 90 + 360) % 360; contentEl.style.transform = 'rotate('+holRotateDegrees[holIdx]+'deg)'; });
+        btnRotL.addEventListener('click', function(e){ e.stopPropagation(); holRotateDegrees[holIdx] = ((holRotateDegrees[holIdx]||0) - 90 + 360) % 360; contentEl.style.transform = 'rotate('+holRotateDegrees[holIdx]+'deg)'; try{ var fd=new FormData(); fd.append('client_id','<?php echo (int)$c['id']; ?>'); fd.append('tipo','holerite'); fd.append('index',holIdx.toString()); fd.append('degrees',holRotateDegrees[holIdx]); fetch('/api/documentos/rotate',{method:'POST',body:fd}); }catch(e){} });
         var btnRotR = document.createElement('button'); btnRotR.type='button'; btnRotR.setAttribute('aria-label','Girar à direita'); btnRotR.style.position='absolute'; btnRotR.style.bottom='-48px'; btnRotR.style.left='28px'; btnRotR.style.background='#fff'; btnRotR.style.color='#000'; btnRotR.style.border='none'; btnRotR.style.borderRadius='8px'; btnRotR.style.padding='6px 10px'; btnRotR.style.cursor='pointer'; btnRotR.appendChild(document.createTextNode('↷'));
-        btnRotR.addEventListener('click', function(e){ e.stopPropagation(); holRotateDegrees[holIdx] = ((holRotateDegrees[holIdx]||0) + 90) % 360; contentEl.style.transform = 'rotate('+holRotateDegrees[holIdx]+'deg)'; });
+        btnRotR.addEventListener('click', function(e){ e.stopPropagation(); holRotateDegrees[holIdx] = ((holRotateDegrees[holIdx]||0) + 90) % 360; contentEl.style.transform = 'rotate('+holRotateDegrees[holIdx]+'deg)'; try{ var fd=new FormData(); fd.append('client_id','<?php echo (int)$c['id']; ?>'); fd.append('tipo','holerite'); fd.append('index',holIdx.toString()); fd.append('degrees',holRotateDegrees[holIdx]); fetch('/api/documentos/rotate',{method:'POST',body:fd}); }catch(e){} });
         wrap.appendChild(btnRotL); wrap.appendChild(btnRotR);
       }
       lb.appendChild(wrap);

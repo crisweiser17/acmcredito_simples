@@ -1235,6 +1235,43 @@ class ClientesController {
     $content = __DIR__ . '/../Views/clientes_editar.php';
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function salvarRotacaoDoc(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo 'Método não permitido'; return; }
+    if (!isset($_SESSION['user_id'])) { http_response_code(401); echo 'Não autenticado'; return; }
+    $cid = (int)($_POST['client_id'] ?? 0);
+    $tipo = trim($_POST['tipo'] ?? '');
+    $degrees = (int)($_POST['degrees'] ?? 0);
+    $degrees = (($degrees % 360) + 360) % 360;
+    if ($cid <= 0 || $tipo === '') { http_response_code(400); echo 'Parâmetros inválidos'; return; }
+    $pdo = \App\Database\Connection::get();
+    if ($tipo === 'frente') {
+      $st = $pdo->prepare('UPDATE clients SET doc_cnh_frente_rot = :d WHERE id = :id');
+      $st->execute([':d'=>$degrees, ':id'=>$cid]);
+    } elseif ($tipo === 'verso') {
+      $st = $pdo->prepare('UPDATE clients SET doc_cnh_verso_rot = :d WHERE id = :id');
+      $st->execute([':d'=>$degrees, ':id'=>$cid]);
+    } elseif ($tipo === 'selfie') {
+      $st = $pdo->prepare('UPDATE clients SET doc_selfie_rot = :d WHERE id = :id');
+      $st->execute([':d'=>$degrees, ':id'=>$cid]);
+    } elseif ($tipo === 'holerite') {
+      $idx = (int)($_POST['index'] ?? -1);
+      if ($idx < 0) { http_response_code(400); echo 'Index inválido'; return; }
+      $st = $pdo->prepare('SELECT doc_holerites, doc_holerites_rot FROM clients WHERE id = :id');
+      $st->execute([':id'=>$cid]);
+      $row = $st->fetch(\PDO::FETCH_ASSOC);
+      if (!$row) { http_response_code(404); echo 'Cliente não encontrado'; return; }
+      $arr = json_decode($row['doc_holerites'] ?? '[]', true); if (!is_array($arr)) $arr = [];
+      $rot = json_decode($row['doc_holerites_rot'] ?? '[]', true); if (!is_array($rot)) $rot = [];
+      $len = count($arr);
+      for ($i=0;$i<$len;$i++){ if (!isset($rot[$i])) $rot[$i]=0; }
+      if ($idx >= $len) { http_response_code(400); echo 'Index fora do limite'; return; }
+      $rot[$idx] = $degrees;
+      $st2 = $pdo->prepare('UPDATE clients SET doc_holerites_rot = :rot WHERE id = :id');
+      $st2->execute([':rot'=>json_encode($rot), ':id'=>$cid]);
+    } else {
+      http_response_code(400); echo 'Tipo inválido'; return; }
+    header('Content-Type: application/json'); echo json_encode(['ok'=>true]);
+  }
   public static function ver(int $id): void {
     $pdo = Connection::get();
     $stmt = $pdo->prepare('SELECT * FROM clients WHERE id = :id');

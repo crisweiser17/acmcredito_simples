@@ -146,6 +146,10 @@ class Router {
       \App\Controllers\ClientesController::salvarParcialInterno();
       return;
     }
+    if ($path === '/api/documentos/rotate') {
+      \App\Controllers\ClientesController::salvarRotacaoDoc();
+      return;
+    }
     if ($path === '/api/clientes/check-cpf') {
       \App\Controllers\ClientesController::checkCpf();
       return;
