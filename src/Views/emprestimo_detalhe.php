@@ -6,7 +6,8 @@
       <div class="text-sm text-gray-600">R$ <?php echo number_format((float)$l['valor_principal'],2,',','.'); ?> → R$ <?php echo number_format((float)$l['valor_total'],2,',','.'); ?> em <?php echo (int)$l['num_parcelas']; ?>x de R$ <?php echo number_format((float)$l['valor_parcela'],2,',','.'); ?></div>
     </div>
     <div>
-      <span class="px-3 py-1 rounded text-white <?php echo $l['status']==='concluido'?'bg-green-600':'bg-blue-600'; ?>"><?php echo strtoupper($l['status']); ?></span>
+      <?php $st = (string)($l['status'] ?? ''); $stClass = 'bg-gray-100 text-gray-800'; if ($st==='ativo'){ $stClass='bg-green-100 text-green-800'; } elseif ($st==='cancelado'){ $stClass='bg-red-100 text-red-800'; } elseif ($st==='aguardando_assinatura'){ $stClass='bg-orange-100 text-orange-800'; } elseif ($st==='aguardando_transferencia'){ $stClass='bg-blue-100 text-blue-800'; } elseif ($st==='aguardando_boletos'){ $stClass='bg-black text-white'; } elseif ($st==='concluido'){ $stClass='bg-gray-100 text-gray-800'; } ?>
+      <span class="px-3 py-1 rounded <?php echo $stClass; ?>"><?php echo strtoupper($st ?: '—'); ?></span>
     </div>
   </div>
   <div class="space-y-4 border rounded p-4 mt-4">
