@@ -85,17 +85,16 @@
           <td class="border px-2 py-1"><?php echo isset($l['taxa_juros_mensal']) ? (number_format((float)$l['taxa_juros_mensal'],2,',','.').'% am') : '—'; ?></td>
           <td class="border px-2 py-1"><?php echo isset($l['valor_total']) ? ('R$ '.number_format((float)$l['valor_total'],2,',','.')) : '—'; ?></td>
           <td class="border px-2 py-1"><?php $st = (string)($l['status'] ?? ''); $stLabel = $st; if ($st==='aguardando_assinatura'){ $stLabel='Aguardando assinatura'; } elseif ($st==='aguardando_transferencia'){ $stLabel='Aguardando transferência'; } elseif ($st==='aguardando_boletos'){ $stLabel='Aguardando boletos'; } elseif ($st==='ativo'){ $stLabel='Ativo'; } elseif ($st==='cancelado'){ $stLabel='Cancelado'; } $stClass = 'bg-gray-100 text-gray-800'; if ($st==='ativo'){ $stClass='bg-green-100 text-green-800'; } elseif ($st==='cancelado'){ $stClass='bg-red-100 text-red-800'; } elseif (strpos($st,'aguardando_')===0){ $stClass='bg-yellow-100 text-yellow-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $stClass; ?>"><?php echo htmlspecialchars($stLabel ?: '—'); ?></span></td>
-          <td class="border px-2 py-1"><?php echo !empty($l['created_at'])?date('d/m/Y', strtotime($l['created_at'])):'—'; ?></td>
+          <td class="border px-2 py-1"><?php echo !empty($l['created_at'])?date('d/m/Y H:i', strtotime($l['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">
             <div class="flex items-center gap-0.5">
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" title="Abrir" aria-label="Abrir">
                 <i class="fa fa-eye text-[14px]" aria-hidden="true"></i>
               </a>
-              <?php if ($l['status']==='aguardando_assinatura'): ?>
-                <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/<?php echo (int)$l['id']; ?>" onclick="return confirm('Editar irá invalidar o link de assinatura atual. Prosseguir?');" title="Editar" aria-label="Editar">
-                  <i class="fa fa-pencil text-[14px]" aria-hidden="true"></i>
-                </a>
-              <?php endif; ?>
+              <?php $canEdit = ($l['status']==='aguardando_assinatura'); ?>
+              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 <?php echo $canEdit ? '' : 'opacity-50 pointer-events-none'; ?>" <?php echo $canEdit ? ('href="/emprestimos/'.(int)$l['id'].'" onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');"') : ''; ?> title="<?php echo $canEdit ? 'Editar' : 'Editar (desabilitado)'; ?>" aria-label="<?php echo $canEdit ? 'Editar' : 'Editar (desabilitado)'; ?>">
+                <i class="fa fa-pencil text-[14px]" aria-hidden="true"></i>
+              </a>
               <?php $uid = (int)($_SESSION['user_id'] ?? 0); $canDel = \App\Helpers\Permissions::can($uid, 'loans_delete'); if ($canDel): ?>
                 <form method="post" action="/emprestimos/<?php echo (int)$l['id']; ?>" style="display:inline" onsubmit="return confirm('Excluir este empréstimo?');">
                   <input type="hidden" name="acao" value="excluir">
@@ -103,6 +102,8 @@
                     <i class="fa fa-trash text-[14px]" aria-hidden="true"></i>
                   </button>
                 </form>
+              <?php else: ?>
+                <button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded opacity-50 pointer-events-none" title="Excluir (desabilitado)" aria-label="Excluir (desabilitado)"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button>
               <?php endif; ?>
             </div>
           </td>
@@ -128,12 +129,13 @@
   </div>
   <?php } ?>
   <script>
+    var CAN_DELETE_LOAN = <?php echo \App\Helpers\Permissions::can((int)($_SESSION['user_id'] ?? 0), 'loans_delete') ? 'true' : 'false'; ?>;
     (function(){
       var perSel = document.getElementById('loan_per_page');
       if (!perSel) return;
       function fmtMoney(n){ var f = parseFloat(n||0); if (isNaN(f)) f = 0; return 'R$ '+f.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
       function badgeStatus(st){ var s = String(st||''); var lbl = s; if(s==='aguardando_assinatura'){ lbl='Aguardando assinatura'; } else if(s==='aguardando_transferencia'){ lbl='Aguardando transferência'; } else if(s==='aguardando_boletos'){ lbl='Aguardando boletos'; } else if(s==='ativo'){ lbl='Ativo'; } else if(s==='cancelado'){ lbl='Cancelado'; } var cls='bg-gray-100 text-gray-800'; if(s==='ativo'){ cls='bg-green-100 text-green-800'; } else if(s==='cancelado'){ cls='bg-red-100 text-red-800'; } else if(s.indexOf('aguardando_')===0){ cls='bg-yellow-100 text-yellow-800'; } return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+lbl+'</span>'; }
-      function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); return dd+'/'+mm+'/'+yy; }
+      function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); var HH=('0'+dt.getHours()).slice(-2), NN=('0'+dt.getMinutes()).slice(-2); return dd+'/'+mm+'/'+yy+' '+HH+':'+NN; }
       perSel.addEventListener('change', function(){
         var form = document.querySelector('form[method="get"]');
         var params = new URLSearchParams();
@@ -143,7 +145,7 @@
         params.set('ajax', '1');
         fetch('/emprestimos?'+params.toString(), {headers:{'Accept':'application/json'}})
           .then(function(r){ return r.json(); })
-          .then(function(j){ var tb = document.getElementById('loan_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(l){ out += '<tr>'+
+          .then(function(j){ var tb = document.getElementById('loan_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(l){ var canEdit = (String(l.status||'')==='aguardando_assinatura'); out += '<tr>'+
             '<td class="border px-2 py-1">'+(l.id||'')+'</td>'+
             '<td class="border px-2 py-1 break-words"><a class="text-blue-700 underline uppercase" href="/clientes/'+(l.cid||'')+'/ver">'+(l.nome? String(l.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtMoney(l.valor_principal)+'</td>'+
@@ -156,8 +158,10 @@
             '<td class="border px-2 py-1">'+
               '<div class="flex items-center gap-0.5">'+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/'+(l.id||'')+'" title="Abrir" aria-label="Abrir"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
-                ((String(l.status||'')==='aguardando_assinatura')?('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos/'+(l.id||'')+'" onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');" title="Editar" aria-label="Editar"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>'):'')+
-                '<form method="post" action="/emprestimos/'+(l.id||'')+'" style="display:inline" onsubmit="return confirm(\'Excluir este empréstimo?\');"><input type="hidden" name="acao" value="excluir"><button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button></form>'+
+                ('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 '+(canEdit?'':('opacity-50 pointer-events-none'))+'" '+(canEdit?('href="/emprestimos/'+(l.id||'')+'" onclick="return confirm(\'Editar irá invalidar o link de assinatura atual. Prosseguir?\');"'):'')+' title="'+(canEdit?'Editar':'Editar (desabilitado)')+'" aria-label="'+(canEdit?'Editar':'Editar (desabilitado)')+'"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>')+
+                (CAN_DELETE_LOAN?('<form method="post" action="/emprestimos/'+(l.id||'')+'" style="display:inline" onsubmit="return confirm(\'Excluir este empréstimo?\');"><input type="hidden" name="acao" value="excluir"><button class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" type="submit" title="Excluir" aria-label="Excluir" style="background:transparent;color:#b91c1c"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button></form>'):(
+                  '<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded opacity-50 pointer-events-none" title="Excluir (desabilitado)" aria-label="Excluir (desabilitado)"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button>'
+                ))+
               '</div>'+
             '</td>'+
           '</tr>'; }); tb.innerHTML = out; var pi = document.getElementById('loan_pageinfo'); if (pi){ var p = j.pagination||{}; pi.textContent = 'Página '+(p.page||1)+' de '+(p.pages_total||1)+' • Total '+(p.total||0); }

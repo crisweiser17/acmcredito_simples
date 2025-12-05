@@ -19,6 +19,29 @@
       <div class="text-sm text-gray-500">Configurar em Configurações → Links e Pagamentos</div>
     <?php endif; ?>
   </div>
+  <div class="rounded border border-gray-200 p-4">
+    <div class="text-sm font-semibold mb-2">Minhas anotações</div>
+    <div class="text-xs text-gray-500 mb-1">Somente você vê e edita</div>
+    <textarea id="user_notes" class="w-full border rounded px-3 py-2 h-36" placeholder="Escreva suas anotações aqui..."><?php echo htmlspecialchars($userNotes ?? ''); ?></textarea>
+    <div class="mt-2 flex items-center justify-end">
+      <button id="save_notes_btn" type="button" class="px-4 py-2 rounded btn-primary">Salvar</button>
+    </div>
+    <div id="notes_toast" class="hidden mt-2 px-3 py-2 rounded bg-green-100 text-green-700">Anotações salvas</div>
+  </div>
+  <script>
+    (function(){
+      var btn = document.getElementById('save_notes_btn');
+      var ta = document.getElementById('user_notes');
+      var toast = document.getElementById('notes_toast');
+      if (!btn || !ta) return;
+      btn.addEventListener('click', function(){
+        var fd = new FormData(); fd.append('notes', ta.value||'');
+        fetch('/api/user/notes', {method:'POST', body: fd})
+          .then(function(r){ try { return r.json(); } catch(e){ return {ok:false}; } })
+          .then(function(j){ if (toast){ toast.classList.remove('hidden'); setTimeout(function(){ toast.classList.add('hidden'); }, 2000); } });
+      });
+    })();
+  </script>
   
   
 </div>

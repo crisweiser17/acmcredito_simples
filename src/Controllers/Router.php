@@ -203,6 +203,7 @@ class Router {
       return;
     }
     if ($path === '/dashboard') { \App\Controllers\HomeController::handle(); return; }
+    if ($path === '/api/user/notes') { \App\Controllers\UsersController::saveNotes(); return; }
     if ($path === '/relatorios/financeiro/export-csv') {
       \App\Controllers\ReportsController::financeiroExportCsv();
       return;

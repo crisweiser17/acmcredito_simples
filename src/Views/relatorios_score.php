@@ -46,7 +46,7 @@
           <th class="text-left px-4 py-2">Decisão</th>
           <th class="text-left px-4 py-2">% Ajuste</th>
           <th class="text-left px-4 py-2">Valor base</th>
-          <th class="text-left px-4 py-2">Próximo valor</th>
+          <th class="text-left px-4 py-2">Proximo Emprestimo</th>
           <th class="text-left px-4 py-2">Parcela/Renda</th>
           <th class="text-left px-4 py-2">Ações</th>
         </tr>

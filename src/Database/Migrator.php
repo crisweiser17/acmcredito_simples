@@ -14,7 +14,7 @@ class Migrator {
     $sql[] = "CREATE TABLE IF NOT EXISTS billing_queue (id INT PRIMARY KEY AUTO_INCREMENT, parcela_id INT NOT NULL, loan_id INT NOT NULL, client_id INT NOT NULL, status ENUM('aguardando','processando','sucesso','erro') NOT NULL DEFAULT 'aguardando', try_count INT NOT NULL DEFAULT 0, last_error TEXT NULL, api_response JSON NULL, payment_id VARCHAR(100) NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, processed_at DATETIME NULL, UNIQUE KEY uniq_parcela (parcela_id), INDEX idx_status (status), INDEX idx_loan (loan_id))";
     $sql[] = "CREATE TABLE IF NOT EXISTS billing_logs (id INT PRIMARY KEY AUTO_INCREMENT, queue_id INT NULL, action VARCHAR(50) NOT NULL, http_code INT NULL, request_json JSON NULL, response_json JSON NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_action (action), INDEX idx_queue (queue_id))";
     $sql[] = "CREATE TABLE IF NOT EXISTS audit_log (id INT PRIMARY KEY AUTO_INCREMENT, user_id INT, tabela VARCHAR(50), registro_id INT, acao VARCHAR(50) NOT NULL, descricao TEXT, ip VARCHAR(45), user_agent TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_user (user_id), INDEX idx_tabela (tabela), INDEX idx_acao (acao), INDEX idx_created (created_at))";
-    $sql[] = "CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(100) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, nome VARCHAR(100) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
+    $sql[] = "CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(100) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, nome VARCHAR(100) NOT NULL, user_notes TEXT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
     foreach ($sql as $q) { $pdo->exec($q); }
     try {
       $hasLytex = $pdo->query("SHOW TABLES LIKE 'lytex_queue'")->fetch();
@@ -103,10 +103,10 @@ class Migrator {
       $ins->execute(['u'=>'operador2','p'=>password_hash('senha456', PASSWORD_DEFAULT),'n'=>'Operador 2']);
       $ins->execute(['u'=>'operador3','p'=>password_hash('senha789', PASSWORD_DEFAULT),'n'=>'Operador 3']);
     }
-    // Ensure role column exists and assign roles
     $userCols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll();
-    $haveRole = false; foreach ($userCols as $col) { if (($col['Field'] ?? '') === 'role') { $haveRole = true; break; } }
+    $haveRole = false; $haveNotes = false; foreach ($userCols as $col) { $f = ($col['Field'] ?? ''); if ($f === 'role') { $haveRole = true; } if ($f === 'user_notes') { $haveNotes = true; } }
     if (!$haveRole) { $pdo->exec("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'admin'"); }
+    if (!$haveNotes) { $pdo->exec("ALTER TABLE users ADD COLUMN user_notes TEXT NULL"); }
     // Set user ID 1 as superadmin, others as admin
     try {
       $pdo->exec("UPDATE users SET role='superadmin' WHERE id=1");

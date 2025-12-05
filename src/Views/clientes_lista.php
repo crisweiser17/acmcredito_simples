@@ -120,28 +120,31 @@
           <td class="border px-2 py-1"><?php $cr = strtolower((string)($c['criterios_status'] ?? '')); $crClass = 'bg-gray-100 text-gray-800'; if ($cr==='aprovado'){ $crClass='bg-green-100 text-green-800'; } elseif ($cr==='pendente'){ $crClass='bg-yellow-100 text-yellow-800'; } elseif ($cr==='reprovado'){ $crClass='bg-red-100 text-red-800'; } ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $crClass; ?>"><?php echo htmlspecialchars($cr ? ucfirst($cr) : '—'); ?></span></td>
           <td class="border px-2 py-1"><?php $refs = json_decode((string)($c['referencias'] ?? '[]'), true); if (!is_array($refs)) $refs = []; $st='pendente'; foreach ($refs as $r){ $op = strtolower((string)($r['operador']['status'] ?? '')); $pb = strtolower((string)($r['public']['status'] ?? '')); if ($op==='aprovado' || $pb==='aprovado'){ $st='aprovado'; break; } if ($op==='reprovado' || $pb==='reprovado'){ $st = ($st==='aprovado') ? 'aprovado' : 'reprovado'; } } $color = ($st==='aprovado')?'#16a34a':(($st==='reprovado')?'#ef4444':'#9ca3af'); $stLabel = ucfirst($st); ?><i class="fa fa-check-circle" title="Referências: <?php echo $stLabel; ?>" aria-label="Referências: <?php echo $stLabel; ?>" aria-hidden="true" style="color: <?php echo $color; ?>;"></i></td>
           <td class="border px-2 py-1"><?php $elig = (strtolower((string)($c['prova_vida_status'] ?? ''))==='aprovado' && strtolower((string)($c['cpf_check_status'] ?? ''))==='aprovado' && strtolower((string)($c['criterios_status'] ?? ''))==='aprovado'); $elClass = $elig ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $elClass; ?>"><?php echo $elig ? 'Sim' : 'Não'; ?></span></td>
-          <td class="border px-2 py-1"><?php echo !empty($c['created_at'])?date('d/m/Y', strtotime($c['created_at'])):'—'; ?></td>
+          <td class="border px-2 py-1"><?php echo !empty($c['created_at'])?date('d/m/Y H:i', strtotime($c['created_at'])):'—'; ?></td>
           <td class="border px-2 py-1">
             <div class="flex items-center gap-0.5">
-              <?php if ((int)($c['is_draft'] ?? 0) === 0): ?>
-              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/validar" title="Validar" aria-label="Validar">
+              <?php $isDraft = (int)($c['is_draft'] ?? 0) === 1; ?>
+              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 <?php echo $isDraft ? 'opacity-50 pointer-events-none' : ''; ?>" <?php echo $isDraft ? '' : ('href="/clientes/'.(int)$c['id'].'/validar"'); ?> title="<?php echo $isDraft ? 'Validar (desabilitado)' : 'Validar'; ?>" aria-label="<?php echo $isDraft ? 'Validar (desabilitado)' : 'Validar'; ?>">
                 <i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i>
               </a>
-              <?php endif; ?>
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/ver" title="Ver" aria-label="Ver">
                 <i class="fa fa-eye text-[14px]" aria-hidden="true"></i>
               </a>
               <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/<?php echo (int)$c['id']; ?>/editar" title="Editar" aria-label="Editar">
                 <i class="fa fa-pencil text-[14px]" aria-hidden="true"></i>
               </a>
-              <?php if (!empty($c['loans_count']) && (int)$c['loans_count'] > 0): ?>
-              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos?client_id=<?php echo (int)$c['id']; ?>" title="Empréstimos" aria-label="Empréstimos">
+              <?php $hasLoans = (int)($c['loans_count'] ?? 0) > 0; ?>
+              <a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 <?php echo $hasLoans ? '' : 'opacity-50 pointer-events-none'; ?>" <?php echo $hasLoans ? ('href="/emprestimos?client_id='.(int)$c['id'].'"') : ''; ?> title="<?php echo $hasLoans ? 'Empréstimos' : 'Empréstimos (desabilitado)'; ?>" aria-label="<?php echo $hasLoans ? 'Empréstimos' : 'Empréstimos (desabilitado)'; ?>">
                 <i class="fa fa-money text-[14px]" aria-hidden="true"></i>
               </a>
-              <?php endif; ?>
-              <?php if ((int)($_SESSION['user_id'] ?? 0) === 1 && (int)($c['loans_count'] ?? 0) === 0): ?>
+              <?php $canDelete = ((int)($_SESSION['user_id'] ?? 0) === 1) && ((int)($c['loans_count'] ?? 0) === 0); ?>
+              <?php if ($canDelete): ?>
               <button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" title="Excluir" aria-label="Excluir" data-del-id="<?php echo (int)$c['id']; ?>">
                 <i class="fa fa-trash text-red-600 text-[14px]" aria-hidden="true"></i>
+              </button>
+              <?php else: ?>
+              <button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded opacity-50 pointer-events-none" title="Excluir (desabilitado)" aria-label="Excluir (desabilitado)">
+                <i class="fa fa-trash text-[14px]" aria-hidden="true"></i>
               </button>
               <?php endif; ?>
             </div>
@@ -177,7 +180,7 @@
       function elig(pv,cpf,cr){ var ok = (String(pv).toLowerCase()==='aprovado' && String(cpf).toLowerCase()==='aprovado' && String(cr).toLowerCase()==='aprovado'); var cls = ok?'bg-green-100 text-green-800':'bg-red-100 text-red-800'; return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '+cls+'">'+(ok?'Sim':'Não')+'</span>'; }
       function statusIcon(isDraft, id){ return (parseInt(isDraft,10)===1) ? '<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-blue-50 copy-link-btn" data-client-id="'+(id||'')+'" title="Copiar link de cadastro" aria-label="Copiar link de cadastro"><i class="fa fa-file text-gray-600" aria-hidden="true"></i></button>' : '<i class="fa fa-check text-green-600" title="Ativo" aria-hidden="true"></i>'; }
       function refCheck(json){ try{ var arr = (typeof json==='string')?JSON.parse(json||'[]'):(json||[]); if(!Array.isArray(arr)) arr=[]; var st='pendente'; for(var i=0;i<arr.length;i++){ var r=arr[i]||{}; var op = String((r.operador&&r.operador.status)||'').toLowerCase(); var pb = String((r.public&&r.public.status)||'').toLowerCase(); if(op==='aprovado'||pb==='aprovado'){ st='aprovado'; break; } if(op==='reprovado'||pb==='reprovado'){ st = (st==='aprovado') ? 'aprovado' : 'reprovado'; } } var color = (st==='aprovado')?'#16a34a':((st==='reprovado')?'#ef4444':'#9ca3af'); var lbl = 'Referências: '+(st.charAt(0).toUpperCase()+st.slice(1)); return '<i class="fa fa-check-circle" title="'+lbl+'" aria-label="'+lbl+'" aria-hidden="true" style="color:'+color+'"></i>'; } catch(e){ return '<i class="fa fa-check-circle" title="Referências: Pendente" aria-label="Referências: Pendente" aria-hidden="true" style="color:#9ca3af"></i>'; } }
-      function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); return dd+'/'+mm+'/'+yy; }
+      function toBRDate(d){ if(!d) return '—'; var dt = new Date(d); if (isNaN(dt.getTime())) return '—'; var dd = ('0'+dt.getDate()).slice(-2), mm=('0'+(dt.getMonth()+1)).slice(-2), yy=dt.getFullYear(); var HH=('0'+dt.getHours()).slice(-2), NN=('0'+dt.getMinutes()).slice(-2); return dd+'/'+mm+'/'+yy+' '+HH+':'+NN; }
       perSel.addEventListener('change', function(){
         var form = document.querySelector('form[method="get"]');
         var params = new URLSearchParams();
@@ -187,7 +190,7 @@
         params.set('ajax', '1');
         fetch('/clientes?'+params.toString(), {headers:{'Accept':'application/json'}})
           .then(function(r){ return r.json(); })
-          .then(function(j){ var tb = document.getElementById('cli_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(c){ out += '<tr>'+
+          .then(function(j){ var tb = document.getElementById('cli_tbody'); if (!tb) return; var out = ''; (j.rows||[]).forEach(function(c){ var isDraft = (parseInt(c.is_draft,10)===1); var hasLoans = !!(c.loans_count && parseInt(c.loans_count,10)>0); out += '<tr>'+
             '<td class="border px-2 py-1">'+(c.id||'')+'</td>'+
             '<td class="border px-2 py-1 break-words"><a class="text-blue-600 hover:underline uppercase" href="/clientes/'+(c.id||'')+'/ver">'+(c.nome? String(c.nome).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '')+'</a></td>'+
             '<td class="border px-2 py-1">'+fmtCPF(c.cpf||'')+'</td>'+
@@ -200,11 +203,13 @@
             '<td class="border px-2 py-1">'+toBRDate(c.created_at)+'</td>'+
             '<td class="border px-2 py-1">'+
               '<div class="flex items-center gap-0.5">'+
-                ((parseInt(c.is_draft,10)===1)?(''):('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/validar" title="Validar" aria-label="Validar"><i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i></a>'))+
+                ('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 '+(isDraft?'opacity-50 pointer-events-none':'')+'" '+(isDraft?'':('href="/clientes/'+(c.id||'')+'/validar"'))+' title="'+(isDraft?'Validar (desabilitado)':'Validar')+'" aria-label="'+(isDraft?'Validar (desabilitado)':'Validar')+'"><i class="fa fa-check-circle text-[14px]" aria-hidden="true"></i></a>')+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/ver" title="Ver" aria-label="Ver"><i class="fa fa-eye text-[14px]" aria-hidden="true"></i></a>'+
                 '<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/clientes/'+(c.id||'')+'/editar" title="Editar" aria-label="Editar"><i class="fa fa-pencil text-[14px]" aria-hidden="true"></i></a>'+
-                ((c.loans_count&&parseInt(c.loans_count,10)>0)?('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100" href="/emprestimos?client_id='+(c.id||'')+'" title="Empréstimos" aria-label="Empréstimos"><i class="fa fa-money text-[14px]" aria-hidden="true"></i></a>'):'')+
-                ((CAN_DELETE && !(c.loans_count && parseInt(c.loans_count,10)>0))?('<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" title="Excluir" aria-label="Excluir" data-del-id="'+(c.id||'')+'"><i class="fa fa-trash text-red-600 text-[14px]" aria-hidden="true"></i></button>'):'')+
+                ('<a class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 '+(hasLoans?'':('opacity-50 pointer-events-none'))+'" '+(hasLoans?('href="/emprestimos?client_id='+(c.id||'')+'"'):'')+' title="'+(hasLoans?'Empréstimos':'Empréstimos (desabilitado)')+'" aria-label="'+(hasLoans?'Empréstimos':'Empréstimos (desabilitado)')+'"><i class="fa fa-money text-[14px]" aria-hidden="true"></i></a>')+
+                ((CAN_DELETE && !hasLoans)?('<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50" title="Excluir" aria-label="Excluir" data-del-id="'+(c.id||'')+'"><i class="fa fa-trash text-red-600 text-[14px]" aria-hidden="true"></i></button>'):(
+                  '<button type="button" class="inline-flex items-center justify-center w-6 h-6 rounded opacity-50 pointer-events-none" title="Excluir (desabilitado)" aria-label="Excluir (desabilitado)"><i class="fa fa-trash text-[14px]" aria-hidden="true"></i></button>'
+                ))+
               '</div>'+
             '</td>'+
           '</tr>'; }); tb.innerHTML = out; var pi = document.getElementById('cli_pageinfo'); if (pi){ var p = j.pagination||{}; pi.textContent = 'Página '+(p.page||1)+' de '+(p.pages_total||1)+' • Total '+(p.total||0); }

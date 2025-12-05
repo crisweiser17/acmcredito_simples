@@ -59,6 +59,9 @@ class HomeController {
     $title = 'Dashboard';
     $content = __DIR__ . '/../Views/home.php';
     $metrics = compact('clients','loans','valorLiberado','valorRepagamento','inadValor','inadPercent','lucroBruto','lucroBrutoPercent','pddSugestao','receberMesAtual','receberProximoMes','periodo','ini','fim');
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $userNotes = '';
+    if ($uid > 0) { $stmtN = $pdo->prepare('SELECT user_notes FROM users WHERE id=:id'); $stmtN->execute(['id'=>$uid]); $rowN = $stmtN->fetch(); $userNotes = (string)($rowN['user_notes'] ?? ''); }
     include __DIR__ . '/../Views/layout.php';
   }
 }

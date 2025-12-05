@@ -118,4 +118,18 @@ class UsersController {
     $users = $rows;
     include __DIR__ . '/../Views/layout.php';
   }
+  public static function saveNotes(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo 'Método não permitido'; return; }
+    $userId = (int)($_SESSION['user_id'] ?? 0);
+    if ($userId <= 0) { http_response_code(401); echo 'Não autenticado'; return; }
+    $notes = trim($_POST['notes'] ?? '');
+    $pdo = Connection::get();
+    try {
+      $stmt = $pdo->prepare('UPDATE users SET user_notes=:n WHERE id=:id');
+      $stmt->execute(['n'=>$notes,'id'=>$userId]);
+      header('Content-Type: application/json'); echo json_encode(['ok'=>true]);
+    } catch (\Throwable $e) {
+      header('Content-Type: application/json'); echo json_encode(['ok'=>false]);
+    }
+  }
 }
