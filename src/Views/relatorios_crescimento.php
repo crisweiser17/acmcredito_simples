@@ -10,7 +10,7 @@
           <option value="meses">Meses (12)</option>
         </select>
       </div>
-      <canvas id="chart_clientes" height="180"></canvas>
+      <canvas id="chart_clientes" class="w-full" height="180"></canvas>
     </div>
     <div class="border rounded p-4">
       <div class="flex items-center justify-between mb-3">
@@ -21,7 +21,7 @@
           <option value="meses">Meses (12)</option>
         </select>
       </div>
-      <canvas id="chart_emprestimos" height="180"></canvas>
+      <canvas id="chart_emprestimos" class="w-full" height="180"></canvas>
     </div>
     <div class="border rounded p-4">
       <div class="flex items-center justify-between mb-3">
@@ -32,7 +32,7 @@
           <option value="meses">Meses (12)</option>
         </select>
       </div>
-      <canvas id="chart_valores" height="200"></canvas>
+      <canvas id="chart_valores" class="w-full" height="200"></canvas>
     </div>
   </div>
 </div>
@@ -46,4 +46,6 @@ async function loadEmp(){ var sel = document.getElementById('gran_emprestimos');
 async function loadVals(){ var sel = document.getElementById('gran_valores'); var gran = sel.value; var d = await fetchData('valores', gran); var lab = (d.labels||[]).map(function(s){ if (gran==='dias'){ var p=s.split('-'); return `${p[2]}/${p[1]}`; } if (gran==='meses'){ var p=s.split('-'); return `${p[1]}/${p[0]}`; } return s; }); var cv = document.getElementById('chart_valores'); drawBar(cv, lab, d.values||[], 'R$'); }
 ['gran_clientes','gran_emprestimos','gran_valores'].forEach(function(id){ var el=document.getElementById(id); if(el){ el.addEventListener('change', function(){ if(id==='gran_clientes') loadClientes(); else if(id==='gran_emprestimos') loadEmp(); else loadVals(); }); }});
 loadClientes(); loadEmp(); loadVals();
+var _rzT;
+window.addEventListener('resize', function(){ clearTimeout(_rzT); _rzT = setTimeout(function(){ loadClientes(); loadEmp(); loadVals(); }, 150); });
 </script>
