@@ -96,6 +96,7 @@ $saved = isset($_GET['saved']);
             <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/parcelas')): ?><a href="/relatorios/parcelas" class="block px-6 py-2 hover:bg-gray-800">Parcelas</a><?php endif; ?>
             <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/financeiro')): ?><a href="/relatorios/financeiro" class="block px-6 py-2 hover:bg-gray-800">Financeiro</a><?php endif; ?>
             <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/score')): ?><a href="/relatorios/score" class="block px-6 py-2 hover:bg-gray-800">Score</a><?php endif; ?>
+            <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/crescimento')): ?><a href="/relatorios/crescimento" class="block px-6 py-2 hover:bg-gray-800">Crescimento</a><?php endif; ?>
             <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/logs')): ?><a href="/relatorios/logs" class="block px-6 py-2 hover:bg-gray-800">Logs</a><?php endif; ?>
             <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/filas')): ?><a href="/relatorios/filas" class="block px-6 py-2 hover:bg-gray-800">Filas</a><?php endif; ?>
             <?php if (\App\Helpers\Permissions::canAccessPage($uid, '/relatorios/emprestimos-apagados')): ?><a href="/relatorios/emprestimos-apagados" class="block px-6 py-2 hover:bg-gray-800">Apagados</a><?php endif; ?>

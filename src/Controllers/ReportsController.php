@@ -707,4 +707,87 @@ use App\Database\Connection;
       echo json_encode(['ok'=>false,'error'=>'score_compute_failed']);
     }
   }
+  public static function crescimento(): void {
+    if (!isset($_SESSION['user_id'])) { header('Location: /login'); return; }
+    $title = 'Crescimento';
+    $content = __DIR__ . '/../Views/relatorios_crescimento.php';
+    include __DIR__ . '/../Views/layout.php';
+  }
+  public static function crescimentoApi(): void {
+    if (!isset($_SESSION['user_id'])) { header('Content-Type: application/json'); echo json_encode(['ok'=>false,'error'=>'auth']); return; }
+    $pdo = Connection::get();
+    $tipo = trim($_GET['tipo'] ?? 'clientes');
+    $gran = trim($_GET['gran'] ?? 'dias');
+    $labels = [];
+    $values = [];
+    if ($gran === 'dias') {
+      $end = new \DateTimeImmutable(date('Y-m-d'));
+      $start = $end->modify('-29 days');
+      $map = [];
+      for ($i=0; $i<30; $i++) { $d = $start->modify("+{$i} days")->format('Y-m-d'); $labels[] = $d; $map[$d] = 0.0; }
+      if ($tipo === 'clientes') {
+        $st = $pdo->prepare("SELECT DATE(created_at) AS d, COUNT(*) AS c FROM clients WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY d");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$end->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['d']] = (float)($r['c'] ?? 0); }
+        foreach ($labels as $d) { $values[] = (float)$map[$d]; }
+      } elseif ($tipo === 'emprestimos') {
+        $st = $pdo->prepare("SELECT DATE(created_at) AS d, COUNT(*) AS c FROM loans WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY d");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$end->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['d']] = (float)($r['c'] ?? 0); }
+        foreach ($labels as $d) { $values[] = (float)$map[$d]; }
+      } else {
+        $st = $pdo->prepare("SELECT DATE(created_at) AS d, COALESCE(SUM(valor_principal),0) AS s FROM loans WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY d");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$end->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['d']] = (float)($r['s'] ?? 0); }
+        foreach ($labels as $d) { $values[] = round((float)$map[$d],2); }
+      }
+    } elseif ($gran === 'semanas') {
+      $end = new \DateTimeImmutable(date('Y-m-d', strtotime('sunday this week')));
+      $start = $end->modify('-11 weeks')->modify('monday this week');
+      $seq = [];
+      for ($i=0; $i<12; $i++) { $m = $start->modify("+{$i} weeks"); $wk = $m->format('oW'); $seq[] = $wk; $labels[] = $wk; }
+      $map = array_fill_keys($seq, 0.0);
+      if ($tipo === 'clientes') {
+        $st = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%x%v') AS w, COUNT(*) AS c FROM clients WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY w");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$end->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['w']] = (float)($r['c'] ?? 0); }
+        foreach ($labels as $w) { $values[] = (float)$map[$w]; }
+      } elseif ($tipo === 'emprestimos') {
+        $st = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%x%v') AS w, COUNT(*) AS c FROM loans WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY w");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$end->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['w']] = (float)($r['c'] ?? 0); }
+        foreach ($labels as $w) { $values[] = (float)$map[$w]; }
+      } else {
+        $st = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%x%v') AS w, COALESCE(SUM(valor_principal),0) AS s FROM loans WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY w");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$end->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['w']] = (float)($r['s'] ?? 0); }
+        foreach ($labels as $w) { $values[] = round((float)$map[$w],2); }
+      }
+    } else {
+      $end = new \DateTimeImmutable(date('Y-m-01'));
+      $start = $end->modify('-11 months');
+      $seq = [];
+      for ($i=0; $i<12; $i++) { $m = $start->modify("+{$i} months"); $ym = $m->format('Y-m'); $seq[] = $ym; $labels[] = $ym; }
+      $map = array_fill_keys($seq, 0.0);
+      $fim = $end->modify('+1 month')->modify('-1 day');
+      if ($tipo === 'clientes') {
+        $st = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS c FROM clients WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY ym");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$fim->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['ym']] = (float)($r['c'] ?? 0); }
+        foreach ($labels as $ym) { $values[] = (float)$map[$ym]; }
+      } elseif ($tipo === 'emprestimos') {
+        $st = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS c FROM loans WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY ym");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$fim->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['ym']] = (float)($r['c'] ?? 0); }
+        foreach ($labels as $ym) { $values[] = (float)$map[$ym]; }
+      } else {
+        $st = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COALESCE(SUM(valor_principal),0) AS s FROM loans WHERE DATE(created_at) BETWEEN :ini AND :fim GROUP BY ym");
+        $st->execute(['ini'=>$start->format('Y-m-d'),'fim'=>$fim->format('Y-m-d')]);
+        foreach ($st->fetchAll() as $r) { $map[$r['ym']] = (float)($r['s'] ?? 0); }
+        foreach ($labels as $ym) { $values[] = round((float)$map[$ym],2); }
+      }
+    }
+    header('Content-Type: application/json');
+    echo json_encode(['ok'=>true,'labels'=>$labels,'values'=>$values]);
+  }
 }
