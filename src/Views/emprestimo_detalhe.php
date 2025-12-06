@@ -57,6 +57,9 @@
   </div>
   <div class="border rounded p-4 relative">
     <div class="font-semibold mb-2">Etapa 1: Gerar Contrato</div>
+    <?php if (!empty($l['contrato_gerado_em'])): ?>
+      <div class="text-xs text-gray-600 mb-2">Gerado por: <?php echo htmlspecialchars($l['contrato_gerado_user_nome'] ?? ''); ?> em <?php echo date('d/m/Y H:i', strtotime($l['contrato_gerado_em'])); ?></div>
+    <?php endif; ?>
     <?php if ($done1): ?>
     <span class="absolute right-2 top-2 bg-green-100 text-green-800 text-xs rounded px-2 py-1">Etapa Concluída</span>
     <?php endif; ?>
@@ -194,6 +197,9 @@
         <div>
           <div class="text-sm text-gray-600">Confirmado em</div>
           <div><?php echo !empty($l['transferencia_em'])?date('d/m/Y H:i', strtotime($l['transferencia_em'])):'—'; ?></div>
+          <?php if (!empty($l['transferencia_user_nome'])): ?>
+          <div class="text-xs text-gray-600">Por: <?php echo htmlspecialchars($l['transferencia_user_nome']); ?></div>
+          <?php endif; ?>
         </div>
       </div>
       <?php
@@ -250,6 +256,9 @@
         <div>
           <div class="text-sm text-gray-600">Gerados em</div>
           <div><?php echo !empty($l['boletos_gerados_em'])?date('d/m/Y H:i', strtotime($l['boletos_gerados_em'])):'—'; ?></div>
+          <?php if (!empty($l['boletos_user_nome'])): ?>
+          <div class="text-xs text-gray-600">Por: <?php echo htmlspecialchars($l['boletos_user_nome']); ?></div>
+          <?php endif; ?>
         </div>
         <div>
           <div class="text-sm text-gray-600">Método</div>
@@ -266,6 +275,9 @@
       <?php if ($aguardandoBoletos): ?>
         <div class="mb-3 rounded border border-blue-200 bg-blue-50 text-blue-700 px-4 py-3">
           Empréstimo na fila de geração de boletos via API. Aguarde o processamento.
+          <?php if (!empty($l['boletos_solicitado_em'])): ?>
+            <div class="text-xs text-gray-700 mt-1">Solicitado por: <?php echo htmlspecialchars($l['boletos_user_nome'] ?? ''); ?> em <?php echo date('d/m/Y H:i', strtotime($l['boletos_solicitado_em'])); ?></div>
+          <?php endif; ?>
         </div>
       <?php endif; ?>
       <div class="flex flex-wrap gap-2">

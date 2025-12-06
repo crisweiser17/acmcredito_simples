@@ -65,6 +65,15 @@ class Migrator {
       $colDb = $pdo->query("SHOW COLUMNS FROM loans LIKE 'data_base'")->fetch();
       if (!$colDb) { $pdo->exec("ALTER TABLE loans ADD COLUMN data_base DATE NULL"); }
     } catch (\Throwable $e) {}
+    try {
+      $cols = $pdo->query("SHOW COLUMNS FROM loans")->fetchAll();
+      $haveContratoUser = false; $haveContratoEm = false; $haveBoletosUser = false; $haveBoletosSolic = false;
+      foreach ($cols as $c){ $f = ($c['Field'] ?? ''); if ($f==='contrato_gerado_user_id') $haveContratoUser=true; if ($f==='contrato_gerado_em') $haveContratoEm=true; if ($f==='boletos_user_id') $haveBoletosUser=true; if ($f==='boletos_solicitado_em') $haveBoletosSolic=true; }
+      if (!$haveContratoUser) { $pdo->exec("ALTER TABLE loans ADD COLUMN contrato_gerado_user_id INT NULL AFTER contrato_assinante_user_agent"); }
+      if (!$haveContratoEm) { $pdo->exec("ALTER TABLE loans ADD COLUMN contrato_gerado_em DATETIME NULL AFTER contrato_gerado_user_id"); }
+      if (!$haveBoletosUser) { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_user_id INT NULL AFTER boletos_api_response"); }
+      if (!$haveBoletosSolic) { $pdo->exec("ALTER TABLE loans ADD COLUMN boletos_solicitado_em DATETIME NULL AFTER boletos_user_id"); }
+    } catch (\Throwable $e) {}
     $cols = $pdo->query("SHOW COLUMNS FROM clients")->fetchAll();
     $haveIndicador = false; $haveReferencias = false; $haveCriterios = false; $haveCadastroPublico = false; $haveDraft = false; $havePixTipo = false; $havePixChave = false; $haveCadastroToken = false; $haveRendaLiquida = false; $haveRotFrente=false; $haveRotVerso=false; $haveRotSelfie=false; $haveRotHol=false;
     foreach ($cols as $col) {
